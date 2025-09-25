@@ -1,0 +1,444 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Métronome Vibrant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 350px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .bpm-display {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .bpm-controls {
+            margin: 30px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .bpm-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bpm-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .bpm-digits {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bpm-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .bpm-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .bpm-btn:active {
+            transform: scale(0.95);
+        }
+
+        .vibration-controls {
+            margin: 25px 0;
+        }
+
+        .vibration-group {
+            margin: 15px 0;
+        }
+
+        .vibration-label {
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            opacity: 0.9;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            margin-top: 40px;
+        }
+
+        .play-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            margin: 0 auto;
+            display: block;
+        }
+
+        .play-button.stopped {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .play-button.playing {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .preset-buttons {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .preset-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .vibration-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            margin: 10px auto;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+
+        .vibration-indicator.active {
+            opacity: 1;
+            animation: flash 0.1s ease;
+        }
+
+        @keyframes flash {
+            from { transform: scale(1); background: #4CAF50; }
+            to { transform: scale(1.2); background: #8BC34A; }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .bpm-display {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Métronome</h1>
+        
+        <div class="bpm-display" id="bpmDisplay">120</div>
+        
+        <div class="bpm-controls">
+            <div class="bpm-group">
+                <div class="bpm-label">Dizaines</div>
+                <div class="bpm-digits">
+                    <button class="bpm-btn" onclick="changeBpm(-10)">-</button>
+                    <span style="width: 30px; text-align: center; font-weight: bold;" id="tensDisplay">12</span>
+                    <button class="bpm-btn" onclick="changeBpm(10)">+</button>
+                </div>
+            </div>
+            
+            <div class="bpm-group">
+                <div class="bpm-label">Unités</div>
+                <div class="bpm-digits">
+                    <button class="bpm-btn" onclick="changeBpm(-1)">-</button>
+                    <span style="width: 30px; text-align: center; font-weight: bold;" id="unitsDisplay">0</span>
+                    <button class="bpm-btn" onclick="changeBpm(1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="vibration-controls">
+            <div class="vibration-group">
+                <div class="vibration-label">
+                    <span>Force de vibration</span>
+                    <span id="strengthValue">100%</span>
+                </div>
+                <input type="range" min="10" max="100" value="100" class="slider" id="strengthSlider">
+            </div>
+            
+            <div class="vibration-group">
+                <div class="vibration-label">
+                    <span>Durée de vibration</span>
+                    <span id="durationValue">100ms</span>
+                </div>
+                <input type="range" min="50" max="300" value="100" class="slider" id="durationSlider">
+            </div>
+        </div>
+
+        <div class="preset-buttons">
+            <button class="preset-btn" onclick="setBpm(60)">Lent (60)</button>
+            <button class="preset-btn" onclick="setBpm(120)">Modéré (120)</button>
+            <button class="preset-btn" onclick="setBpm(140)">Rapide (140)</button>
+        </div>
+
+        <div class="controls">
+            <button class="play-button stopped" id="playButton" onclick="toggleMetronome()">
+                DÉMARRER
+            </button>
+        </div>
+
+        <div class="vibration-indicator" id="vibrationIndicator"></div>
+        
+        <div class="status" id="status">Prêt à jouer</div>
+    </div>
+
+    <script>
+        let isPlaying = false;
+        let currentBpm = 120;
+        let vibrationStrength = 100;
+        let vibrationDuration = 100;
+        let intervalId = null;
+
+        const bpmDisplay = document.getElementById('bpmDisplay');
+        const tensDisplay = document.getElementById('tensDisplay');
+        const unitsDisplay = document.getElementById('unitsDisplay');
+        const playButton = document.getElementById('playButton');
+        const status = document.getElementById('status');
+        const vibrationIndicator = document.getElementById('vibrationIndicator');
+        const strengthSlider = document.getElementById('strengthSlider');
+        const durationSlider = document.getElementById('durationSlider');
+        const strengthValue = document.getElementById('strengthValue');
+        const durationValue = document.getElementById('durationValue');
+
+        // Initialiser l'affichage
+        updateBpmDisplay();
+
+        // Gérer les sliders de vibration
+        strengthSlider.addEventListener('input', function() {
+            vibrationStrength = parseInt(this.value);
+            strengthValue.textContent = vibrationStrength + '%';
+        });
+
+        durationSlider.addEventListener('input', function() {
+            vibrationDuration = parseInt(this.value);
+            durationValue.textContent = vibrationDuration + 'ms';
+        });
+
+        function updateBpmDisplay() {
+            bpmDisplay.textContent = currentBpm;
+            const tens = Math.floor(currentBpm / 10);
+            const units = currentBpm % 10;
+            tensDisplay.textContent = tens;
+            unitsDisplay.textContent = units;
+        }
+
+        function changeBpm(delta) {
+            const newBpm = currentBpm + delta;
+            
+            // Limiter entre 40 et 200 BPM
+            if (newBpm >= 40 && newBpm <= 200) {
+                currentBpm = newBpm;
+                updateBpmDisplay();
+                
+                // Redémarrer le métronome si il est en cours
+                if (isPlaying) {
+                    stopMetronome();
+                    startMetronome();
+                }
+            }
+        }
+
+        function setBpm(bpm) {
+            if (bpm >= 40 && bpm <= 200) {
+                currentBpm = bpm;
+                updateBpmDisplay();
+                
+                // Redémarrer le métronome si il est en cours
+                if (isPlaying) {
+                    stopMetronome();
+                    startMetronome();
+                }
+            }
+        }
+
+        function toggleMetronome() {
+            if (isPlaying) {
+                stopMetronome();
+            } else {
+                startMetronome();
+            }
+        }
+
+        function startMetronome() {
+            isPlaying = true;
+            playButton.textContent = 'ARRÊTER';
+            playButton.className = 'play-button playing';
+            status.textContent = `En cours - ${currentBpm} BPM`;
+
+            // Calculer l'intervalle en millisecondes
+            const interval = (60 / currentBpm) * 1000;
+
+            // Première vibration immédiate
+            vibrate();
+
+            // Programmer les vibrations suivantes
+            intervalId = setInterval(() => {
+                vibrate();
+            }, interval);
+        }
+
+        function stopMetronome() {
+            isPlaying = false;
+            playButton.textContent = 'DÉMARRER';
+            playButton.className = 'play-button stopped';
+            status.textContent = 'Prêt à jouer';
+
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+        }
+
+        function vibrate() {
+            // Affichage visuel
+            vibrationIndicator.classList.add('active');
+            setTimeout(() => {
+                vibrationIndicator.classList.remove('active');
+            }, vibrationDuration);
+
+            // Vibration du téléphone avec les paramètres personnalisés
+            if ('vibrate' in navigator) {
+                // Calculer l'intensité (la durée simule l'intensité car l'API Web ne supporte pas la force directement)
+                const effectiveDuration = Math.round((vibrationDuration * vibrationStrength) / 100);
+                navigator.vibrate(effectiveDuration);
+            } else {
+                console.log('Vibration not supported');
+            }
+        }
+
+        // Arrêter le métronome quand on quitte la page
+        window.addEventListener('beforeunload', function() {
+            if (isPlaying) {
+                stopMetronome();
+            }
+        });
+
+        // Gérer la mise en veille
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && isPlaying) {
+                // La page est cachée, on peut choisir d'arrêter ou continuer
+                // Pour l'instant on continue à fonctionner en arrière-plan
+            }
+        });
+    </script>
+</body>
+</html>
