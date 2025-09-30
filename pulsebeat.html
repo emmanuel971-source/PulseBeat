@@ -9,6 +9,10 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         body {
@@ -223,61 +227,92 @@
         }
 
         .lock-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
+            margin: 25px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
         }
 
         .lock-label {
-            font-size: 0.9em;
-            opacity: 0.8;
+            font-size: 1em;
+            margin-bottom: 15px;
+            display: block;
+            text-align: center;
+            font-weight: bold;
         }
 
-        .lock-switch {
+        .lock-track {
             position: relative;
-            width: 60px;
-            height: 30px;
+            width: 100%;
+            height: 60px;
             background: rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
+            border-radius: 30px;
             cursor: pointer;
+            overflow: hidden;
             transition: all 0.3s ease;
         }
 
-        .lock-switch.locked {
-            background: rgba(255, 100, 100, 0.5);
+        .lock-track.locked {
+            background: rgba(255, 100, 100, 0.3);
         }
 
-        .lock-slider {
+        .lock-fill {
             position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 24px;
-            height: 24px;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: rgba(255, 100, 100, 0.5);
+            transition: width 0.1s ease;
+            border-radius: 30px;
+        }
+
+        .lock-thumb {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 50px;
+            height: 50px;
             background: white;
             border-radius: 50%;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            transition: left 0.3s ease;
+            cursor: grab;
+            z-index: 2;
         }
 
-        .lock-switch.locked .lock-slider {
-            transform: translateX(30px);
+        .lock-thumb:active {
+            cursor: grabbing;
         }
 
-        .lock-icon {
+        .lock-text {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 0.8em;
+            font-size: 0.9em;
+            font-weight: bold;
+            opacity: 0.7;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
         }
 
-        .lock-icon.unlocked {
-            left: 8px;
+        .lock-text.left {
+            left: 70px;
         }
 
-        .lock-icon.locked {
-            right: 8px;
+        .lock-text.right {
+            right: 20px;
+        }
+
+        .lock-track.locked .lock-text.left {
+            opacity: 0;
+        }
+
+        .lock-track:not(.locked) .lock-text.right {
+            opacity: 0;
         }
 
         .bpm-controls {
@@ -521,11 +556,14 @@
         <div class="bpm-display" id="bpmDisplay">120</div>
         
         <div class="lock-container">
-            <span class="lock-label" id="lockLabel">Verrouiller</span>
-            <div class="lock-switch" id="lockSwitch" onclick="toggleLock()">
-                <div class="lock-slider"></div>
-                <span class="lock-icon unlocked">🔓</span>
-                <span class="lock-icon locked">🔒</span>
+            <span class="lock-label" id="lockLabel">Glissez pour verrouiller</span>
+            <div class="lock-track" id="lockTrack">
+                <div class="lock-fill" id="lockFill"></div>
+                <div class="lock-thumb" id="lockThumb">
+                    <span id="lockIcon">🔓</span>
+                </div>
+                <span class="lock-text left" id="lockTextLeft">Glissez →</span>
+                <span class="lock-text right" id="lockTextRight">← Glissez</span>
             </div>
         </div>
 
@@ -599,7 +637,8 @@
                 buttonStop: 'ARRÊTER',
                 statusReady: 'Prêt à jouer',
                 statusPlaying: 'En cours',
-                lockLabel: 'Verrouiller',
+                lockLabelUnlocked: 'Glissez pour verrouiller',
+                lockLabelLocked: 'Glissez pour déverrouiller',
                 shareOther: 'Autres',
                 coffeeText: 'Buy me a coffee'
             },
@@ -613,7 +652,8 @@
                 buttonStop: 'STOP',
                 statusReady: 'Ready to play',
                 statusPlaying: 'Playing',
-                lockLabel: 'Lock',
+                lockLabelUnlocked: 'Slide to lock',
+                lockLabelLocked: 'Slide to unlock',
                 shareOther: 'Other',
                 coffeeText: 'Buy me a coffee'
             },
@@ -627,7 +667,8 @@
                 buttonStop: 'DETENER',
                 statusReady: 'Listo para tocar',
                 statusPlaying: 'En curso',
-                lockLabel: 'Bloquear',
+                lockLabelUnlocked: 'Desliza para bloquear',
+                lockLabelLocked: 'Desliza para desbloquear',
                 shareOther: 'Otros',
                 coffeeText: 'Cómprame un café'
             }
@@ -646,12 +687,132 @@
         const durationValue = document.getElementById('durationValue');
         const hamburger = document.getElementById('hamburger');
         const menu = document.getElementById('menu');
-        const lockSwitch = document.getElementById('lockSwitch');
+        const lockTrack = document.getElementById('lockTrack');
+        const lockThumb = document.getElementById('lockThumb');
+        const lockFill = document.getElementById('lockFill');
+        const lockIcon = document.getElementById('lockIcon');
         const bpmControls = document.getElementById('bpmControls');
+        const vibrationControls = document.querySelector('.vibration-controls');
+        const controls = document.querySelector('.controls');
+
+        // Lock slider variables
+        let isDragging = false;
+        let startX = 0;
+        let currentX = 0;
+        let trackWidth = 0;
+        const thumbWidth = 50;
 
         // Initialize
         updateBpmDisplay();
         loadSettings();
+        initLockSlider();
+
+        // Lock slider initialization
+        function initLockSlider() {
+            trackWidth = lockTrack.offsetWidth;
+            
+            // Touch events
+            lockThumb.addEventListener('touchstart', handleLockStart, { passive: false });
+            document.addEventListener('touchmove', handleLockMove, { passive: false });
+            document.addEventListener('touchend', handleLockEnd);
+            
+            // Mouse events
+            lockThumb.addEventListener('mousedown', handleLockStart);
+            document.addEventListener('mousemove', handleLockMove);
+            document.addEventListener('mouseup', handleLockEnd);
+        }
+
+        function handleLockStart(e) {
+            e.preventDefault();
+            isDragging = true;
+            startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            trackWidth = lockTrack.offsetWidth;
+            lockThumb.style.transition = 'none';
+            lockFill.style.transition = 'none';
+        }
+
+        function handleLockMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            const currentPos = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            const rect = lockTrack.getBoundingClientRect();
+            let x = currentPos - rect.left - thumbWidth / 2;
+            
+            // Limit movement
+            x = Math.max(5, Math.min(x, trackWidth - thumbWidth - 5));
+            
+            currentX = x;
+            lockThumb.style.left = x + 'px';
+            lockFill.style.width = (x + thumbWidth / 2) + 'px';
+        }
+
+        function handleLockEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            lockThumb.style.transition = 'left 0.3s ease';
+            lockFill.style.transition = 'width 0.3s ease';
+            
+            const threshold = trackWidth * 0.7;
+            
+            if (currentX > threshold && !isLocked) {
+                // Lock
+                setLocked(true);
+            } else if (currentX < trackWidth * 0.3 && isLocked) {
+                // Unlock
+                setLocked(false);
+            } else {
+                // Reset to current state
+                resetLockPosition();
+            }
+        }
+
+        function setLocked(locked) {
+            isLocked = locked;
+            
+            if (locked) {
+                lockTrack.classList.add('locked');
+                lockIcon.textContent = '🔒';
+                document.getElementById('lockLabel').textContent = translations[currentLang].lockLabelLocked;
+                lockThumb.style.left = (trackWidth - thumbWidth - 5) + 'px';
+                lockFill.style.width = '100%';
+                
+                // Disable all controls
+                bpmControls.classList.add('disabled');
+                vibrationControls.classList.add('disabled');
+                controls.classList.add('disabled');
+            } else {
+                lockTrack.classList.remove('locked');
+                lockIcon.textContent = '🔓';
+                document.getElementById('lockLabel').textContent = translations[currentLang].lockLabelUnlocked;
+                lockThumb.style.left = '5px';
+                lockFill.style.width = '0%';
+                
+                // Enable all controls
+                bpmControls.classList.remove('disabled');
+                vibrationControls.classList.remove('disabled');
+                controls.classList.remove('disabled');
+            }
+            
+            saveSettings();
+        }
+
+        function resetLockPosition() {
+            if (isLocked) {
+                lockThumb.style.left = (trackWidth - thumbWidth - 5) + 'px';
+                lockFill.style.width = '100%';
+            } else {
+                lockThumb.style.left = '5px';
+                lockFill.style.width = '0%';
+            }
+        }
+
+        // Recalculate on window resize
+        window.addEventListener('resize', function() {
+            trackWidth = lockTrack.offsetWidth;
+            resetLockPosition();
+        });
 
         // Menu toggle
         hamburger.addEventListener('click', function() {
@@ -669,12 +830,14 @@
 
         // Vibration sliders
         strengthSlider.addEventListener('input', function() {
+            if (isLocked) return;
             vibrationStrength = parseInt(this.value);
             strengthValue.textContent = vibrationStrength + '%';
             saveSettings();
         });
 
         durationSlider.addEventListener('input', function() {
+            if (isLocked) return;
             vibrationDuration = parseInt(this.value);
             durationValue.textContent = vibrationDuration + 'ms';
             saveSettings();
@@ -706,13 +869,11 @@
         }
 
         function toggleLock() {
-            isLocked = !isLocked;
-            lockSwitch.classList.toggle('locked');
-            bpmControls.classList.toggle('disabled');
-            saveSettings();
+            setLocked(!isLocked);
         }
 
         function toggleMetronome() {
+            if (isLocked) return;
             if (isPlaying) {
                 stopMetronome();
             } else {
@@ -773,7 +934,7 @@
             document.getElementById('durationLabel').textContent = t.durationLabel;
             document.getElementById('buttonText').textContent = isPlaying ? t.buttonStop : t.buttonStart;
             document.getElementById('status').textContent = isPlaying ? `${t.statusPlaying} - ${currentBpm} BPM` : t.statusReady;
-            document.getElementById('lockLabel').textContent = t.lockLabel;
+            document.getElementById('lockLabel').textContent = isLocked ? t.lockLabelLocked : t.lockLabelUnlocked;
             document.getElementById('shareOther').textContent = t.shareOther;
             document.getElementById('coffeeText').textContent = t.coffeeText;
             
@@ -840,12 +1001,20 @@
                     durationValue.textContent = vibrationDuration + 'ms';
                     
                     if (isLocked) {
-                        lockSwitch.classList.add('locked');
+                        lockTrack.classList.add('locked');
                         bpmControls.classList.add('disabled');
+                        vibrationControls.classList.add('disabled');
+                        controls.classList.add('disabled');
                     }
                     
                     changeLanguage(currentLang);
                     changeTheme(currentTheme);
+                    
+                    // Reset lock slider position after loading
+                    setTimeout(() => {
+                        trackWidth = lockTrack.offsetWidth;
+                        resetLockPosition();
+                    }, 100);
                 }
             } catch (e) {
                 console.log('No saved settings');
