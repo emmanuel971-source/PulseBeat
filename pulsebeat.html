@@ -1,161 +1,1125 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PulseBeat</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: linear-gradient(135deg, #1e1e2f, #3a3a5a);
-      color: white;
-    }
-
-    .container {
-      text-align: center;
-    }
-
-    /* BPM Display */
-    .bpm-display {
-      font-size: 48px;
-      margin: 20px 0;
-    }
-
-    /* Buttons */
-    button {
-      background: #444;
-      border: none;
-      color: white;
-      padding: 10px 20px;
-      margin: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background: #666;
-    }
-
-    /* Langues */
-    .language-selector {
-      margin-top: 20px;
-    }
-
-    /* Animation de l'onde du logo */
-    .pulse-wave {
-      stroke-dasharray: 120;
-      stroke-dashoffset: 0;
-      animation: pulseAnim 2s linear infinite;
-    }
-
-    @keyframes pulseAnim {
-      from { stroke-dashoffset: 120; }
-      to   { stroke-dashoffset: 0; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <!-- Logo PulseBeat -->
-    <div id="appLogo" style="margin-bottom:30px;">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
-        <style>
-          .pulse-text { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            font-size: 28px; 
-            font-weight: bold; 
-            fill: white;
-          }
-          .pulse-wave {
-            stroke: white;
-            stroke-width: 2;
-            fill: none;
-          }
-        </style>
-        <text x="10" y="40" class="pulse-text">PulseBeat</text>
-        <polyline class="pulse-wave" points="130,30 140,10 150,50 160,20 170,40 180,25 190,35" />
-      </svg>
-    </div>
-
-    <div class="bpm-display" id="bpmDisplay">120</div>
-    <div>
-      <button onclick="changeBPM(-5)">-5</button>
-      <button onclick="changeBPM(-1)">-1</button>
-      <button onclick="changeBPM(1)">+1</button>
-      <button onclick="changeBPM(5)">+5</button>
-    </div>
-    <div style="margin-top:20px;">
-      <button onclick="toggleMetronome()" id="toggleBtn">▶️ Démarrer</button>
-    </div>
-    <div class="language-selector">
-      <button onclick="changeLanguage('fr')">FR</button>
-      <button onclick="changeLanguage('en')">EN</button>
-      <button onclick="changeLanguage('jp')">日本語</button>
-    </div>
-  </div>
-
-  <script>
-    let bpm = 120;
-    let intervalId = null;
-
-    const texts = {
-      fr: { start: "▶️ Démarrer", stop: "⏹️ Arrêter" },
-      en: { start: "▶️ Start", stop: "⏹️ Stop" },
-      jp: { start: "▶️ スタート", stop: "⏹️ ストップ" }
-    };
-
-    let currentLang = "fr";
-
-    function updateBPM() {
-      document.getElementById("bpmDisplay").textContent = bpm;
-    }
-
-    function changeBPM(change) {
-      bpm = Math.max(20, Math.min(300, bpm + change));
-      updateBPM();
-      if (intervalId) {
-        clearInterval(intervalId);
-        startMetronome();
-      }
-    }
-
-    function startMetronome() {
-      const interval = 60000 / bpm;
-      intervalId = setInterval(() => {
-        if (navigator.vibrate) {
-          navigator.vibrate(50);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulseBeat</title> <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
-      }, interval);
-    }
 
-    function stopMetronome() {
-      clearInterval(intervalId);
-      intervalId = null;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: background 0.5s ease;
+        }
 
-    function toggleMetronome() {
-      const btn = document.getElementById("toggleBtn");
-      if (intervalId) {
-        stopMetronome();
-        btn.textContent = texts[currentLang].start;
-      } else {
-        startMetronome();
-        btn.textContent = texts[currentLang].stop;
-      }
-    }
+        body.theme-purple {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
 
-    function changeLanguage(lang) {
-      currentLang = lang;
-      const btn = document.getElementById("toggleBtn");
-      btn.textContent = intervalId ? texts[lang].stop : texts[lang].start;
-    }
-  </script>
+        body.theme-blue {
+            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        }
+
+        body.theme-green {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        body.theme-orange {
+            background: linear-gradient(135deg, #f77062 0%, #fe5196 100%);
+        }
+
+        body.theme-dark {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+        }
+
+        .hamburger {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .hamburger span {
+            width: 20px;
+            height: 2px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger.open span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .hamburger.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.open span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        .menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 300px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 80px 30px 30px;
+            z-index: 999;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .menu.open {
+            right: 0;
+        }
+
+        .menu-section {
+            margin-bottom: 30px;
+        }
+
+        .menu-title {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+        }
+
+        .menu-option {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .menu-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .menu-option.active {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .color-option {
+            width: 100%;
+            height: 50px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .color-option.active {
+            border-color: white;
+            transform: scale(1.05);
+        }
+
+        .color-purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .color-blue { background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%); }
+        .color-green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .color-orange { background: linear-gradient(135deg, #f77062 0%, #fe5196 100%); }
+        .color-dark { background: linear-gradient(135deg, #232526 0%, #414345 100%); }
+
+        .share-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .share-btn, .coffee-btn {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: none;
+            width: 100%;
+            font-size: 1em;
+        }
+
+        .share-btn:hover, .coffee-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .coffee-btn {
+            background: linear-gradient(135deg, #FFDD00 0%, #FBB034 100%);
+            color: #000;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 350px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Nouveau style pour le logo dans le titre H1 */
+        #appTitle img {
+            height: 60px; /* Taille du logo ajustée */
+            width: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .bpm-display {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .lock-container {
+            margin: 25px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+
+        .lock-label {
+            font-size: 1em;
+            margin-bottom: 15px;
+            display: block;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .lock-track {
+            position: relative;
+            width: 100%;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .lock-track.locked {
+            background: rgba(255, 100, 100, 0.3);
+        }
+
+        .lock-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: rgba(255, 100, 100, 0.5);
+            transition: width 0.1s ease;
+            border-radius: 30px;
+        }
+
+        .lock-thumb {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            transition: left 0.3s ease;
+            cursor: grab;
+            z-index: 2;
+        }
+
+        .lock-thumb:active {
+            cursor: grabbing;
+        }
+
+        .lock-text {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9em;
+            font-weight: bold;
+            opacity: 0.7;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .lock-text.left {
+            left: 70px;
+        }
+
+        .lock-text.right {
+            right: 20px;
+        }
+
+        .lock-track.locked .lock-text.left {
+            opacity: 0;
+        }
+
+        .lock-track:not(.locked) .lock-text.right {
+            opacity: 0;
+        }
+
+        .bpm-controls {
+            margin: 30px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .bpm-controls.disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .bpm-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bpm-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .bpm-digits {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bpm-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .bpm-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .bpm-btn:active {
+            transform: scale(0.95);
+        }
+
+        .vibration-controls {
+            margin: 25px 0;
+        }
+
+        .vibration-group {
+            margin: 15px 0;
+        }
+
+        .vibration-label {
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            opacity: 0.9;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            margin-top: 40px;
+        }
+
+        .play-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            margin: 0 auto;
+            display: block;
+        }
+
+        .play-button.stopped {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .play-button.playing {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            from {
+                transform: scale(1);
+            }
+            to {
+                transform: scale(1.05);
+            }
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .vibration-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            margin: 10px auto;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+
+        .vibration-indicator.active {
+            opacity: 1;
+            animation: flash 0.1s ease;
+        }
+
+        @keyframes flash {
+            from {
+                transform: scale(1);
+                background: #4CAF50;
+            }
+            to {
+                transform: scale(1.2);
+                background: #8BC34A;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            .bpm-display {
+                font-size: 2.5em;
+            }
+            .menu {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="theme-purple">
+    <button class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    <div class="menu" id="menu">
+        <div class="menu-section">
+            <div class="menu-title" id="langTitle">Langue / Language</div>
+            <div class="menu-option" onclick="changeLanguage('fr')" id="lang-fr">🇫🇷 Français</div>
+            <div class="menu-option" onclick="changeLanguage('en')" id="lang-en">🇬🇧 English</div>
+            <div class="menu-option" onclick="changeLanguage('es')" id="lang-es">🇪🇸 Español</div>
+        </div>
+        <div class="menu-section">
+            <div class="menu-title" id="colorTitle">Couleur / Color</div>
+            <div class="color-grid">
+                <div class="color-option color-purple active" onclick="changeTheme('purple')"></div>
+                <div class="color-option color-blue" onclick="changeTheme('blue')"></div>
+                <div class="color-option color-green" onclick="changeTheme('green')"></div>
+                <div class="color-option color-orange" onclick="changeTheme('orange')"></div>
+                <div class="color-option color-dark" onclick="changeTheme('dark')"></div>
+            </div>
+        </div>
+        <div class="menu-section">
+            <div class="menu-title" id="shareTitle">Partager / Share</div>
+            <div class="share-buttons">
+                <a href="#" class="share-btn" onclick="shareVia('whatsapp')">
+                    <span>📱</span>
+                    <span>WhatsApp</span>
+                </a>
+                <a href="#" class="share-btn" onclick="shareVia('messenger')">
+                    <span>💬</span>
+                    <span>Messenger</span>
+                </a>
+                <button class="share-btn" onclick="shareVia('native')">
+                    <span>📤</span>
+                    <span id="shareOther">Autres</span>
+                </button>
+            </div>
+        </div>
+        <div class="menu-section">
+            <a href="https://www.buymeacoffee.com/votrepseudo" target="_blank" class="coffee-btn">
+                <span>☕</span>
+                <span id="coffeeText">Buy me a coffee</span>
+            </a>
+        </div>
+    </div>
+    <div class="container">
+        <h1 id="appTitle">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAAB/HSuDAADLfGNhQlgAAMt8anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAANw9qdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjk2OWNlNWQxLTZjMTctNGZiZS1hNGQ2LWJhNzdkMjdhZWVlNQAAAAHVanVtYgAAAClqdW1kYzJhcwARABCAAACqADibcQNjMnBhLmFzc2VydGlvbnMAAAAA+Wp1bWIAAAApanVtZGNib3IAEQAQgAAAqgA4m3EDYzJwYS5hY3Rpb25zLnYyAAAAAMhjYm9yomdhY3Rpb25zgqNmYWN0aW9ubMycGEuY3JlYXRlZG1zb2Z0d2FyZUFnZW50v2RuYW1lZkdQVC00b/9xZGlnaXRhbFNvdXJjZVR5cGV4Rmh0dHA6Ly9jdi5pcHRjLm9yZy9uZXdzY29kZXMvZGlnaXRhbHNvdXJjZXR5cGUvdHJhaW5lZEFsZ29yaXRobWljTWVkaWGhZmFjdGlvbm5jMnBhLmNvbnZlcnRlZHJhbGxBY3Rpb25zSW5jbHVkZWT1AAAAq2p1bWIAAAAoanVtZGNib3IAEQAQgAAAqgA4m3EDYzJwYS5oYXNoLmRhdGEAAAAAe2Nib3KlamV4Y2x1c2lvbnOBomVzdGFydBghZmxlbmd0aBk3QWRuYW1lbmp1bWJmIG1hbmlmZXN0Y2FsZ2ZzaGEyNTZkaGFzaFggZoP8SDWQyF3TO7EE0vd5atlmVlX48kst8smvV5suTZdjcGFkSAAAAAAAAAAAAAAB7mp1bWIAAAAnanVtZGMyY2wAEQAQgAAAqgA4m3EDYzJwYS5jbGFpbS52MgAAAAG/Y2JvcqZqaW5zdGFuY2VJRHgseG1wOmlpZDpjNDg1MmRjMy0wN2RjLTQxYjgtYTMxMy0xNWU1NTliODFkY2Z0Y2xhaW1fZ2VuZXJhdG9yX2luZm+/ZG5hbWVnQ2hhdEdQVHdvcmcuY29udGVudGF1dGguYzJwYV9yc2YwLjY0LjD/aXNpZ25hdHVyZXhNc2VsZiNqdW1iZj0vYzJwYS91cm46YzJwYTo5NjljZTVkMS02YzE3LTRmYmUtYTRkNi1iYTc3ZDI3YWVlZTUvYzJwYS5zaWduYXR1cmVyY3JlYXRlZF9hc3NlcnRpb25zgqJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggunMbFQiP5kP9dxXSSsW1/BmCPZKIwgpWB2BE+a236qSiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggLyFXD5yoT1/beISzQVhIAa2U+IpxjONpJFIaAPW7OZpoZGM6dGl0bGVpaW1hZ2UucG5nY2FsZ2ZzaGEyNTYAADL9anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAADLNY2JvctKEWQfBogEmGCGCWQM3MIIDMzCCAhugAwIBAgIUbq4oo+7FuOQqNvod5kEVrmIWGzswDQYJKoZIhvcNAQEMBQAwSjEaMBgGA1UEAwwRV2ViQ2xhaW1TaWduaW5nQ0ExDTALBgNVBAsMBExlbnMxEDAOBgNVBAoMB1RydWVwaWMxCzAJBgNVBAYTAlVTMB4XDTI1MDExMzIwMzY0NloXDTI2MDExMzIwMzY0NVowVjELMAkGA1UEBhMCVVMxDzANBgNVBAoMBk9wZW5BSTEQMA4GA1UECwwHQ2hhdEdQVDEkMCIGA1UEAwwbVHJ1ZXBpYyBMZW5zIENMSSBpbiBDaGF0R1BUMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVh14xypQD33uBMgU9aukdnuL7dOjIz3VpkIz2UwpCUIxMAhLpTWV6JHjLvDamqOsAQruAtmJXwzVLbsuFpo36KOBzzCBzDAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFFofa2bTlOewQYN9nAx7XcVzS0uzME0GCCsGAQUFBwEBBEEwPzA9M
+            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAAB/HSuDAADLfGNhQlgAAMt8anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAANw9qdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjk2OWNlNWQxLTZjMTctNGZiZS1hNGQ2LWJhNzdkMjdhZWVlNQAAAAHVanVtYgAAAClqdW1kYzJhcwARABCAAACqADibcQNjMnBhLmFzc2VydGlvbnMAAAAA+Wp1bWIAAAApanVtZGNib3IAEQAQgAAAqgA4m3EDYzJwYS5hY3Rpb25zLnYyAAAAAMhjYm9yomdhY3Rpb25zgqNmYWN0aW9ubMycGEuY3JlYXRlZG1zb2Z0d2FyZUFnZW50v2RuYW1lZkdQVC00b/9xZGlnaXRhbFNvdXJjZVR5cGV4Rmh0dHA6Ly9jdi5pcHRjLm9yZy9uZXdzY29kZXMvZGlnaXRhbHNvdXJjZXR5cGUvdHJhaW5lZEFsZ29yaXRobWljTWVkaWGhZmFjdGlvbm5jMnBhLmNvbnZlcnRlZHJhbGxBY3Rpb25zSW5jbHVkZWT1AAAAq2p1bWIAAAAoanVtZGNib3IAEQAQgAAAqgA4m3EDYzJwYS5oYXNoLmRhdGEAAAAAe2Nib3KlamV4Y2x1c2lvbnOBomVzdGFydBghZmxlbmd0aBk3QWRuYW1lbmp1bWJmIG1hbmlmZXN0Y2FsZ2ZzaGEyNTZkaGFzaFggZoP8SDWQyF3TO7EE0vd5atlmVlX48kst8smvV5suTZdjcGFkSAAAAAAAAAAAAAAB7mp1bWIAAAAnanVtZGMyY2wAEQAQgAAAqgA4m3EDYzJwYS5jbGFpbS52MgAAAAG/Y2JvcqZqaW5zdGFuY2VJRHgseG1wOmlpZDpjNDg1MmRjMy0wN2RjLTQxYjgtYTMxMy0xNWU1NTliODFkY2Z0Y2xhaW1fZ2VuZXJhdG9yX2luZm+/ZG5hbWVnQ2hhdEdQVHdvcmcuY29udGVudGF1dGguYzJwYV9yc2YwLjY0LjD/aXNpZ25hdHVyZXhNc2VsZiNqdW1iZj0vYzJwYS91cm46YzJwYTo5NjljZTVkMS02YzE3LTRmYmUtYTRkNi1iYTc3ZDI3YWVlZTUvYzJwYS5zaWduYXR1cmVyY3JlYXRlZF9hc3NlcnRpb25zgqJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggunMbFQiP5kP9dxXSSsW1/BmCPZKIwgpWB2BE+a236qSiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggLyFXD5yoT1/beISzQVhIAa2U+IpxjONpJFIaAPW7OZpoZGM6dGl0bGVpaW1hZ2UucG5nY2FsZ2ZzaGEyNTYAADL9anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAADLNY2JvctKEWQfBogEmGCGCWQM3MIIDMzCCAhugAwIBAgIUbq4oo+7FuOQqNvod5kEVrmIWGzswDQYJKoZIhvcNAQEMBQAwSjEaMBgGA1UEAwwRV2ViQ2xhaW1TaWduaW5nQ0ExDTALBgNVBAsMBExlbnMxEDAOBgNVBAoMB1RydWVwaWMxCzAJBgNVBAYTAlVTMB4XDTI1MDExMzIwMzY0NloXDTI2MDExMzIwMzY0NVowVjELMAkGA1UEBhMCVVMxDzANBgNVBAoMBk9wZW5BSTEQMA4GA1UECwwHQ2hhdEdQVDEkMCIGA1UEAwwbVHJ1ZXBpYyBMZW5zIENMSSBpbiBDaGF0R1BUMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVh14xypQD33uBMgU9aukdnuL7dOjIz3VpkIz2UwpCUIxMAhLpTWV6JHjLvDamqOsAQruAtmJXwzVLbsuFpo36KOBzzCBzDAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFFofa2bTlOewQYN9nAx7XcVzS0uzME0GCCsGAQUFBwEBBEEwPzA9M
+            alt="Logo Métronome"
+            />
+        </h1>
+        <div class="bpm-display" id="bpmDisplay">120</div>
+        <div class="lock-container">
+            <span class="lock-label" id="lockLabel">Glissez pour verrouiller</span>
+            <div class="lock-track" id="lockTrack">
+                <div class="lock-fill" id="lockFill"></div>
+                <div class="lock-thumb" id="lockThumb">
+                    <span id="lockIcon">🔓</span>
+                </div>
+                <span class="lock-text left" id="lockTextUnlock">DÉVERROUILLÉ</span>
+                <span class="lock-text right" id="lockTextLock">VERROUILLÉ</span>
+            </div>
+        </div>
+        <div class="bpm-controls" id="bpmControls">
+            <div class="bpm-group">
+                <span class="bpm-label" id="bpmLabel">BPM</span>
+                <div class="bpm-digits">
+                    <button class="bpm-btn" onclick="adjustBPM(-10)">-10</button>
+                    <button class="bpm-btn" onclick="adjustBPM(-1)">-1</button>
+                    <button class="bpm-btn" onclick="adjustBPM(1)">+1</button>
+                    <button class="bpm-btn" onclick="adjustBPM(10)">+10</button>
+                </div>
+            </div>
+            <div class="bpm-group">
+                <span class="bpm-label" id="tapLabel">TAP Tempo</span>
+                <button class="bpm-btn" id="tapButton" onclick="tapTempo()">TAP</button>
+            </div>
+        </div>
+
+        <div class="vibration-controls" id="vibrationControls">
+            <div class="vibration-group">
+                <label for="strength" class="vibration-label">
+                    <span id="strengthTitle">Force de vibration</span>
+                    <span id="strengthValue">100%</span>
+                </label>
+                <input type="range" min="1" max="100" value="100" class="slider" id="strengthSlider">
+            </div>
+
+            <div class="vibration-group">
+                <label for="duration" class="vibration-label">
+                    <span id="durationTitle">Durée de l'impulsion</span>
+                    <span id="durationValue">100ms</span>
+                </label>
+                <input type="range" min="10" max="500" value="100" class="slider" id="durationSlider">
+            </div>
+        </div>
+
+        <div class="controls" id="controls">
+            <button class="play-button stopped" id="playButton" onclick="toggleMetronome()">
+                <span id="playText">DÉMARRER</span>
+            </button>
+            <div class="vibration-indicator" id="vibrationIndicator"></div>
+            <div class="status" id="statusMessage">Prêt</div>
+        </div>
+    </div>
+
+    <script>
+        // ... (Le reste du code JavaScript n'a pas été modifié)
+        // Variables
+        let bpm = 120;
+        let isPlaying = false;
+        let intervalId = null;
+        let beatCount = 0;
+        let tapTimes = [];
+        let isLocked = false;
+        let vibrationStrength = 100; // 1-100
+        let vibrationDuration = 100; // ms
+        let currentLang = 'fr';
+        let currentTheme = 'purple';
+
+        // DOM Elements
+        const bpmDisplay = document.getElementById('bpmDisplay');
+        const playButton = document.getElementById('playButton');
+        const playText = document.getElementById('playText');
+        const statusMessage = document.getElementById('statusMessage');
+        const vibrationIndicator = document.getElementById('vibrationIndicator');
+        const hamburger = document.getElementById('hamburger');
+        const menu = document.getElementById('menu');
+        const lockTrack = document.getElementById('lockTrack');
+        const lockThumb = document.getElementById('lockThumb');
+        const lockFill = document.getElementById('lockFill');
+        const lockIcon = document.getElementById('lockIcon');
+        const strengthSlider = document.getElementById('strengthSlider');
+        const durationSlider = document.getElementById('durationSlider');
+        const strengthValue = document.getElementById('strengthValue');
+        const durationValue = document.getElementById('durationValue');
+        const bpmControls = document.getElementById('bpmControls');
+        const vibrationControls = document.getElementById('vibrationControls');
+        const controls = document.getElementById('controls');
+        const lockTextUnlock = document.getElementById('lockTextUnlock');
+        const lockTextLock = document.getElementById('lockTextLock');
+
+        // Lock/Unlock variables
+        let trackWidth = lockTrack.offsetWidth;
+        let thumbSize = lockThumb.offsetWidth;
+        let isDragging = false;
+        let startX = 0;
+
+        // Language data
+        const translations = {
+            fr: {
+                title: "🎵 Métronome",
+                playTextStart: "DÉMARRER",
+                playTextStop: "ARRÊTER",
+                statusReady: "Prêt",
+                statusPlaying: "Joue...",
+                lockLabel: "Glissez pour verrouiller",
+                lockTextUnlock: "DÉVERROUILLÉ",
+                lockTextLock: "VERROUILLÉ",
+                bpmLabel: "BPM",
+                tapLabel: "TAP Tempo",
+                strengthTitle: "Force de vibration",
+                durationTitle: "Durée de l'impulsion",
+                langTitle: "Langue / Language",
+                colorTitle: "Couleur / Color",
+                shareTitle: "Partager / Share",
+                shareOther: "Autres",
+                coffeeText: "Buy me a coffee"
+            },
+            en: {
+                title: "🎵 Metronome",
+                playTextStart: "START",
+                playTextStop: "STOP",
+                statusReady: "Ready",
+                statusPlaying: "Playing...",
+                lockLabel: "Swipe to lock",
+                lockTextUnlock: "UNLOCKED",
+                lockTextLock: "LOCKED",
+                bpmLabel: "BPM",
+                tapLabel: "TAP Tempo",
+                strengthTitle: "Vibration Strength",
+                durationTitle: "Pulse Duration",
+                langTitle: "Langue / Language",
+                colorTitle: "Couleur / Color",
+                shareTitle: "Partager / Share",
+                shareOther: "Other",
+                coffeeText: "Buy me a coffee"
+            },
+            es: {
+                title: "🎵 Metrónomo",
+                playTextStart: "INICIAR",
+                playTextStop: "DETENER",
+                statusReady: "Listo",
+                statusPlaying: "Reproduciendo...",
+                lockLabel: "Desliza para bloquear",
+                lockTextUnlock: "DESBLOQUEADO",
+                lockTextLock: "BLOQUEADO",
+                bpmLabel: "PPM",
+                tapLabel: "TAP Tempo",
+                strengthTitle: "Fuerza de vibración",
+                durationTitle: "Duración del pulso",
+                langTitle: "Langue / Language",
+                colorTitle: "Couleur / Color",
+                shareTitle: "Partager / Share",
+                shareOther: "Otras",
+                coffeeText: "Buy me a coffee"
+            }
+        };
+
+        // --- Core Metronome Logic ---
+
+        function vibrate() {
+            if (navigator.vibrate) {
+                // Vibration intensity is simulated by pattern length and timing
+                // We use the strengthSlider value to adjust the duration/pattern
+                const pattern = vibrationDuration * (vibrationStrength / 100);
+                navigator.vibrate(pattern);
+                
+                // Visual feedback
+                vibrationIndicator.classList.add('active');
+                setTimeout(() => {
+                    vibrationIndicator.classList.remove('active');
+                }, pattern);
+            }
+        }
+
+        function startMetronome() {
+            if (isPlaying) return;
+
+            // Check if vibration is available
+            if (!navigator.vibrate) {
+                alert("Votre appareil ne prend pas en charge l'API Vibration. Le métronome fonctionnera sans retour haptique.");
+                // continue without vibration
+            }
+
+            isPlaying = true;
+            beatCount = 0;
+            const msPerBeat = (60 / bpm) * 1000;
+
+            playButton.classList.remove('stopped');
+            playButton.classList.add('playing');
+            playText.textContent = translations[currentLang].playTextStop;
+            statusMessage.textContent = translations[currentLang].statusPlaying;
+
+            function nextBeat() {
+                vibrate();
+                beatCount++;
+            }
+
+            // Start the first beat immediately
+            nextBeat();
+
+            // Set the interval for subsequent beats
+            intervalId = setInterval(nextBeat, msPerBeat);
+            saveSettings();
+        }
+
+        function stopMetronome() {
+            if (!isPlaying) return;
+
+            isPlaying = false;
+            clearInterval(intervalId);
+            intervalId = null;
+            
+            playButton.classList.remove('playing');
+            playButton.classList.add('stopped');
+            playText.textContent = translations[currentLang].playTextStart;
+            statusMessage.textContent = translations[currentLang].statusReady;
+            saveSettings();
+        }
+
+        function toggleMetronome() {
+            if (isPlaying) {
+                stopMetronome();
+            } else {
+                startMetronome();
+            }
+        }
+
+        function updateBpmDisplay() {
+            bpmDisplay.textContent = bpm;
+            if (isPlaying) {
+                // Restart metronome with new BPM
+                stopMetronome();
+                startMetronome();
+            }
+            saveSettings();
+        }
+
+        function adjustBPM(delta) {
+            if (isLocked) return;
+            bpm = Math.max(20, Math.min(300, bpm + delta)); // Min 20, Max 300
+            updateBpmDisplay();
+        }
+
+        function tapTempo() {
+            if (isLocked) return;
+
+            const now = Date.now();
+            tapTimes.push(now);
+
+            // Keep only the last 5 taps
+            if (tapTimes.length > 5) {
+                tapTimes.shift();
+            }
+
+            if (tapTimes.length >= 2) {
+                let intervals = [];
+                for (let i = 1; i < tapTimes.length; i++) {
+                    intervals.push(tapTimes[i] - tapTimes[i - 1]);
+                }
+
+                // Calculate average interval
+                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+
+                // Convert ms interval to BPM
+                const calculatedBPM = Math.round(60000 / avgInterval);
+
+                if (calculatedBPM >= 20 && calculatedBPM <= 300) {
+                    bpm = calculatedBPM;
+                    updateBpmDisplay();
+                }
+            }
+
+            // Clear old taps if too much time has passed
+            setTimeout(() => {
+                if (tapTimes.length > 0 && now === tapTimes[tapTimes.length - 1] && Date.now() - now > 2000) {
+                    tapTimes = [];
+                }
+            }, 2000);
+        }
+
+
+        // --- Slider Event Handlers ---
+
+        strengthSlider.oninput = function() {
+            if (isLocked) return;
+            vibrationStrength = this.value;
+            strengthValue.textContent = vibrationStrength + '%';
+            saveSettings();
+        }
+
+        durationSlider.oninput = function() {
+            if (isLocked) return;
+            vibrationDuration = this.value;
+            durationValue.textContent = vibrationDuration + 'ms';
+            saveSettings();
+        }
+
+
+        // --- Lock/Unlock Logic (Swipe) ---
+
+        function updateLockState(locked) {
+            isLocked = locked;
+            lockIcon.textContent = isLocked ? '🔒' : '🔓';
+            lockTrack.classList.toggle('locked', isLocked);
+            bpmControls.classList.toggle('disabled', isLocked);
+            vibrationControls.classList.toggle('disabled', isLocked);
+            controls.classList.toggle('disabled', isLocked);
+
+            // Stop metronome when locking
+            if (isLocked && isPlaying) {
+                stopMetronome();
+            }
+            saveSettings();
+        }
+
+        function resetLockPosition() {
+            if (isLocked) {
+                lockThumb.style.left = `${trackWidth - thumbSize - 5}px`;
+                lockFill.style.width = `${trackWidth}px`;
+            } else {
+                lockThumb.style.left = '5px';
+                lockFill.style.width = '0px';
+            }
+        }
+
+        // Mouse/Touch Down
+        lockThumb.addEventListener('mousedown', startDrag);
+        lockThumb.addEventListener('touchstart', startDrag);
+
+        function startDrag(e) {
+            if (isPlaying) return; // Cannot lock/unlock while playing
+
+            isDragging = true;
+            // Get the starting X position of the touch or mouse
+            startX = (e.touches ? e.touches[0].clientX : e.clientX);
+            lockThumb.style.transition = 'none'; // Disable transition during drag
+            
+            // Get the current position of the thumb relative to the track
+            const currentThumbLeft = lockThumb.offsetLeft;
+            const currentTrackLeft = lockTrack.getBoundingClientRect().left;
+            
+            // This is the starting position of the drag
+            lockThumb.dataset.dragStartOffset = currentThumbLeft - (startX - currentTrackLeft);
+        }
+
+        // Mouse/Touch Move
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag);
+
+        function drag(e) {
+            if (!isDragging) return;
+
+            e.preventDefault(); // Prevent scrolling
+            trackWidth = lockTrack.offsetWidth;
+            thumbSize = lockThumb.offsetWidth;
+            const currentX = (e.touches ? e.touches[0].clientX : e.clientX);
+            const trackLeft = lockTrack.getBoundingClientRect().left;
+
+            // Calculate the new left position based on the drag movement
+            let newLeft = currentX - trackLeft - (thumbSize / 2);
+
+            // Clamp the position within the track boundaries
+            const minLeft = 5;
+            const maxLeft = trackWidth - thumbSize - 5;
+            newLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
+
+            // Apply the new position
+            lockThumb.style.left = `${newLeft}px`;
+
+            // Update the fill bar width
+            const fillWidth = newLeft + thumbSize / 2;
+            lockFill.style.width = `${fillWidth}px`;
+        }
+
+        // Mouse/Touch Up
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+
+        function endDrag(e) {
+            if (!isDragging) return;
+            isDragging = false;
+            lockThumb.style.transition = 'left 0.3s ease'; // Re-enable transition
+
+            trackWidth = lockTrack.offsetWidth;
+            thumbSize = lockThumb.offsetWidth;
+            const threshold = trackWidth / 2;
+            const thumbCenter = lockThumb.offsetLeft + (thumbSize / 2);
+
+            if (thumbCenter > threshold) {
+                // Lock
+                updateLockState(true);
+            } else {
+                // Unlock
+                updateLockState(false);
+            }
+
+            // Snap the thumb to the final position
+            resetLockPosition();
+        }
+
+        // Recalculate track width on resize
+        window.addEventListener('resize', () => {
+            trackWidth = lockTrack.offsetWidth;
+            resetLockPosition();
+        });
+
+
+        // --- Menu Logic ---
+
+        hamburger.addEventListener('click', toggleMenu);
+
+        function toggleMenu() {
+            hamburger.classList.toggle('open');
+            menu.classList.toggle('open');
+        }
+
+
+        // --- Theme & Language ---
+
+        function changeTheme(theme) {
+            document.body.className = '';
+            document.body.classList.add(`theme-${theme}`);
+            currentTheme = theme;
+
+            // Update active color option
+            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.color-${theme}`).classList.add('active');
+            
+            saveSettings();
+        }
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            const t = translations[lang];
+
+            // Update visible text
+            document.getElementById('playText').textContent = isPlaying ? t.playTextStop : t.playTextStart;
+            document.getElementById('statusMessage').textContent = isPlaying ? t.statusPlaying : t.statusReady;
+            document.getElementById('lockLabel').textContent = t.lockLabel;
+            document.getElementById('lockTextUnlock').textContent = t.lockTextUnlock;
+            document.getElementById('lockTextLock').textContent = t.lockTextLock;
+            document.getElementById('bpmLabel').textContent = t.bpmLabel;
+            document.getElementById('tapLabel').textContent = t.tapLabel;
+            document.getElementById('strengthTitle').textContent = t.strengthTitle;
+            document.getElementById('durationTitle').textContent = t.durationTitle;
+            document.getElementById('langTitle').textContent = t.langTitle;
+            document.getElementById('colorTitle').textContent = t.colorTitle;
+            document.getElementById('shareTitle').textContent = t.shareTitle;
+            document.getElementById('shareOther').textContent = t.shareOther;
+            document.getElementById('coffeeText').textContent = t.coffeeText;
+            
+            // Update active language option
+            document.querySelectorAll('.menu-option').forEach(el => el.classList.remove('active'));
+            document.getElementById(`lang-${lang}`).classList.add('active');
+
+            // The H1 title has been replaced by the logo, so no need to update its text.
+            
+            saveSettings();
+        }
+
+        function shareVia(app) {
+            const url = window.location.href;
+            const text = translations[currentLang].shareMessage || `Découvrez ce métronome vibrant ultra-pratique ! ${url}`;
+
+            if (app === 'whatsapp') {
+                window.open(`whatsapp://send?text=${encodeURIComponent(text)}`, '_blank');
+            } else if (app === 'messenger') {
+                // Messenger share requires a link to an app/web page
+                window.open(`fb-messenger://share/?link=${encodeURIComponent(url)}`, '_blank');
+            } else if (navigator.share) {
+                // Native Web Share API
+                navigator.share({
+                    title: translations[currentLang].title,
+                    text: translations[currentLang].shareMessage || "Découvrez ce métronome vibrant ultra-pratique !",
+                    url: url,
+                })
+                .catch((error) => console.log('Error sharing', error));
+            } else {
+                // Fallback for browsers without native share
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Lien copié dans le presse-papiers !');
+                });
+            }
+        }
+
+
+        // --- Persistence (Local Storage) ---
+
+        function saveSettings() {
+            const settings = {
+                bpm: bpm,
+                isLocked: isLocked,
+                vibrationStrength: vibrationStrength,
+                vibrationDuration: vibrationDuration,
+                lang: currentLang,
+                theme: currentTheme
+            };
+            localStorage.setItem('metronomeSettings', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            try {
+                const savedSettings = localStorage.getItem('metronomeSettings');
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
+                    
+                    // Assign loaded values
+                    bpm = settings.bpm || 120;
+                    isLocked = settings.isLocked || false;
+                    vibrationStrength = settings.vibrationStrength || 100;
+                    vibrationDuration = settings.vibrationDuration || 100;
+                    currentLang = settings.lang || 'fr';
+                    currentTheme = settings.theme || 'purple';
+                    
+                    // Apply settings
+                    updateBpmDisplay();
+                    strengthSlider.value = vibrationStrength;
+                    durationSlider.value = vibrationDuration;
+                    strengthValue.textContent = vibrationStrength + '%';
+                    durationValue.textContent = vibrationDuration + 'ms';
+                    
+                    if (isLocked) {
+                        lockTrack.classList.add('locked');
+                        bpmControls.classList.add('disabled');
+                        vibrationControls.classList.add('disabled');
+                        controls.classList.add('disabled');
+                    }
+                    
+                    changeLanguage(currentLang);
+                    changeTheme(currentTheme);
+                    
+                    // Reset lock slider position after loading
+                    setTimeout(() => {
+                        trackWidth = lockTrack.offsetWidth;
+                        resetLockPosition();
+                    }, 100);
+                }
+            } catch (e) {
+                console.log('No saved settings');
+            }
+        }
+
+        window.addEventListener('beforeunload', function() {
+            if (isPlaying) {
+                stopMetronome();
+            }
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            // Initial call to set the lock position correctly
+            trackWidth = lockTrack.offsetWidth;
+            resetLockPosition();
+        });
+    </script>
 </body>
 </html>
