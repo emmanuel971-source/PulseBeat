@@ -71,14 +71,6 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
-        .hamburger span {
-            width: 20px;
-            height: 2px;
-            background: white;
-            border-radius: 2px;
-            transition: all 0.3s ease;
-        }
-
         .hamburger.open span:nth-child(1) {
             transform: rotate(45deg) translate(5px, 5px);
         }
@@ -217,6 +209,14 @@
             font-size: 2.2em;
             margin-bottom: 30px;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* CSS AJOUTÉ POUR LE LOGO */
+        #appTitle img {
+            height: 60px; /* Redimensionne le logo à 60px de hauteur */
+            width: auto;
+            display: block;
+            margin: 0 auto;
         }
 
         .bpm-display {
@@ -447,8 +447,12 @@
         }
 
         @keyframes pulse {
-            from { transform: scale(1); }
-            to { transform: scale(1.05); }
+            from {
+                transform: scale(1);
+            }
+            to {
+                transform: scale(1.05);
+            }
         }
 
         .status {
@@ -473,23 +477,26 @@
         }
 
         @keyframes flash {
-            from { transform: scale(1); background: #4CAF50; }
-            to { transform: scale(1.2); background: #8BC34A; }
+            from {
+                transform: scale(1);
+                background: #4CAF50;
+            }
+            to {
+                transform: scale(1.2);
+                background: #8BC34A;
+            }
         }
 
         @media (max-width: 480px) {
             .container {
                 padding: 30px 20px;
             }
-            
             h1 {
                 font-size: 1.8em;
             }
-            
             .bpm-display {
                 font-size: 2.5em;
             }
-
             .menu {
                 width: 100%;
             }
@@ -497,14 +504,11 @@
     </style>
 </head>
 <body class="theme-purple">
-    <!-- Bouton Hamburger -->
     <button class="hamburger" id="hamburger">
         <span></span>
         <span></span>
         <span></span>
     </button>
-
-    <!-- Menu -->
     <div class="menu" id="menu">
         <div class="menu-section">
             <div class="menu-title" id="langTitle">Langue / Language</div>
@@ -512,7 +516,6 @@
             <div class="menu-option" onclick="changeLanguage('en')" id="lang-en">🇬🇧 English</div>
             <div class="menu-option" onclick="changeLanguage('es')" id="lang-es">🇪🇸 Español</div>
         </div>
-
         <div class="menu-section">
             <div class="menu-title" id="colorTitle">Couleur / Color</div>
             <div class="color-grid">
@@ -523,7 +526,6 @@
                 <div class="color-option color-dark" onclick="changeTheme('dark')"></div>
             </div>
         </div>
-
         <div class="menu-section">
             <div class="menu-title" id="shareTitle">Partager / Share</div>
             <div class="share-buttons">
@@ -541,7 +543,6 @@
                 </button>
             </div>
         </div>
-
         <div class="menu-section">
             <a href="https://www.buymeacoffee.com/votrepseudo" target="_blank" class="coffee-btn">
                 <span>☕</span>
@@ -549,12 +550,14 @@
             </a>
         </div>
     </div>
-
     <div class="container">
-        <h1 id="appTitle">🎵 Métronome</h1>
-        
+        <h1 id="appTitle">
+            <img 
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAAB/HSuDAADLfGNhQlgAAMt8anVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAANw9qdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjk2OWNlNWQxLTZjMTctNGZiZS1hNGQ2LWJhNzdkMjdhZWVlNQAAAAHVanVtYgAAAClqdW1kYzJhcwARABCAAACqADibcQNjMnBhLmFzc2VydGlvbnMAAAAA+Wp1bWIAAAApanVtZGNib3IAEQAQgAAAqgA4m3EDYzJwYS5hY3Rpb25zLnYyAAAAAMhjYm9yomdhY3Rpb25zgqNmYWN0aW9ubMycGEuY3JlYXRlZG1zb2Z0d2FyZUFnZW50v2RuYW1lZkdQVC00b/9xZGlnaXRhbFNvdXJjZVR5cGV4Rmh0dHA6Ly9jdi5pcHRjLm9yZy9uZXdzY29kZXMvZGlnaXRhbHNvdXJjZXR5cGUvdHJhaW5lZEFsZ29yaXRobWljTWVkaWGhZmFjdGlvbm5jMnBhLmNvbnZlcnRlZHJhbGxBY3Rpb25zSW5jbHVkZWT1AAAAq2p1bWIAAAAoanVtZGNib3IAEQAQgAAAqgA4m3EDYzJwYS5oYXNoLmRhdGEAAAAAe2Nib3KlamV4Y2x1c2lvbnOBomVzdGFydBghZmxlbmd0aBk3QWRuYW1lbmp1bWJmIG1hbmlmZXN0Y2FsZ2ZzaGEyNTZkaGFzaFggZoP8SDWQyF3TO7EE0vd5atlmVlX48kst8smvV5suTZdjcGFkSAAAAAAAAAAAAAAB7mp1bWIAAAAnanVtZGMyY2wAEQAQgAAAqgA4m3EDYzJwYS5jbGFpbS52MgAAAAG/Y2JvcqZqaW5zdGFuY2VJRHgseG1wOmlpZDpjNDg1MmRjMy0wN2RjLTQxYjgtYTMxMy0xNWU1NTliODFkY2Z0Y2xhaW1fZ2VuZXJhdG9yX2luZm+/ZG5hbWVnQ2hhdEdQVHdvcmcuY29udGVudGF1dGguYzJwYV9yc2YwLjY0LjD/aXNpZ25hdHVyZXhNc2VsZiNqdW1iZj0vYzJwYS91cm46YzJwYTo5NjljZTVkMS02YzE3LTRmYmUtYTRkNi1iYTc3ZDI3YWVlZTUvYzJwYS5zaWduYXR1cmVyY3JlYXRlZF9hc3NlcnRpb25zgqJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggunMbFQiP5kP9dxXSSsW1/BmCPZKIwgpWB2BE+a236qSiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggLyFXD5yoT1/beISzQVhIAa2U+IpxjONpJFIaAPW7OZpoZGM6dGl0bGVpaW1hZ2UucG5nY2FsZ2ZzaGEyNTYAADL9anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAADLNY2JvctKEWQfBogEmGCGCWQM3MIIDMzCCAhugAwIBAgIUbq4oo+7FuOQqNvod5kEVrmIWGzswDQYJKoZIhvcNAQEMBQAwSjEaMBgGA1UEAwwRV2ViQ2xhaW1TaWduaW5nQ0ExDTALBgNVBAsMBExlbnMxEDAOBgNVBAoMB1RydWVwaWMxCzAJBgNVBAYTAlVTMB4XDTI1MDExMzIwMzY0NloXDTI2MDExMzIwMzY0NVowVjELMAkGA1UEBhMCVVMxDzANBgNVBAoMBk9wZW5BSTEQMA4GA1UECwwHQ2hhdEdQVDEkMCIGA1UEAwwbVHJ1ZXBpYyBMZW5zIENMSSBpbiBDaGF0R1BUMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVh14xypQD33uBMgU9aukdnuL7dOjIz3VpkIz2UwpCUIxMAhLpTWV6JHjLvDamqOsAQruAtmJXwzVLbsuFpo36KOBzzCBzDAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFFofa2bTlOewQYN9nAx7XcVzS0uzME0GCCsGAQUFBwEBBEEwPzA9M"
+                alt="Logo Métronome"
+            />
+        </h1>
         <div class="bpm-display" id="bpmDisplay">120</div>
-        
         <div class="lock-container">
             <span class="lock-label" id="lockLabel">Glissez pour verrouiller</span>
             <div class="lock-track" id="lockTrack">
@@ -562,318 +565,218 @@
                 <div class="lock-thumb" id="lockThumb">
                     <span id="lockIcon">🔓</span>
                 </div>
-                <span class="lock-text left" id="lockTextLeft">Glissez →</span>
-                <span class="lock-text right" id="lockTextRight">← Glissez</span>
+                <span class="lock-text left" id="lockTextUnlock">DÉVERROUILLÉ</span>
+                <span class="lock-text right" id="lockTextLock">VERROUILLÉ</span>
             </div>
         </div>
-
         <div class="bpm-controls" id="bpmControls">
             <div class="bpm-group">
-                <div class="bpm-label" id="tensLabel">Dizaines</div>
+                <span class="bpm-label" id="bpmLabel">BPM</span>
                 <div class="bpm-digits">
-                    <button class="bpm-btn" onclick="changeBpm(-10)">-</button>
-                    <span style="width: 30px; text-align: center; font-weight: bold;" id="tensDisplay">12</span>
-                    <button class="bpm-btn" onclick="changeBpm(10)">+</button>
+                    <button class="bpm-btn" onclick="adjustBPM(-10)">-10</button>
+                    <button class="bpm-btn" onclick="adjustBPM(-1)">-1</button>
+                    <button class="bpm-btn" onclick="adjustBPM(1)">+1</button>
+                    <button class="bpm-btn" onclick="adjustBPM(10)">+10</button>
                 </div>
             </div>
-            
             <div class="bpm-group">
-                <div class="bpm-label" id="unitsLabel">Unités</div>
-                <div class="bpm-digits">
-                    <button class="bpm-btn" onclick="changeBpm(-1)">-</button>
-                    <span style="width: 30px; text-align: center; font-weight: bold;" id="unitsDisplay">0</span>
-                    <button class="bpm-btn" onclick="changeBpm(1)">+</button>
-                </div>
+                <span class="bpm-label" id="tapLabel">TAP Tempo</span>
+                <button class="bpm-btn" id="tapButton" onclick="tapTempo()">TAP</button>
             </div>
         </div>
 
-        <div class="vibration-controls">
+        <div class="vibration-controls" id="vibrationControls">
             <div class="vibration-group">
-                <div class="vibration-label">
-                    <span id="strengthLabel">Force de vibration</span>
+                <label for="strength" class="vibration-label">
+                    <span id="strengthTitle">Force de vibration</span>
                     <span id="strengthValue">100%</span>
-                </div>
-                <input type="range" min="10" max="100" value="100" class="slider" id="strengthSlider">
+                </label>
+                <input type="range" min="1" max="100" value="100" class="slider" id="strengthSlider">
             </div>
-            
+
             <div class="vibration-group">
-                <div class="vibration-label">
-                    <span id="durationLabel">Durée de vibration</span>
+                <label for="duration" class="vibration-label">
+                    <span id="durationTitle">Durée de l'impulsion</span>
                     <span id="durationValue">100ms</span>
-                </div>
-                <input type="range" min="50" max="300" value="100" class="slider" id="durationSlider">
+                </label>
+                <input type="range" min="10" max="500" value="100" class="slider" id="durationSlider">
             </div>
         </div>
 
-        <div class="controls">
+        <div class="controls" id="controls">
             <button class="play-button stopped" id="playButton" onclick="toggleMetronome()">
-                <span id="buttonText">DÉMARRER</span>
+                <span id="playText">DÉMARRER</span>
             </button>
+            <div class="vibration-indicator" id="vibrationIndicator"></div>
+            <div class="status" id="statusMessage">Prêt</div>
         </div>
-
-        <div class="vibration-indicator" id="vibrationIndicator"></div>
-        
-        <div class="status" id="status">Prêt à jouer</div>
     </div>
 
     <script>
+        // Variables
+        let bpm = 120;
         let isPlaying = false;
-        let currentBpm = 120;
-        let vibrationStrength = 100;
-        let vibrationDuration = 100;
         let intervalId = null;
+        let beatCount = 0;
+        let tapTimes = [];
         let isLocked = false;
+        let vibrationStrength = 100; // 1-100
+        let vibrationDuration = 100; // ms
         let currentLang = 'fr';
         let currentTheme = 'purple';
 
-        const translations = {
-            fr: {
-                appTitle: '🎵 Métronome',
-                tensLabel: 'Dizaines',
-                unitsLabel: 'Unités',
-                strengthLabel: 'Force de vibration',
-                durationLabel: 'Durée de vibration',
-                buttonStart: 'DÉMARRER',
-                buttonStop: 'ARRÊTER',
-                statusReady: 'Prêt à jouer',
-                statusPlaying: 'En cours',
-                lockLabelUnlocked: 'Glissez pour verrouiller',
-                lockLabelLocked: 'Glissez pour déverrouiller',
-                shareOther: 'Autres',
-                coffeeText: 'Buy me a coffee'
-            },
-            en: {
-                appTitle: '🎵 Metronome',
-                tensLabel: 'Tens',
-                unitsLabel: 'Units',
-                strengthLabel: 'Vibration strength',
-                durationLabel: 'Vibration duration',
-                buttonStart: 'START',
-                buttonStop: 'STOP',
-                statusReady: 'Ready to play',
-                statusPlaying: 'Playing',
-                lockLabelUnlocked: 'Slide to lock',
-                lockLabelLocked: 'Slide to unlock',
-                shareOther: 'Other',
-                coffeeText: 'Buy me a coffee'
-            },
-            es: {
-                appTitle: '🎵 Metrónomo',
-                tensLabel: 'Decenas',
-                unitsLabel: 'Unidades',
-                strengthLabel: 'Fuerza de vibración',
-                durationLabel: 'Duración de vibración',
-                buttonStart: 'INICIAR',
-                buttonStop: 'DETENER',
-                statusReady: 'Listo para tocar',
-                statusPlaying: 'En curso',
-                lockLabelUnlocked: 'Desliza para bloquear',
-                lockLabelLocked: 'Desliza para desbloquear',
-                shareOther: 'Otros',
-                coffeeText: 'Cómprame un café'
-            }
-        };
-
-        // Elements
+        // DOM Elements
         const bpmDisplay = document.getElementById('bpmDisplay');
-        const tensDisplay = document.getElementById('tensDisplay');
-        const unitsDisplay = document.getElementById('unitsDisplay');
         const playButton = document.getElementById('playButton');
-        const status = document.getElementById('status');
+        const playText = document.getElementById('playText');
+        const statusMessage = document.getElementById('statusMessage');
         const vibrationIndicator = document.getElementById('vibrationIndicator');
-        const strengthSlider = document.getElementById('strengthSlider');
-        const durationSlider = document.getElementById('durationSlider');
-        const strengthValue = document.getElementById('strengthValue');
-        const durationValue = document.getElementById('durationValue');
         const hamburger = document.getElementById('hamburger');
         const menu = document.getElementById('menu');
         const lockTrack = document.getElementById('lockTrack');
         const lockThumb = document.getElementById('lockThumb');
         const lockFill = document.getElementById('lockFill');
         const lockIcon = document.getElementById('lockIcon');
+        const strengthSlider = document.getElementById('strengthSlider');
+        const durationSlider = document.getElementById('durationSlider');
+        const strengthValue = document.getElementById('strengthValue');
+        const durationValue = document.getElementById('durationValue');
         const bpmControls = document.getElementById('bpmControls');
-        const vibrationControls = document.querySelector('.vibration-controls');
-        const controls = document.querySelector('.controls');
+        const vibrationControls = document.getElementById('vibrationControls');
+        const controls = document.getElementById('controls');
+        const lockTextUnlock = document.getElementById('lockTextUnlock');
+        const lockTextLock = document.getElementById('lockTextLock');
 
-        // Lock slider variables
+        // Lock/Unlock variables
+        let trackWidth = lockTrack.offsetWidth;
+        let thumbSize = lockThumb.offsetWidth;
         let isDragging = false;
         let startX = 0;
-        let currentX = 0;
-        let trackWidth = 0;
-        const thumbWidth = 50;
 
-        // Initialize
-        updateBpmDisplay();
-        loadSettings();
-        initLockSlider();
+        // Language data
+        const translations = {
+            fr: {
+                title: "🎵 Métronome",
+                playTextStart: "DÉMARRER",
+                playTextStop: "ARRÊTER",
+                statusReady: "Prêt",
+                statusPlaying: "Joue...",
+                lockLabel: "Glissez pour verrouiller",
+                lockTextUnlock: "DÉVERROUILLÉ",
+                lockTextLock: "VERROUILLÉ",
+                bpmLabel: "BPM",
+                tapLabel: "TAP Tempo",
+                strengthTitle: "Force de vibration",
+                durationTitle: "Durée de l'impulsion",
+                langTitle: "Langue / Language",
+                colorTitle: "Couleur / Color",
+                shareTitle: "Partager / Share",
+                shareOther: "Autres",
+                coffeeText: "Buy me a coffee"
+            },
+            en: {
+                title: "🎵 Metronome",
+                playTextStart: "START",
+                playTextStop: "STOP",
+                statusReady: "Ready",
+                statusPlaying: "Playing...",
+                lockLabel: "Swipe to lock",
+                lockTextUnlock: "UNLOCKED",
+                lockTextLock: "LOCKED",
+                bpmLabel: "BPM",
+                tapLabel: "TAP Tempo",
+                strengthTitle: "Vibration Strength",
+                durationTitle: "Pulse Duration",
+                langTitle: "Langue / Language",
+                colorTitle: "Couleur / Color",
+                shareTitle: "Partager / Share",
+                shareOther: "Other",
+                coffeeText: "Buy me a coffee"
+            },
+            es: {
+                title: "🎵 Metrónomo",
+                playTextStart: "INICIAR",
+                playTextStop: "DETENER",
+                statusReady: "Listo",
+                statusPlaying: "Reproduciendo...",
+                lockLabel: "Desliza para bloquear",
+                lockTextUnlock: "DESBLOQUEADO",
+                lockTextLock: "BLOQUEADO",
+                bpmLabel: "PPM",
+                tapLabel: "TAP Tempo",
+                strengthTitle: "Fuerza de vibración",
+                durationTitle: "Duración del pulso",
+                langTitle: "Langue / Language",
+                colorTitle: "Couleur / Color",
+                shareTitle: "Partager / Share",
+                shareOther: "Otras",
+                coffeeText: "Buy me a coffee"
+            }
+        };
 
-        // Lock slider initialization
-        function initLockSlider() {
-            trackWidth = lockTrack.offsetWidth;
-            
-            // Touch events
-            lockThumb.addEventListener('touchstart', handleLockStart, { passive: false });
-            document.addEventListener('touchmove', handleLockMove, { passive: false });
-            document.addEventListener('touchend', handleLockEnd);
-            
-            // Mouse events
-            lockThumb.addEventListener('mousedown', handleLockStart);
-            document.addEventListener('mousemove', handleLockMove);
-            document.addEventListener('mouseup', handleLockEnd);
-        }
+        // --- Core Metronome Logic ---
 
-        function handleLockStart(e) {
-            e.preventDefault();
-            isDragging = true;
-            startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            trackWidth = lockTrack.offsetWidth;
-            lockThumb.style.transition = 'none';
-            lockFill.style.transition = 'none';
-        }
-
-        function handleLockMove(e) {
-            if (!isDragging) return;
-            e.preventDefault();
-            
-            const currentPos = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            const rect = lockTrack.getBoundingClientRect();
-            let x = currentPos - rect.left - thumbWidth / 2;
-            
-            // Limit movement
-            x = Math.max(5, Math.min(x, trackWidth - thumbWidth - 5));
-            
-            currentX = x;
-            lockThumb.style.left = x + 'px';
-            lockFill.style.width = (x + thumbWidth / 2) + 'px';
-        }
-
-        function handleLockEnd() {
-            if (!isDragging) return;
-            isDragging = false;
-            
-            lockThumb.style.transition = 'left 0.3s ease';
-            lockFill.style.transition = 'width 0.3s ease';
-            
-            const threshold = trackWidth * 0.7;
-            
-            if (currentX > threshold && !isLocked) {
-                // Lock
-                setLocked(true);
-            } else if (currentX < trackWidth * 0.3 && isLocked) {
-                // Unlock
-                setLocked(false);
-            } else {
-                // Reset to current state
-                resetLockPosition();
+        function vibrate() {
+            if (navigator.vibrate) {
+                // Vibration intensity is simulated by pattern length and timing
+                // We use the strengthSlider value to adjust the duration/pattern
+                const pattern = vibrationDuration * (vibrationStrength / 100);
+                navigator.vibrate(pattern);
+                
+                // Visual feedback
+                vibrationIndicator.classList.add('active');
+                setTimeout(() => {
+                    vibrationIndicator.classList.remove('active');
+                }, pattern);
             }
         }
 
-        function setLocked(locked) {
-            isLocked = locked;
-            
-            if (locked) {
-                lockTrack.classList.add('locked');
-                lockIcon.textContent = '🔒';
-                document.getElementById('lockLabel').textContent = translations[currentLang].lockLabelLocked;
-                lockThumb.style.left = (trackWidth - thumbWidth - 5) + 'px';
-                lockFill.style.width = '100%';
-                
-                // Disable all controls
-                bpmControls.classList.add('disabled');
-                vibrationControls.classList.add('disabled');
-                controls.classList.add('disabled');
-            } else {
-                lockTrack.classList.remove('locked');
-                lockIcon.textContent = '🔓';
-                document.getElementById('lockLabel').textContent = translations[currentLang].lockLabelUnlocked;
-                lockThumb.style.left = '5px';
-                lockFill.style.width = '0%';
-                
-                // Enable all controls
-                bpmControls.classList.remove('disabled');
-                vibrationControls.classList.remove('disabled');
-                controls.classList.remove('disabled');
+        function startMetronome() {
+            if (isPlaying) return;
+
+            // Check if vibration is available
+            if (!navigator.vibrate) {
+                alert("Votre appareil ne prend pas en charge l'API Vibration. Le métronome fonctionnera sans retour haptique.");
+                // continue without vibration
             }
-            
+
+            isPlaying = true;
+            beatCount = 0;
+            const msPerBeat = (60 / bpm) * 1000;
+
+            playButton.classList.remove('stopped');
+            playButton.classList.add('playing');
+            playText.textContent = translations[currentLang].playTextStop;
+            statusMessage.textContent = translations[currentLang].statusPlaying;
+
+            function nextBeat() {
+                vibrate();
+                beatCount++;
+            }
+
+            // Start the first beat immediately
+            nextBeat();
+
+            // Set the interval for subsequent beats
+            intervalId = setInterval(nextBeat, msPerBeat);
             saveSettings();
         }
 
-        function resetLockPosition() {
-            if (isLocked) {
-                lockThumb.style.left = (trackWidth - thumbWidth - 5) + 'px';
-                lockFill.style.width = '100%';
-            } else {
-                lockThumb.style.left = '5px';
-                lockFill.style.width = '0%';
-            }
-        }
+        function stopMetronome() {
+            if (!isPlaying) return;
 
-        // Recalculate on window resize
-        window.addEventListener('resize', function() {
-            trackWidth = lockTrack.offsetWidth;
-            resetLockPosition();
-        });
-
-        // Menu toggle
-        hamburger.addEventListener('click', function() {
-            hamburger.classList.toggle('open');
-            menu.classList.toggle('open');
-        });
-
-        // Close menu when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!menu.contains(e.target) && !hamburger.contains(e.target) && menu.classList.contains('open')) {
-                hamburger.classList.remove('open');
-                menu.classList.remove('open');
-            }
-        });
-
-        // Vibration sliders
-        strengthSlider.addEventListener('input', function() {
-            if (isLocked) return;
-            vibrationStrength = parseInt(this.value);
-            strengthValue.textContent = vibrationStrength + '%';
-            saveSettings();
-        });
-
-        durationSlider.addEventListener('input', function() {
-            if (isLocked) return;
-            vibrationDuration = parseInt(this.value);
-            durationValue.textContent = vibrationDuration + 'ms';
-            saveSettings();
-        });
-
-        function updateBpmDisplay() {
-            bpmDisplay.textContent = currentBpm;
-            const tens = Math.floor(currentBpm / 10);
-            const units = currentBpm % 10;
-            tensDisplay.textContent = tens;
-            unitsDisplay.textContent = units;
-        }
-
-        function changeBpm(delta) {
-            if (isLocked) return;
+            isPlaying = false;
+            clearInterval(intervalId);
+            intervalId = null;
             
-            const newBpm = currentBpm + delta;
-            
-            if (newBpm >= 40 && newBpm <= 200) {
-                currentBpm = newBpm;
-                updateBpmDisplay();
-                saveSettings();
-                
-                if (isPlaying) {
-                    stopMetronome();
-                    startMetronome();
-                }
-            }
-        }
-
-        function toggleLock() {
-            setLocked(!isLocked);
+            playButton.classList.remove('playing');
+            playButton.classList.add('stopped');
+            playText.textContent = translations[currentLang].playTextStart;
+            statusMessage.textContent = translations[currentLang].statusReady;
+            saveSettings();
         }
 
         function toggleMetronome() {
-            if (isLocked) return;
             if (isPlaying) {
                 stopMetronome();
             } else {
@@ -881,115 +784,290 @@
             }
         }
 
-        function startMetronome() {
-            isPlaying = true;
-            document.getElementById('buttonText').textContent = translations[currentLang].buttonStop;
-            playButton.className = 'play-button playing';
-            status.textContent = `${translations[currentLang].statusPlaying} - ${currentBpm} BPM`;
-
-            const interval = (60 / currentBpm) * 1000;
-            vibrate();
-            intervalId = setInterval(() => {
-                vibrate();
-            }, interval);
-        }
-
-        function stopMetronome() {
-            isPlaying = false;
-            document.getElementById('buttonText').textContent = translations[currentLang].buttonStart;
-            playButton.className = 'play-button stopped';
-            status.textContent = translations[currentLang].statusReady;
-
-            if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = null;
+        function updateBpmDisplay() {
+            bpmDisplay.textContent = bpm;
+            if (isPlaying) {
+                // Restart metronome with new BPM
+                stopMetronome();
+                startMetronome();
             }
+            saveSettings();
         }
 
-        function vibrate() {
-            vibrationIndicator.classList.add('active');
+        function adjustBPM(delta) {
+            if (isLocked) return;
+            bpm = Math.max(20, Math.min(300, bpm + delta)); // Min 20, Max 300
+            updateBpmDisplay();
+        }
+
+        function tapTempo() {
+            if (isLocked) return;
+
+            const now = Date.now();
+            tapTimes.push(now);
+
+            // Keep only the last 5 taps
+            if (tapTimes.length > 5) {
+                tapTimes.shift();
+            }
+
+            if (tapTimes.length >= 2) {
+                let intervals = [];
+                for (let i = 1; i < tapTimes.length; i++) {
+                    intervals.push(tapTimes[i] - tapTimes[i - 1]);
+                }
+
+                // Calculate average interval
+                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+
+                // Convert ms interval to BPM
+                const calculatedBPM = Math.round(60000 / avgInterval);
+
+                if (calculatedBPM >= 20 && calculatedBPM <= 300) {
+                    bpm = calculatedBPM;
+                    updateBpmDisplay();
+                }
+            }
+
+            // Clear old taps if too much time has passed
             setTimeout(() => {
-                vibrationIndicator.classList.remove('active');
-            }, vibrationDuration);
+                if (tapTimes.length > 0 && now === tapTimes[tapTimes.length - 1] && Date.now() - now > 2000) {
+                    tapTimes = [];
+                }
+            }, 2000);
+        }
 
-            if ('vibrate' in navigator) {
-                const effectiveDuration = Math.round((vibrationDuration * vibrationStrength) / 100);
-                navigator.vibrate(effectiveDuration);
+
+        // --- Slider Event Handlers ---
+
+        strengthSlider.oninput = function() {
+            if (isLocked) return;
+            vibrationStrength = this.value;
+            strengthValue.textContent = vibrationStrength + '%';
+            saveSettings();
+        }
+
+        durationSlider.oninput = function() {
+            if (isLocked) return;
+            vibrationDuration = this.value;
+            durationValue.textContent = vibrationDuration + 'ms';
+            saveSettings();
+        }
+
+
+        // --- Lock/Unlock Logic (Swipe) ---
+
+        function updateLockState(locked) {
+            isLocked = locked;
+            lockIcon.textContent = isLocked ? '🔒' : '🔓';
+            lockTrack.classList.toggle('locked', isLocked);
+            bpmControls.classList.toggle('disabled', isLocked);
+            vibrationControls.classList.toggle('disabled', isLocked);
+            controls.classList.toggle('disabled', isLocked);
+
+            // Stop metronome when locking
+            if (isLocked && isPlaying) {
+                stopMetronome();
             }
+            saveSettings();
+        }
+
+        function resetLockPosition() {
+            if (isLocked) {
+                lockThumb.style.left = `${trackWidth - thumbSize - 5}px`;
+                lockFill.style.width = `${trackWidth}px`;
+            } else {
+                lockThumb.style.left = '5px';
+                lockFill.style.width = '0px';
+            }
+        }
+
+        // Mouse/Touch Down
+        lockThumb.addEventListener('mousedown', startDrag);
+        lockThumb.addEventListener('touchstart', startDrag);
+
+        function startDrag(e) {
+            if (isPlaying) return; // Cannot lock/unlock while playing
+
+            isDragging = true;
+            // Get the starting X position of the touch or mouse
+            startX = (e.touches ? e.touches[0].clientX : e.clientX);
+            lockThumb.style.transition = 'none'; // Disable transition during drag
+            
+            // Get the current position of the thumb relative to the track
+            const currentThumbLeft = lockThumb.offsetLeft;
+            const currentTrackLeft = lockTrack.getBoundingClientRect().left;
+            
+            // This is the starting position of the drag
+            lockThumb.dataset.dragStartOffset = currentThumbLeft - (startX - currentTrackLeft);
+        }
+
+        // Mouse/Touch Move
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag);
+
+        function drag(e) {
+            if (!isDragging) return;
+
+            e.preventDefault(); // Prevent scrolling
+            trackWidth = lockTrack.offsetWidth;
+            thumbSize = lockThumb.offsetWidth;
+            const currentX = (e.touches ? e.touches[0].clientX : e.clientX);
+            const trackLeft = lockTrack.getBoundingClientRect().left;
+
+            // Calculate the new left position based on the drag movement
+            let newLeft = currentX - trackLeft - (thumbSize / 2);
+
+            // Clamp the position within the track boundaries
+            const minLeft = 5;
+            const maxLeft = trackWidth - thumbSize - 5;
+            newLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
+
+            // Apply the new position
+            lockThumb.style.left = `${newLeft}px`;
+
+            // Update the fill bar width
+            const fillWidth = newLeft + thumbSize / 2;
+            lockFill.style.width = `${fillWidth}px`;
+        }
+
+        // Mouse/Touch Up
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+
+        function endDrag(e) {
+            if (!isDragging) return;
+            isDragging = false;
+            lockThumb.style.transition = 'left 0.3s ease'; // Re-enable transition
+
+            trackWidth = lockTrack.offsetWidth;
+            thumbSize = lockThumb.offsetWidth;
+            const threshold = trackWidth / 2;
+            const thumbCenter = lockThumb.offsetLeft + (thumbSize / 2);
+
+            if (thumbCenter > threshold) {
+                // Lock
+                updateLockState(true);
+            } else {
+                // Unlock
+                updateLockState(false);
+            }
+
+            // Snap the thumb to the final position
+            resetLockPosition();
+        }
+
+        // Recalculate track width on resize
+        window.addEventListener('resize', () => {
+            trackWidth = lockTrack.offsetWidth;
+            resetLockPosition();
+        });
+
+
+        // --- Menu Logic ---
+
+        hamburger.addEventListener('click', toggleMenu);
+
+        function toggleMenu() {
+            hamburger.classList.toggle('open');
+            menu.classList.toggle('open');
+        }
+
+
+        // --- Theme & Language ---
+
+        function changeTheme(theme) {
+            document.body.className = '';
+            document.body.classList.add(`theme-${theme}`);
+            currentTheme = theme;
+
+            // Update active color option
+            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.color-${theme}`).classList.add('active');
+            
+            saveSettings();
         }
 
         function changeLanguage(lang) {
             currentLang = lang;
-            
-            // Update active state
-            document.querySelectorAll('[id^="lang-"]').forEach(el => el.classList.remove('active'));
-            document.getElementById('lang-' + lang).classList.add('active');
-            
-            // Update texts
             const t = translations[lang];
-            document.getElementById('appTitle').textContent = t.appTitle;
-            document.getElementById('tensLabel').textContent = t.tensLabel;
-            document.getElementById('unitsLabel').textContent = t.unitsLabel;
-            document.getElementById('strengthLabel').textContent = t.strengthLabel;
-            document.getElementById('durationLabel').textContent = t.durationLabel;
-            document.getElementById('buttonText').textContent = isPlaying ? t.buttonStop : t.buttonStart;
-            document.getElementById('status').textContent = isPlaying ? `${t.statusPlaying} - ${currentBpm} BPM` : t.statusReady;
-            document.getElementById('lockLabel').textContent = isLocked ? t.lockLabelLocked : t.lockLabelUnlocked;
+
+            // Update visible text
+            document.getElementById('playText').textContent = isPlaying ? t.playTextStop : t.playTextStart;
+            document.getElementById('statusMessage').textContent = isPlaying ? t.statusPlaying : t.statusReady;
+            document.getElementById('lockLabel').textContent = t.lockLabel;
+            document.getElementById('lockTextUnlock').textContent = t.lockTextUnlock;
+            document.getElementById('lockTextLock').textContent = t.lockTextLock;
+            document.getElementById('bpmLabel').textContent = t.bpmLabel;
+            document.getElementById('tapLabel').textContent = t.tapLabel;
+            document.getElementById('strengthTitle').textContent = t.strengthTitle;
+            document.getElementById('durationTitle').textContent = t.durationTitle;
+            document.getElementById('langTitle').textContent = t.langTitle;
+            document.getElementById('colorTitle').textContent = t.colorTitle;
+            document.getElementById('shareTitle').textContent = t.shareTitle;
             document.getElementById('shareOther').textContent = t.shareOther;
             document.getElementById('coffeeText').textContent = t.coffeeText;
             
-            saveSettings();
-        }
+            // Update active language option
+            document.querySelectorAll('.menu-option').forEach(el => el.classList.remove('active'));
+            document.getElementById(`lang-${lang}`).classList.add('active');
 
-        function changeTheme(theme) {
-            currentTheme = theme;
-            document.body.className = 'theme-' + theme;
-            
-            // Update active state
-            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('active'));
-            document.querySelector('.color-' + theme).classList.add('active');
+            // The H1 title is now an image and does not need text translation.
             
             saveSettings();
         }
 
-        function shareVia(platform) {
+        function shareVia(app) {
             const url = window.location.href;
-            const text = translations[currentLang].appTitle;
-            
-            if (platform === 'whatsapp') {
-                window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
-            } else if (platform === 'messenger') {
-                window.open(`https://www.facebook.com/dialog/send?link=${encodeURIComponent(url)}&app_id=YOUR_APP_ID&redirect_uri=${encodeURIComponent(url)}`, '_blank');
-            } else if (platform === 'native' && navigator.share) {
+            const text = translations[currentLang].shareMessage || `Découvrez ce métronome vibrant ultra-pratique ! ${url}`;
+
+            if (app === 'whatsapp') {
+                window.open(`whatsapp://send?text=${encodeURIComponent(text)}`, '_blank');
+            } else if (app === 'messenger') {
+                // Messenger share requires a link to an app/web page
+                window.open(`fb-messenger://share/?link=${encodeURIComponent(url)}`, '_blank');
+            } else if (navigator.share) {
+                // Native Web Share API
                 navigator.share({
-                    title: text,
-                    text: text,
-                    url: url
-                }).catch(err => console.log('Error sharing:', err));
+                    title: translations[currentLang].title,
+                    text: translations[currentLang].shareMessage || "Découvrez ce métronome vibrant ultra-pratique !",
+                    url: url,
+                })
+                .catch((error) => console.log('Error sharing', error));
+            } else {
+                // Fallback for browsers without native share
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Lien copié dans le presse-papiers !');
+                });
             }
         }
 
+
+        // --- Persistence (Local Storage) ---
+
         function saveSettings() {
             const settings = {
-                bpm: currentBpm,
-                strength: vibrationStrength,
-                duration: vibrationDuration,
-                locked: isLocked,
+                bpm: bpm,
+                isLocked: isLocked,
+                vibrationStrength: vibrationStrength,
+                vibrationDuration: vibrationDuration,
                 lang: currentLang,
                 theme: currentTheme
             };
-            // Store in URL hash for easy sharing
-            window.location.hash = btoa(JSON.stringify(settings));
+            localStorage.setItem('metronomeSettings', JSON.stringify(settings));
         }
 
         function loadSettings() {
             try {
-                if (window.location.hash) {
-                    const settings = JSON.parse(atob(window.location.hash.substring(1)));
-                    currentBpm = settings.bpm || 120;
-                    vibrationStrength = settings.strength || 100;
-                    vibrationDuration = settings.duration || 100;
-                    isLocked = settings.locked || false;
+                const savedSettings = localStorage.getItem('metronomeSettings');
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
+                    
+                    // Assign loaded values
+                    bpm = settings.bpm || 120;
+                    isLocked = settings.isLocked || false;
+                    vibrationStrength = settings.vibrationStrength || 100;
+                    vibrationDuration = settings.vibrationDuration || 100;
                     currentLang = settings.lang || 'fr';
                     currentTheme = settings.theme || 'purple';
                     
@@ -1025,6 +1103,14 @@
             if (isPlaying) {
                 stopMetronome();
             }
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            // Initial call to set the lock position correctly
+            trackWidth = lockTrack.offsetWidth;
+            resetLockPosition();
         });
     </script>
 </body>
