@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Métronome Vibrant</title>
+    <title>Metronome Vibrant</title>
     <style>
         * {
             margin: 0;
@@ -206,11 +206,7 @@
             text-align: center;
             max-width: 350px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
             padding: 40px 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
 
         h1 {
@@ -496,7 +492,7 @@
         }
     </style>
 </head>
-<body class="theme-purple">
+<body class="theme-dark">
     <!-- Bouton Hamburger -->
     <button class="hamburger" id="hamburger">
         <span></span>
@@ -509,18 +505,18 @@
         <div class="menu-section">
             <div class="menu-title" id="langTitle">Langue / Language</div>
             <div class="menu-option" onclick="changeLanguage('fr')" id="lang-fr">🇫🇷 Français</div>
-            <div class="menu-option" onclick="changeLanguage('en')" id="lang-en">🇬🇧 English</div>
+            <div class="menu-option active" onclick="changeLanguage('en')" id="lang-en">🇬🇧 English</div>
             <div class="menu-option" onclick="changeLanguage('es')" id="lang-es">🇪🇸 Español</div>
         </div>
 
         <div class="menu-section">
             <div class="menu-title" id="colorTitle">Couleur / Color</div>
             <div class="color-grid">
-                <div class="color-option color-purple active" onclick="changeTheme('purple')"></div>
+                <div class="color-option color-purple" onclick="changeTheme('purple')"></div>
                 <div class="color-option color-blue" onclick="changeTheme('blue')"></div>
                 <div class="color-option color-green" onclick="changeTheme('green')"></div>
                 <div class="color-option color-orange" onclick="changeTheme('orange')"></div>
-                <div class="color-option color-dark" onclick="changeTheme('dark')"></div>
+                <div class="color-option color-dark active" onclick="changeTheme('dark')"></div>
             </div>
         </div>
 
@@ -537,7 +533,7 @@
                 </a>
                 <button class="share-btn" onclick="shareVia('native')">
                     <span>✉️</span>
-                    <span id="shareOther">Autres</span>
+                    <span id="shareOther">Other</span>
                 </button>
             </div>
         </div>
@@ -551,25 +547,13 @@
     </div>
 
     <div class="container">
-        <h1 id="appTitle">🎵 Métronome</h1>
+        <h1 id="appTitle">🎵 Metronome 🥁</h1>
         
         <div class="bpm-display" id="bpmDisplay">120</div>
         
-        <div class="lock-container">
-            <span class="lock-label" id="lockLabel">Glissez pour verrouiller</span>
-            <div class="lock-track" id="lockTrack">
-                <div class="lock-fill" id="lockFill"></div>
-                <div class="lock-thumb" id="lockThumb">
-                    <span id="lockIcon">🔓</span>
-                </div>
-                <span class="lock-text left" id="lockTextLeft">Glissez →</span>
-                <span class="lock-text right" id="lockTextRight">← Glissez</span>
-            </div>
-        </div>
-
         <div class="bpm-controls" id="bpmControls">
             <div class="bpm-group">
-                <div class="bpm-label" id="tensLabel">Dizaines</div>
+                <div class="bpm-label" id="tensLabel">Tens</div>
                 <div class="bpm-digits">
                     <button class="bpm-btn" onclick="changeBpm(-10)">-</button>
                     <span style="width: 30px; text-align: center; font-weight: bold;" id="tensDisplay">12</span>
@@ -578,7 +562,7 @@
             </div>
             
             <div class="bpm-group">
-                <div class="bpm-label" id="unitsLabel">Unités</div>
+                <div class="bpm-label" id="unitsLabel">Units</div>
                 <div class="bpm-digits">
                     <button class="bpm-btn" onclick="changeBpm(-1)">-</button>
                     <span style="width: 30px; text-align: center; font-weight: bold;" id="unitsDisplay">0</span>
@@ -590,7 +574,7 @@
         <div class="vibration-controls">
             <div class="vibration-group">
                 <div class="vibration-label">
-                    <span id="strengthLabel">Force de vibration</span>
+                    <span id="strengthLabel">Vibration strength</span>
                     <span id="strengthValue">100%</span>
                 </div>
                 <input type="range" min="10" max="100" value="100" class="slider" id="strengthSlider">
@@ -598,7 +582,7 @@
             
             <div class="vibration-group">
                 <div class="vibration-label">
-                    <span id="durationLabel">Durée de vibration</span>
+                    <span id="durationLabel">Vibration duration</span>
                     <span id="durationValue">100ms</span>
                 </div>
                 <input type="range" min="50" max="300" value="100" class="slider" id="durationSlider">
@@ -607,13 +591,25 @@
 
         <div class="controls">
             <button class="play-button stopped" id="playButton" onclick="toggleMetronome()">
-                <span id="buttonText">DÉMARRER</span>
+                <span id="buttonText">START</span>
             </button>
+        </div>
+
+        <div class="lock-container">
+            <span class="lock-label" id="lockLabel">Slide to lock</span>
+            <div class="lock-track" id="lockTrack">
+                <div class="lock-fill" id="lockFill"></div>
+                <div class="lock-thumb" id="lockThumb">
+                    <span id="lockIcon">🔓</span>
+                </div>
+                <span class="lock-text left" id="lockTextLeft">Slide →</span>
+                <span class="lock-text right" id="lockTextRight">← Slide</span>
+            </div>
         </div>
 
         <div class="vibration-indicator" id="vibrationIndicator"></div>
         
-        <div class="status" id="status">Prêt à jouer</div>
+        <div class="status" id="status">Ready to play</div>
     </div>
 
     <script>
@@ -623,12 +619,12 @@
         let vibrationDuration = 100;
         let intervalId = null;
         let isLocked = false;
-        let currentLang = 'fr';
-        let currentTheme = 'purple';
+        let currentLang = 'en';
+        let currentTheme = 'dark';
 
         const translations = {
             fr: {
-                appTitle: '📳 Métronome',
+                appTitle: '🎵 Métronome',
                 tensLabel: 'Dizaines',
                 unitsLabel: 'Unités',
                 strengthLabel: 'Force de vibration',
@@ -643,7 +639,7 @@
                 coffeeText: 'Buy me a coffee'
             },
             en: {
-                appTitle: '📳 Metronome ',
+                appTitle: '🎵 Metronome 🥁',
                 tensLabel: 'Tens',
                 unitsLabel: 'Units',
                 strengthLabel: 'Vibration strength',
@@ -658,7 +654,7 @@
                 coffeeText: 'Buy me a coffee'
             },
             es: {
-                appTitle: '📳 Metrónomo',
+                appTitle: '🎵 Metrónomo',
                 tensLabel: 'Decenas',
                 unitsLabel: 'Unidades',
                 strengthLabel: 'Fuerza de vibración',
@@ -1029,6 +1025,7 @@
     </script>
 </body>
 </html>
+
 
 
 
