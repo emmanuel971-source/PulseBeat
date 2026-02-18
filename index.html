@@ -197,6 +197,15 @@
     <!-- VOIX -->
     <div class="card">
         <div class="card-title">Voix ElevenLabs <span id="voice-count" style="color:var(--muted)">(entrez votre clé API)</span></div>
+
+        <!-- Filtre langue voix -->
+        <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+            <button class="btn-sm" onclick="filterVoices('all')"    id="vf-all"  style="border-color:var(--accent);color:var(--accent)">Toutes</button>
+            <button class="btn-sm" onclick="filterVoices('ja')"     id="vf-ja">🇯🇵 Japonaises</button>
+            <button class="btn-sm" onclick="filterVoices('fr')"     id="vf-fr">🇫🇷 Françaises</button>
+            <button class="btn-sm" onclick="filterVoices('en')"     id="vf-en">🇬🇧 Anglaises</button>
+            <button class="btn-sm" onclick="loadSharedVoices()"     id="vf-lib" style="color:var(--yellow)">+ Voix Library JP</button>
+        </div>
         <div class="voices-grid" id="voices-grid">
             <div class="voices-loading">Entrez votre clé API puis appuyez sur Entrée pour charger les voix.</div>
         </div>
@@ -296,6 +305,56 @@ document.getElementById('api-key').addEventListener('keydown', e => {
 });
 document.getElementById('api-key').addEventListener('blur', loadVoices);
 
+let voiceFilter = 'all';
+
+function filterVoices(lang) {
+    voiceFilter = lang;
+    ['all','ja','fr','en'].forEach(l => {
+        const btn = document.getElementById(`vf-${l}`);
+        if (btn) {
+            btn.style.borderColor = l === lang ? 'var(--accent)' : 'var(--border)';
+            btn.style.color = l === lang ? 'var(--accent)' : '';
+        }
+    });
+    renderVoices();
+}
+
+async function loadSharedVoices() {
+    const key = document.getElementById('api-key').value.trim();
+    if (!key) return alert('Entrez votre clé API d\'abord.');
+    const btn = document.getElementById('vf-lib');
+    btn.innerText = '⏳ Chargement…';
+
+    try {
+        // Rechercher des voix japonaises dans la Voice Library publique
+        const res = await fetch('https://api.elevenlabs.io/v1/shared-voices?language=ja&page_size=20', {
+            headers: { 'xi-api-key': key }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const sharedJp = (data.voices || []).map(v => ({
+            voice_id: v.voice_id,
+            name: v.name + ' 🇯🇵',
+            labels: { accent: 'Japanese', gender: v.gender || '' },
+            category: 'shared'
+        }));
+
+        // Dédupliquer
+        const existingIds = new Set(voices.map(v => v.voice_id));
+        const newVoices = sharedJp.filter(v => !existingIds.has(v.voice_id));
+        voices = [...newVoices, ...voices];
+
+        btn.innerText = `✅ +${newVoices.length} voix JP`;
+        btn.style.color = 'var(--green)';
+        renderVoices();
+        filterVoices('ja');
+        updateEstimate();
+    } catch(e) {
+        btn.innerText = '+ Voix Library JP';
+        log(`Erreur Library : ${e.message}`);
+    }
+}
+
 async function loadVoices() {
     const key = document.getElementById('api-key').value.trim();
     if (!key) return;
@@ -321,13 +380,29 @@ async function loadVoices() {
 
 function renderVoices() {
     const grid = document.getElementById('voices-grid');
-    grid.innerHTML = voices.map((v, i) => `
-        <div class="voice-row" onclick="toggleVoice(${i})">
-            <input type="checkbox" id="vc-${i}" checked onchange="updateEstimate()">
+    let filtered = voices;
+    if (voiceFilter === 'ja') filtered = voices.filter(v => (v.labels?.accent || '').toLowerCase().includes('japan') || v.name.includes('🇯🇵'));
+    else if (voiceFilter === 'fr') filtered = voices.filter(v => (v.labels?.accent || '').toLowerCase().includes('french') || (v.labels?.language || '').toLowerCase().includes('fr'));
+    else if (voiceFilter === 'en') filtered = voices.filter(v => {
+        const acc = (v.labels?.accent || '').toLowerCase();
+        return acc.includes('american') || acc.includes('british') || acc.includes('australian') || acc.includes('english');
+    });
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `<div class="voices-loading">Aucune voix pour ce filtre. Essayez "Voix Library JP" pour charger des voix japonaises.</div>`;
+        return;
+    }
+
+    grid.innerHTML = filtered.map((v, i) => {
+        const globalIdx = voices.indexOf(v);
+        return `
+        <div class="voice-row" onclick="toggleVoice(${globalIdx})">
+            <input type="checkbox" id="vc-${globalIdx}" checked onchange="updateEstimate()">
             <div class="voice-name">${v.name}</div>
             <div class="voice-meta">${v.labels?.accent || ''} ${v.labels?.gender || ''}</div>
             <button class="btn-preview" onclick="previewVoice(event, '${v.voice_id}', '${v.name}')">▶ Test</button>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 }
 
 function toggleVoice(i) {
@@ -343,6 +418,7 @@ async function previewVoice(e, voiceId, name) {
 
     // Texte de test selon la langue active
     const testText = currentLang === 'jp' ? 'あ' : 'Bonjour';
+    const langCode = currentLang === 'jp' ? 'ja' : 'fr';
     log(`Test voix : ${name}`);
 
     try {
@@ -350,6 +426,7 @@ async function previewVoice(e, voiceId, name) {
             method: 'POST',
             headers: { 'xi-api-key': key, 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: testText, model_id: 'eleven_multilingual_v2',
+                language_code: langCode,
                 voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -424,15 +501,19 @@ function encodeWav1s(audioBuffer) {
     return new Blob([buf], { type: 'audio/wav' });
 }
 
-async function fetchTTS(key, voiceId, text, stability, similarity) {
+async function fetchTTS(key, voiceId, text, stability, similarity, langCode) {
+    const body = {
+        text,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: { stability, similarity_boost: similarity, style: 0, use_speaker_boost: true }
+    };
+    // Forcer la langue pour une phonétique correcte (crucial pour le japonais)
+    if (langCode) body.language_code = langCode;
+
     const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
         method: 'POST',
         headers: { 'xi-api-key': key, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            text,
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: { stability, similarity_boost: similarity, style: 0, use_speaker_boost: true }
-        })
+        body: JSON.stringify(body)
     });
     if (!res.ok) throw new Error(`HTTP ${res.status} — ${await res.text()}`);
     return await res.arrayBuffer();
@@ -501,7 +582,7 @@ async function startGeneration() {
             setProgress(done, total, `"${job.token}" — sample ${s+1}/${nSamples}`);
 
             try {
-                const mp3Buffer  = await fetchTTS(key, voice.voice_id, job.token, stability, similarity);
+                const mp3Buffer  = await fetchTTS(key, voice.voice_id, job.token, stability, similarity, job.lang);
                 const audioBuf   = await audioCtx.decodeAudioData(mp3Buffer);
                 const wavBlob    = encodeWav1s(audioBuf);
                 const filename   = `${String(s+1).padStart(2,'0')}_${job.token}_${voice.name.replace(/\s+/g,'_')}.wav`;
