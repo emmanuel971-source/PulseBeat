@@ -336,7 +336,8 @@ async function loadSharedVoices() {
             voice_id: v.voice_id,
             name: v.name + ' 🇯🇵',
             labels: { accent: 'Japanese', gender: v.gender || '' },
-            category: 'shared'
+            category: 'shared',
+            paid_only: true
         }));
 
         // Dédupliquer
@@ -393,14 +394,15 @@ function renderVoices() {
         return;
     }
 
-    grid.innerHTML = filtered.map((v, i) => {
+    grid.innerHTML = filtered.map((v) => {
         const globalIdx = voices.indexOf(v);
+        const isPaid = v.paid_only === true;
         return `
-        <div class="voice-row" onclick="toggleVoice(${globalIdx})">
-            <input type="checkbox" id="vc-${globalIdx}" checked onchange="updateEstimate()">
-            <div class="voice-name">${v.name}</div>
+        <div class="voice-row" onclick="${isPaid ? '' : `toggleVoice(${globalIdx})`}" style="${isPaid ? 'opacity:0.45;cursor:not-allowed' : ''}">
+            <input type="checkbox" id="vc-${globalIdx}" ${isPaid ? 'disabled' : 'checked'} onchange="updateEstimate()">
+            <div class="voice-name">${v.name} ${isPaid ? '<span style="font-size:0.65rem;color:var(--yellow);font-weight:700">PAYANT</span>' : ''}</div>
             <div class="voice-meta">${v.labels?.accent || ''} ${v.labels?.gender || ''}</div>
-            <button class="btn-preview" onclick="previewVoice(event, '${v.voice_id}', '${v.name}')">▶ Test</button>
+            ${isPaid ? '<div style="font-size:0.7rem;color:var(--yellow)">Plan pro requis</div>' : `<button class="btn-preview" onclick="previewVoice(event, '${v.voice_id}', '${v.name}')">▶ Test</button>`}
         </div>`;
     }).join('');
 }
@@ -440,9 +442,9 @@ async function previewVoice(e, voiceId, name) {
 
 // ── ESTIMATION CRÉDITS ──
 function updateEstimate() {
-    const selectedVoices = voices.filter((_, i) => {
+    const selectedVoices = voices.filter((v, i) => {
         const cb = document.getElementById(`vc-${i}`);
-        return cb && cb.checked;
+        return cb && cb.checked && !v.paid_only;
     });
     const allTokens = [...tokens.jp, ...tokens.fr];
     const nSamples  = parseInt(document.getElementById('samples-count').value) || 30;
@@ -527,11 +529,11 @@ async function startGeneration() {
     const allTokensFr = tokens.fr;
     if (allTokensJp.length === 0 && allTokensFr.length === 0) return alert('Ajoutez au moins un token.');
 
-    const selectedVoices = voices.filter((_, i) => {
+    const selectedVoices = voices.filter((v, i) => {
         const cb = document.getElementById(`vc-${i}`);
-        return cb && cb.checked;
+        return cb && cb.checked && !v.paid_only;
     });
-    if (selectedVoices.length === 0) return alert('Sélectionnez au moins une voix.');
+    if (selectedVoices.length === 0) return alert('Aucune voix disponible. Les voix Library nécessitent un abonnement payant — utilisez vos voix personnelles.');
 
     const nSamples = parseInt(document.getElementById('samples-count').value) || 30;
     const delay    = parseInt(document.getElementById('req-delay').value) || 600;
