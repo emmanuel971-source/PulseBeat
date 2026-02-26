@@ -1,13 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Redirection</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.5; padding: 20px; background: #f4f4f4; }
+        .card { background: white; padding: 20px; border-radius: 8px; shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .test-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; }
+        .label { font-weight: bold; }
+        .value { color: #007bff; font-family: monospace; }
+        .result { font-size: 1.2em; padding: 15px; border-radius: 5px; text-align: center; font-weight: bold; }
+        .stay { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .redirect { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
 <body>
-  <p id="ua"></p>
-  <p id="tp"></p>
-  <p id="pl"></p>
-  <script>
-    document.getElementById('ua').innerText = 'userAgent: ' + navigator.userAgent;
-    document.getElementById('tp').innerText = 'maxTouchPoints: ' + navigator.maxTouchPoints;
-    document.getElementById('pl').innerText = 'platform: ' + navigator.platform;
-  </script>
+
+    <h2>🔍 Diagnostic de l'appareil</h2>
+
+    <div class="card">
+        <div class="test-item">
+            <span class="label">User Agent :</span>
+            <span class="value" id="ua">-</span>
+        </div>
+        <div class="test-item">
+            <span class="label">Largeur Fenêtre (innerWidth) :</span>
+            <span class="value" id="width">-</span>
+        </div>
+        <div class="test-item">
+            <span class="label">Device Pixel Ratio (Retina) :</span>
+            <span class="value" id="dpr">-</span>
+        </div>
+        <div class="test-item">
+            <span class="label">Points Tactiles (maxTouchPoints) :</span>
+            <span class="value" id="touch">-</span>
+        </div>
+        <div class="test-item">
+            <span class="label">Ta Media Query (max-width: 1024px & ratio 2) :</span>
+            <span class="value" id="mq">-</span>
+        </div>
+    </div>
+
+    <div id="final-decision" class="result">
+        Analyse en cours...
+    </div>
+
+    <p style="text-align: center; color: #666; font-size: 0.9em;">
+        Note : La redirection automatique est désactivée sur cette page pour vous laisser lire les résultats.
+    </p>
+
+    <script>
+        (function() {
+            // 1. Collecte des données
+            const ua = navigator.userAgent;
+            const width = window.innerWidth;
+            const dpr = window.devicePixelRatio || 1;
+            const touchPoints = navigator.maxTouchPoints || 0;
+            const mqMatches = window.matchMedia("(max-width: 1024px) and (-webkit-min-device-pixel-ratio: 2)").matches;
+
+            // 2. Affichage des données
+            document.getElementById('ua').textContent = ua;
+            document.getElementById('width').textContent = width + 'px';
+            document.getElementById('dpr').textContent = dpr;
+            document.getElementById('touch').textContent = touchPoints;
+            document.getElementById('mq').textContent = mqMatches ? "OUI (Match)" : "NON";
+
+            // 3. Logique de décision (Celle que l'on veut tester)
+            const decisionBox = document.getElementById('final-decision');
+            
+            // On définit un appareil "Mobile/Tablette" si :
+            // - Ta media query match
+            // - OU c'est un écran < 1100px AVEC du tactile
+            const isMobileOrTablet = mqMatches || (width <= 1100 && touchPoints > 0);
+
+            if (isMobileOrTablet) {
+                decisionBox.textContent = "ACTION : JE RESTE SUR CE SITE (Mobile/Tablette détecté)";
+                decisionBox.className = "result stay";
+            } else {
+                decisionBox.textContent = "ACTION : REDIRECTION VERS LANDSCAPE (Desktop détecté)";
+                decisionBox.className = "result redirect";
+            }
+        })();
+    </script>
 </body>
 </html>
