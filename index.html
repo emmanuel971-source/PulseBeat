@@ -2,865 +2,725 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ひらがなテトリス — Hiragana Tetris</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>かなDROP</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700;900&family=Zen+Dots&family=Sawarabi+Gothic&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=DotGothic16&display=swap');
 
-  :root {
-    --bg: #0a0a14;
-    --panel: #12121f;
-    --border: #2a2a4a;
-    --accent: #e8c84a;
-    --accent2: #4ae8c8;
-    --accent3: #e84a8c;
-    --text: #e8e8f8;
-    --dim: #6a6a9a;
-    --cell-size: 50px;
-    --cols: 8;
-    --rows: 14;
-  }
+:root {
+  --bg:      #080c10;
+  --surface: #0d1520;
+  --border:  #1a2a3a;
+  --glow-b:  #00e5ff;
+  --glow-g:  #39ff14;
+  --glow-p:  #ff2d78;
+  --glow-y:  #ffe600;
+  --text:    #ddeeff;
+  --dim:     #4a6a8a;
+  --cell-bg: #0a1520;
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Noto Sans JP', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
+html, body {
+  width:100%; height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Noto Sans JP', sans-serif;
+  overflow:hidden;
+  touch-action:none;
+}
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 60% 40% at 20% 80%, rgba(78, 90, 232, 0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 30% at 80% 20%, rgba(232, 78, 140, 0.10) 0%, transparent 60%);
-    pointer-events: none;
-    z-index: 0;
-  }
+body::after {
+  content:'';
+  position:fixed; inset:0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
+  pointer-events:none; z-index:100;
+}
 
-  #app {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    gap: 18px;
-    align-items: flex-start;
-    padding: 16px;
-  }
+#shell {
+  display:flex; flex-direction:column;
+  height:100dvh; max-width:480px; margin:0 auto;
+}
 
-  .left-panel, .right-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .left-panel { width: 170px; }
-  .right-panel { width: 200px; }
+/* ── TOP BAR ── */
+#topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 14px 6px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0; gap:10px;
+}
+#title-logo {
+  font-family:'DotGothic16',monospace; font-size:16px;
+  color:var(--glow-b); text-shadow:0 0 10px var(--glow-b);
+  letter-spacing:2px; white-space:nowrap;
+}
+#score-block { display:flex; flex-direction:column; align-items:flex-end; }
+#score-label { font-family:'DotGothic16',monospace; font-size:9px; color:var(--dim); letter-spacing:1px; }
+#score-val   { font-family:'DotGothic16',monospace; font-size:22px; color:var(--glow-y); text-shadow:0 0 8px var(--glow-y); line-height:1; }
+#next-block  { display:flex; flex-direction:column; align-items:center; gap:2px; }
+#next-label  { font-family:'DotGothic16',monospace; font-size:9px; color:var(--dim); letter-spacing:1px; }
+#next-kana   {
+  width:42px; height:42px; border-radius:8px;
+  background:linear-gradient(135deg,#0a2040,#1a0840);
+  border:1px solid rgba(0,229,255,0.4);
+  box-shadow:0 0 12px rgba(0,229,255,0.2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; font-weight:900; color:#fff;
+}
 
-  .panel-box {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-  }
+/* ── BOARD AREA ── */
+#board-wrap {
+  flex:1; position:relative; overflow:hidden;
+  display:flex; align-items:stretch;
+}
+#board {
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  width:100%;
+  background:var(--surface);
+  border-left:2px solid var(--border);
+  border-right:2px solid var(--border);
+}
+.cell {
+  aspect-ratio:1;
+  display:flex; align-items:center; justify-content:center;
+  font-size:clamp(15px,5.5vw,26px); font-weight:900;
+  border:1px solid rgba(255,255,255,0.03);
+  user-select:none; position:relative;
+}
+.cell.empty  { background:var(--cell-bg); }
+.cell.filled {
+  background:linear-gradient(160deg,#0e2240,#1a0e40);
+  border-color:rgba(0,229,255,0.18);
+  color:#aad4ff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.07);
+}
+.cell.active {
+  background:linear-gradient(160deg,#0e3a6e,#2a0e6e);
+  border-color:rgba(0,229,255,0.65);
+  color:#fff;
+  animation:activePulse 0.75s ease infinite alternate;
+}
+@keyframes activePulse {
+  from { box-shadow:0 0 8px rgba(0,229,255,0.4); }
+  to   { box-shadow:0 0 22px rgba(0,229,255,0.75); }
+}
+.cell.ghost {
+  background:var(--cell-bg);
+  border:1px dashed rgba(0,229,255,0.15);
+  color:rgba(0,229,255,0.22);
+}
+.cell.flash {
+  animation:cellFlash 0.7s ease forwards !important;
+}
+@keyframes cellFlash {
+  0%   { background:var(--glow-y); color:#000; transform:scale(1.15); z-index:5; }
+  40%  { background:var(--glow-g); color:#000; }
+  100% { opacity:0; transform:scale(0.7); }
+}
+.cell.combo-flash {
+  animation:comboFlash 0.7s ease forwards !important;
+}
+@keyframes comboFlash {
+  0%   { background:var(--glow-p); color:#fff; transform:scale(1.2); z-index:5; }
+  40%  { background:var(--glow-y); color:#000; }
+  100% { opacity:0; transform:scale(0.7); }
+}
 
-  .panel-label {
-    font-family: 'Zen Dots', monospace;
-    font-size: 9px;
-    letter-spacing: 2px;
-    color: var(--dim);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
+/* ── OVERLAY ── */
+#board-overlay {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:rgba(8,12,16,0.93); backdrop-filter:blur(6px);
+  z-index:50; gap:14px; padding:28px 24px;
+}
+#board-overlay.hidden { display:none; }
+.ov-title {
+  font-family:'DotGothic16',monospace; font-size:22px;
+  color:var(--glow-b); text-shadow:0 0 12px var(--glow-b);
+  text-align:center; line-height:1.4;
+}
+.ov-sub { font-size:13px; color:var(--dim); text-align:center; line-height:1.9; }
+.ov-words { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:320px; }
+.ov-word {
+  background:rgba(0,229,255,0.05); border:1px solid rgba(0,229,255,0.18);
+  border-radius:8px; padding:6px 12px; text-align:center;
+}
+.ov-word .ow-kana { font-size:17px; font-weight:900; color:var(--glow-b); }
+.ov-word .ow-sub  { font-size:10px; color:var(--dim); }
 
-  .score-value {
-    font-family: 'Zen Dots', monospace;
-    font-size: 26px;
-    color: var(--accent);
-    line-height: 1;
-  }
+.btn {
+  font-family:'DotGothic16',monospace; font-size:14px; letter-spacing:1px;
+  background:var(--glow-b); color:#000;
+  border:none; border-radius:8px; padding:12px 28px; cursor:pointer;
+  box-shadow:0 0 20px rgba(0,229,255,0.4);
+  width:100%; max-width:240px; transition:all 0.15s;
+}
+.btn:active { transform:scale(0.96); }
+.btn.secondary {
+  background:transparent; color:var(--dim);
+  border:1px solid var(--border); box-shadow:none; font-size:12px; margin-top:-6px;
+}
 
-  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 6px; }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 2px; transition: width 0.4s ease; }
+/* ── WORD POPUP ── */
+#word-popup {
+  position:absolute; left:50%; top:36%;
+  transform:translate(-50%,-50%);
+  background:rgba(8,12,16,0.96);
+  border:2px solid var(--glow-y);
+  border-radius:16px; padding:14px 22px;
+  text-align:center; z-index:40; pointer-events:none;
+  min-width:160px; display:none;
+}
+#word-popup.show { display:block; animation:popupIn 1.9s ease forwards; }
+#word-popup.combo { border-color:var(--glow-p); }
+.wp-emoji  { font-size:30px; display:block; }
+.wp-kana   { font-family:'DotGothic16',monospace; font-size:26px; color:var(--glow-y); text-shadow:0 0 10px var(--glow-y); display:block; line-height:1.2; }
+#word-popup.combo .wp-kana { color:var(--glow-p); text-shadow:0 0 10px var(--glow-p); }
+.wp-romaji { font-size:11px; color:var(--glow-b); letter-spacing:2px; }
+.wp-meaning{ font-size:13px; color:var(--text); margin:2px 0; }
+.wp-pts    { font-family:'DotGothic16',monospace; font-size:17px; color:var(--glow-p); margin-top:5px; }
 
-  #next-display {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 64px; margin-top: 4px;
-  }
-  .next-kana-cell {
-    width: 58px; height: 58px; border-radius: 10px; font-size: 28px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #2a4a8e, #4a2a8e);
-    border: 1px solid rgba(140,180,255,0.6);
-    color: #fff;
-    box-shadow: 0 0 16px rgba(100,140,255,0.3);
-  }
+@keyframes popupIn {
+  0%   { opacity:0; transform:translate(-50%,-62%) scale(0.7); }
+  12%  { opacity:1; transform:translate(-50%,-68%) scale(1.05); }
+  75%  { opacity:1; transform:translate(-50%,-68%) scale(1); }
+  100% { opacity:0; transform:translate(-50%,-74%) scale(0.9); }
+}
 
-  .mission-list { display: flex; flex-direction: column; gap: 8px; }
+/* ── COMBO BANNER ── */
+#combo-banner {
+  position:absolute; left:50%; top:10%;
+  transform:translateX(-50%);
+  font-family:'DotGothic16',monospace; font-size:26px;
+  color:var(--glow-p); text-shadow:0 0 16px var(--glow-p);
+  pointer-events:none; z-index:41; white-space:nowrap; display:none;
+}
+#combo-banner.show { display:block; animation:comboBannerAnim 1.5s ease forwards; }
+@keyframes comboBannerAnim {
+  0%   { opacity:0; transform:translateX(-50%) scale(0.8); }
+  15%  { opacity:1; transform:translateX(-50%) scale(1.12); }
+  70%  { opacity:1; transform:translateX(-50%) scale(1); }
+  100% { opacity:0; }
+}
 
-  .mission-item {
-    display: flex; align-items: center; gap: 10px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 8px 10px;
-    transition: all 0.4s ease;
-  }
-  .mission-item.found {
-    background: rgba(78, 232, 200, 0.08);
-    border-color: rgba(78,232,200,0.4);
-    opacity: 0.55;
-  }
-  .mission-item.found .m-kana { text-decoration: line-through; color: var(--accent2); }
+/* ── WORD PANEL ── */
+#word-panel {
+  background:var(--surface);
+  border-top:2px solid var(--border);
+  flex-shrink:0;
+  padding:7px 8px 8px;
+  display:flex; flex-direction:column; gap:5px;
+}
+.word-row {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,0.025);
+  border:1px solid var(--border);
+  border-radius:8px; padding:6px 10px;
+  animation:rowAppear 0.4s ease;
+  position:relative; overflow:hidden;
+}
+@keyframes rowAppear {
+  from { opacity:0; transform:translateY(6px); }
+  to   { opacity:1; transform:none; }
+}
+.word-row.boss { border-color:rgba(255,45,120,0.35); background:rgba(255,45,120,0.04); }
+.wr-emoji { font-size:19px; flex-shrink:0; }
+.wr-kana  { font-size:17px; font-weight:900; color:var(--text); }
+.wr-sub   { font-size:9px; color:var(--dim); }
+.wr-mult  {
+  font-family:'DotGothic16',monospace; font-size:15px; font-weight:900;
+  color:var(--glow-g); text-shadow:0 0 5px var(--glow-g);
+  min-width:30px; text-align:right; flex-shrink:0;
+  transition:transform 0.15s;
+}
+.word-row.boss .wr-mult { color:var(--glow-p); text-shadow:0 0 5px var(--glow-p); }
+.wr-mult.bump { transform:scale(1.4); }
 
-  .m-emoji { font-size: 22px; line-height: 1; flex-shrink: 0; }
-  .m-info { flex: 1; min-width: 0; }
-  .m-kana { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.2; }
-  .m-sub  { font-size: 10px; color: var(--dim); letter-spacing: 0.5px; }
-  .m-check { font-size: 18px; opacity: 0; transition: opacity 0.3s; }
-  .mission-item.found .m-check { opacity: 1; }
-
-  .level-badge {
-    font-family: 'Zen Dots', monospace;
-    font-size: 11px; letter-spacing: 2px;
-    color: var(--accent); text-align: center;
-    padding: 4px 0 2px;
-  }
-  .level-theme {
-    font-size: 11px; color: var(--dim); text-align: center; margin-top: 2px;
-  }
-
-  .word-history { display: flex; flex-direction: column; gap: 5px; max-height: 160px; overflow-y: auto; }
-  .word-entry {
-    background: rgba(78,232,200,0.05);
-    border: 1px solid rgba(78,232,200,0.15);
-    border-radius: 7px; padding: 7px 9px;
-    animation: slideIn 0.3s ease;
-  }
-  .word-entry .w-kana { font-size: 16px; color: var(--accent2); font-weight: 700; }
-  .word-entry .w-sub  { font-size: 10px; color: var(--dim); }
-  @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:none; } }
-
-  .game-area { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-
-  .game-title {
-    font-family: 'Zen Dots', monospace; font-size: 12px;
-    letter-spacing: 4px; color: var(--dim); text-align: center;
-  }
-  .game-title span { color: var(--accent); }
-
-  #board-container { position: relative; }
-
-  #board {
-    display: grid;
-    grid-template-columns: repeat(var(--cols), var(--cell-size));
-    grid-template-rows: repeat(var(--rows), var(--cell-size));
-    gap: 2px;
-    background: var(--panel);
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    padding: 4px;
-  }
-
-  .cell {
-    width: var(--cell-size); height: var(--cell-size);
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 21px; font-weight: 700;
-    user-select: none;
-  }
-  .cell.empty {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.04);
-  }
-  .cell.filled {
-    background: linear-gradient(135deg, #1e2a5e, #2a1e5e);
-    border: 1px solid rgba(100,120,255,0.4);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 6px rgba(0,0,0,0.5);
-    color: #c8d4ff;
-  }
-  .cell.active {
-    background: linear-gradient(135deg, #2a4a8e, #4a2a8e);
-    border: 1px solid rgba(140,180,255,0.7);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 14px rgba(100,140,255,0.5);
-    color: #fff;
-    animation: pulse 0.9s ease infinite alternate;
-  }
-  @keyframes pulse {
-    from { box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 8px rgba(100,140,255,0.3); }
-    to   { box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 22px rgba(100,140,255,0.65); }
-  }
-  .cell.ghost {
-    background: rgba(100,140,255,0.05);
-    border: 1px dashed rgba(100,140,255,0.22);
-    color: rgba(200,212,255,0.28);
-  }
-  .cell.highlight-word {
-    animation: wordFlash 0.65s ease forwards !important;
-  }
-  @keyframes wordFlash {
-    0%   { background:#e8c84a; color:#0a0a14; transform:scale(1.12); }
-    50%  { background:#4ae8c8; color:#0a0a14; }
-    100% { opacity:0; transform:scale(0.8); }
-  }
-
-  .word-popup {
-    position: absolute; left: 50%; top: 40%;
-    transform: translate(-50%, -50%);
-    background: linear-gradient(135deg, rgba(10,10,20,0.97), rgba(20,10,40,0.97));
-    border: 2px solid var(--accent);
-    border-radius: 16px; padding: 18px 28px;
-    text-align: center; pointer-events: none; z-index: 10;
-    animation: popupAnim 1.9s ease forwards;
-    min-width: 190px;
-  }
-  .word-popup .pop-emoji  { font-size: 36px; display:block; margin-bottom: 4px; }
-  .word-popup .pop-kana   { font-size: 32px; color: var(--accent); font-weight: 900; display:block; }
-  .word-popup .pop-romaji { font-size: 13px; color: var(--accent2); letter-spacing: 2px; margin: 3px 0; }
-  .word-popup .pop-meaning{ font-size: 14px; color: var(--text); }
-  .word-popup .pop-score  { font-family:'Zen Dots',monospace; font-size:20px; color:var(--accent3); margin-top:8px; }
-  @keyframes popupAnim {
-    0%   { opacity:0; transform:translate(-50%,-60%) scale(0.7); }
-    12%  { opacity:1; transform:translate(-50%,-65%) scale(1.06); }
-    75%  { opacity:1; transform:translate(-50%,-65%) scale(1); }
-    100% { opacity:0; transform:translate(-50%,-72%) scale(0.92); }
-  }
-
-  .controls-hint { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
-  .key-hint { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--dim); }
-  .key {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 4px; padding: 2px 6px;
-    font-family: 'Zen Dots', monospace; font-size: 9px; color: var(--text);
-  }
-
-  #pause-btn {
-    background:transparent; border:1px solid var(--border); color:var(--dim);
-    border-radius:6px; padding:5px 12px;
-    font-family:'Zen Dots',monospace; font-size:10px; cursor:pointer; transition:all 0.2s;
-  }
-  #pause-btn:hover { border-color:var(--accent); color:var(--accent); }
-
-  .overlay {
-    position:absolute; inset:0;
-    background:rgba(10,10,20,0.93);
-    border-radius:8px;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:16px; z-index:20; backdrop-filter:blur(4px);
-    padding: 24px;
-  }
-  .overlay h1 {
-    font-family:'Zen Dots',monospace; font-size:24px;
-    color:var(--accent); text-align:center; line-height:1.4;
-  }
-  .overlay p { color:var(--dim); text-align:center; font-size:13px; line-height:1.8; max-width:300px; }
-
-  .btn {
-    background:var(--accent); color:#0a0a14;
-    border:none; border-radius:8px; padding:11px 28px;
-    font-family:'Zen Dots',monospace; font-size:13px; cursor:pointer; transition:all 0.2s;
-  }
-  .btn:hover { background:#f0d86a; transform:translateY(-2px); box-shadow:0 6px 20px rgba(232,200,74,0.3); }
-  .btn-secondary {
-    background:transparent; color:var(--dim); border:1px solid var(--border);
-    border-radius:8px; padding:9px 20px;
-    font-family:'Zen Dots',monospace; font-size:11px; cursor:pointer; transition:all 0.2s;
-  }
-  .btn-secondary:hover { border-color:var(--accent2); color:var(--accent2); }
-
-  .levelup-words {
-    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 320px;
-  }
-  .lw-item {
-    background: rgba(78,232,200,0.07); border: 1px solid rgba(78,232,200,0.2);
-    border-radius: 8px; padding: 6px 12px; font-size: 13px; text-align: center;
-  }
-  .lw-item .lw-kana { color: var(--accent2); font-weight: 700; font-size: 16px; }
-  .lw-item .lw-sub  { color: var(--dim); font-size: 10px; }
-
-  ::-webkit-scrollbar { width: 3px; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* sweep flash */
+.word-row::after {
+  content:''; position:absolute; inset:0; opacity:0; pointer-events:none;
+}
+.word-row.bar-flash::after {
+  background:linear-gradient(90deg,transparent,rgba(57,255,20,0.3),transparent);
+  animation:barSweep 0.55s ease forwards;
+}
+.word-row.bar-combo::after {
+  background:linear-gradient(90deg,transparent,rgba(255,45,120,0.4),transparent);
+  animation:barSweep 0.55s ease forwards;
+}
+@keyframes barSweep {
+  from { opacity:1; transform:translateX(-110%); }
+  to   { opacity:0; transform:translateX(110%); }
+}
 </style>
 </head>
 <body>
-<div id="app">
+<div id="shell">
 
-  <!-- LEFT -->
-  <div class="left-panel">
-    <div class="panel-box">
-      <div class="panel-label">Score</div>
-      <div class="score-value" id="score-display">0</div>
+  <div id="topbar">
+    <div id="title-logo">かなDROP</div>
+    <div id="next-block">
+      <div id="next-label">NEXT</div>
+      <div id="next-kana">？</div>
     </div>
-    <div class="panel-box">
-      <div class="panel-label">Suivant</div>
-      <div id="next-display"></div>
-    </div>
-    <div class="panel-box" style="flex:1">
-      <div class="panel-label">Mots trouvés</div>
-      <div class="word-history" id="word-history"></div>
+    <div id="score-block">
+      <div id="score-label">SCORE</div>
+      <div id="score-val">0</div>
     </div>
   </div>
 
-  <!-- BOARD -->
-  <div class="game-area">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div class="game-title">ひ<span>RAGANA</span> テトリス</div>
-      <button id="pause-btn">❚❚ Pause</button>
+  <div id="board-wrap">
+    <div id="board"></div>
+    <div id="word-popup">
+      <span class="wp-emoji"></span>
+      <span class="wp-kana"></span>
+      <div class="wp-romaji"></div>
+      <div class="wp-meaning"></div>
+      <div class="wp-pts"></div>
     </div>
-    <div id="board-container">
-      <div id="board"></div>
-    </div>
-    <div class="controls-hint">
-      <div class="key-hint"><div class="key">← →</div> Déplacer</div>
-      <div class="key-hint"><div class="key">↓</div> Accélérer</div>
-      <div class="key-hint"><div class="key">Space</div> Chute</div>
+    <div id="combo-banner"></div>
+    <div id="board-overlay">
+      <div class="ov-title" id="ov-title">かなDROP</div>
+      <div class="ov-sub"  id="ov-sub"></div>
+      <div class="ov-words" id="ov-words"></div>
+      <button class="btn" id="ov-btn">はじめる</button>
+      <button class="btn secondary" id="ov-btn2" style="display:none">Recommencer</button>
     </div>
   </div>
 
-  <!-- RIGHT — MISSIONS -->
-  <div class="right-panel">
-    <div class="panel-box">
-      <div class="level-badge" id="level-badge">NIVEAU 1</div>
-      <div class="level-theme" id="level-theme">Animaux • 2 syllabes</div>
-      <div class="progress-bar" style="margin-top:10px">
-        <div class="progress-fill" id="level-progress" style="width:0%"></div>
-      </div>
-    </div>
-    <div class="panel-box" style="flex:1">
-      <div class="panel-label">Mots à former 🎯</div>
-      <div class="mission-list" id="mission-list"></div>
-    </div>
-  </div>
+  <div id="word-panel"></div>
 
 </div>
 <script>
-// ══════════════════════════════════════════════════════════════════
-//  LEVEL DEFINITIONS
-// ══════════════════════════════════════════════════════════════════
-const LEVELS = [
-  {
-    id:1, theme:'Animaux • 2 syllabes', speed:1500,
-    words:[
-      {kana:'いぬ',  romaji:'inu',   meaning:'chien',  emoji:'🐕'},
-      {kana:'ねこ',  romaji:'neko',  meaning:'chat',   emoji:'🐈'},
-      {kana:'うし',  romaji:'ushi',  meaning:'vache',  emoji:'🐄'},
-      {kana:'うま',  romaji:'uma',   meaning:'cheval', emoji:'🐎'},
-      {kana:'くま',  romaji:'kuma',  meaning:'ours',   emoji:'🐻'},
-    ]
-  },
-  {
-    id:2, theme:'Animaux • 2 syllabes (suite)', speed:1400,
-    words:[
-      {kana:'さる',  romaji:'saru',  meaning:'singe',   emoji:'🐒'},
-      {kana:'とり',  romaji:'tori',  meaning:'oiseau',  emoji:'🐦'},
-      {kana:'かめ',  romaji:'kame',  meaning:'tortue',  emoji:'🐢'},
-      {kana:'へび',  romaji:'hebi',  meaning:'serpent', emoji:'🐍'},
-      {kana:'かに',  romaji:'kani',  meaning:'crabe',   emoji:'🦀'},
-    ]
-  },
-  {
-    id:3, theme:'Animaux • 3 syllabes', speed:1300,
-    words:[
-      {kana:'ねずみ', romaji:'nezumi', meaning:'souris',  emoji:'🐭'},
-      {kana:'うさぎ', romaji:'usagi',  meaning:'lapin',   emoji:'🐰'},
-      {kana:'たぬき', romaji:'tanuki', meaning:'raton',   emoji:'🦝'},
-      {kana:'あひる', romaji:'ahiru',  meaning:'canard',  emoji:'🦆'},
-      {kana:'きつね', romaji:'kitsune',meaning:'renard',  emoji:'🦊'},
-    ]
-  },
-  {
-    id:4, theme:'Couleurs', speed:1200,
-    words:[
-      {kana:'あか',   romaji:'aka',   meaning:'rouge',  emoji:'🔴'},
-      {kana:'あお',   romaji:'ao',    meaning:'bleu',   emoji:'🔵'},
-      {kana:'しろ',   romaji:'shiro', meaning:'blanc',  emoji:'⚪'},
-      {kana:'くろ',   romaji:'kuro',  meaning:'noir',   emoji:'⚫'},
-      {kana:'みどり', romaji:'midori',meaning:'vert',   emoji:'🟢'},
-    ]
-  },
-  {
-    id:5, theme:'Nourriture', speed:1100,
-    words:[
-      {kana:'すし',  romaji:'sushi',  meaning:'sushi',  emoji:'🍣'},
-      {kana:'みそ',  romaji:'miso',   meaning:'miso',   emoji:'🍜'},
-      {kana:'そば',  romaji:'soba',   meaning:'soba',   emoji:'🍜'},
-      {kana:'にく',  romaji:'niku',   meaning:'viande', emoji:'🥩'},
-      {kana:'みず',  romaji:'mizu',   meaning:'eau',    emoji:'💧'},
-    ]
-  },
-  {
-    id:6, theme:'Nourriture (suite)', speed:1000,
-    words:[
-      {kana:'りんご', romaji:'ringo',  meaning:'pomme',      emoji:'🍎'},
-      {kana:'うどん', romaji:'udon',   meaning:'udon',       emoji:'🍜'},
-      {kana:'たまご', romaji:'tamago', meaning:'œuf',        emoji:'🥚'},
-      {kana:'みかん', romaji:'mikan',  meaning:'mandarine',  emoji:'🍊'},
-      {kana:'おちゃ', romaji:'ocha',   meaning:'thé vert',   emoji:'🍵'},
-    ]
-  },
-  {
-    id:7, theme:'Corps & Visage', speed:900,
-    words:[
-      {kana:'め',    romaji:'me',    meaning:'œil',     emoji:'👁️'},
-      {kana:'て',    romaji:'te',    meaning:'main',    emoji:'✋'},
-      {kana:'はな',  romaji:'hana',  meaning:'nez',     emoji:'👃'},
-      {kana:'くち',  romaji:'kuchi', meaning:'bouche',  emoji:'👄'},
-      {kana:'みみ',  romaji:'mimi',  meaning:'oreille', emoji:'👂'},
-    ]
-  },
-  {
-    id:8, theme:'Famille', speed:820,
-    words:[
-      {kana:'ちち',    romaji:'chichi', meaning:'père',        emoji:'👨'},
-      {kana:'はは',    romaji:'haha',   meaning:'mère',        emoji:'👩'},
-      {kana:'あに',    romaji:'ani',    meaning:'grand frère', emoji:'👦'},
-      {kana:'いもうと',romaji:'imōto',  meaning:'petite sœur', emoji:'👧'},
-      {kana:'そふ',    romaji:'sofu',   meaning:'grand-père',  emoji:'👴'},
-    ]
-  },
-  {
-    id:9, theme:'Quotidien', speed:740,
-    words:[
-      {kana:'いえ',   romaji:'ie',    meaning:'maison',    emoji:'🏠'},
-      {kana:'ほん',   romaji:'hon',   meaning:'livre',     emoji:'📚'},
-      {kana:'かさ',   romaji:'kasa',  meaning:'parapluie', emoji:'☂️'},
-      {kana:'くるま', romaji:'kuruma',meaning:'voiture',   emoji:'🚗'},
-      {kana:'かぎ',   romaji:'kagi',  meaning:'clé',       emoji:'🔑'},
-    ]
-  },
-  {
-    id:10, theme:'Mix • Défi final !', speed:640,
-    words:[
-      {kana:'はなび', romaji:'hanabi', meaning:"feux d'artifice", emoji:'🎆'},
-      {kana:'さかな', romaji:'sakana', meaning:'poisson',         emoji:'🐟'},
-      {kana:'てがみ', romaji:'tegami', meaning:'lettre',          emoji:'✉️'},
-      {kana:'きいろ', romaji:'kiiro',  meaning:'jaune',           emoji:'🟡'},
-      {kana:'ぶどう', romaji:'budō',   meaning:'raisin',          emoji:'🍇'},
-    ]
-  },
+// ═══════════════════════════════════════════════
+//  WORD LIST  —  5 × 2-kana  +  1 boss × 3-kana
+// ═══════════════════════════════════════════════
+const LEVEL_WORDS = [
+  {kana:'いぬ',  romaji:'inu',    meaning:'chien',  emoji:'🐕', boss:false},
+  {kana:'ねこ',  romaji:'neko',   meaning:'chat',   emoji:'🐈', boss:false},
+  {kana:'うし',  romaji:'ushi',   meaning:'vache',  emoji:'🐄', boss:false},
+  {kana:'うま',  romaji:'uma',    meaning:'cheval', emoji:'🐎', boss:false},
+  {kana:'くま',  romaji:'kuma',   meaning:'ours',   emoji:'🐻', boss:false},
+  {kana:'ねずみ',romaji:'nezumi', meaning:'souris', emoji:'🐭', boss:true},
 ];
 
-// ══════════════════════════════════════════════════════════════════
-//  GAME STATE
-// ══════════════════════════════════════════════════════════════════
-const COLS = 8, ROWS = 14;
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+const COLS = 8;
+let ROWS = 10;
+
 let board = [];
-let active = null;
+let active = null;        // {char, x, y}
 let nextChar = '';
 let score = 0;
-let currentLevelIdx = 0;
-let foundInLevel = new Set();
-let gameRunning = false, paused = false;
-let dropInterval;
-let kanaPool = [];
-let waitingForNext = false; // prevent double spawn during word flash
 
-function getLevelDef() { return LEVELS[currentLevelIdx]; }
+let activeWords  = [];    // words currently displayed in panel
+let wordIntroIdx = 0;     // next index in LEVEL_WORDS to introduce
+let foundRound   = new Set(); // kana found since last intro
+let kanaPool     = [];
 
-function buildKanaPool() {
-  const lv = getLevelDef();
-  kanaPool = lv.words.flatMap(w => [...w.kana]);
+let gameRunning  = false;
+let waitSpawn    = false;
+let dropTimer    = null;
+let DROP_SPEED   = 1400;
+
+// touch
+let txStart=0, tyStart=0, ttStart=0, lastTap=0;
+
+// ═══════════════════════════════════════════════
+//  BOARD SIZING
+// ═══════════════════════════════════════════════
+function calcRows() {
+  const topH  = document.getElementById('topbar').offsetHeight || 54;
+  const panH  = document.getElementById('word-panel').offsetHeight || 0;
+  const avail = (window.innerHeight || document.documentElement.clientHeight) - topH - panH - 4;
+  const cellW = Math.floor((window.innerWidth > 480 ? 480 : window.innerWidth) / COLS);
+  ROWS = Math.max(7, Math.floor(avail / cellW));
 }
 
-function randomKana() {
+// ═══════════════════════════════════════════════
+//  KANA POOL
+// ═══════════════════════════════════════════════
+function rebuildPool() {
+  kanaPool = activeWords.flatMap(w => [...w.kana]);
+}
+function rndKana() {
   return kanaPool[Math.floor(Math.random() * kanaPool.length)];
 }
 
+// ═══════════════════════════════════════════════
+//  BOARD DOM
+// ═══════════════════════════════════════════════
 function initBoard() {
-  board = Array.from({length: ROWS}, () =>
-    Array.from({length: COLS}, () => ({filled: false, char: ''}))
+  board = Array.from({length:ROWS}, () =>
+    Array.from({length:COLS}, () => ({filled:false, char:''}))
   );
 }
+function buildDOM() {
+  const el = document.getElementById('board');
+  el.innerHTML = '';
+  el.style.gridTemplateRows = `repeat(${ROWS},1fr)`;
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    const d = document.createElement('div');
+    d.className = 'cell empty';
+    d.dataset.r = r; d.dataset.c = c;
+    el.appendChild(d);
+  }
+}
+const gc = (r,c) => document.querySelector(`#board [data-r="${r}"][data-c="${c}"]`);
 
-// ══════════════════════════════════════════════════════════════════
-//  PIECE MOVEMENT
-// ══════════════════════════════════════════════════════════════════
-function spawnKana() {
-  waitingForNext = false;
-  active = {char: nextChar || randomKana(), x: Math.floor(COLS / 2), y: 0};
-  nextChar = randomKana();
-  renderNext();
+// ═══════════════════════════════════════════════
+//  SPAWN / MOVE / LOCK
+// ═══════════════════════════════════════════════
+function spawn() {
+  waitSpawn = false;
+  active = {char: nextChar||rndKana(), x: Math.floor(COLS/2), y:0};
+  nextChar = rndKana();
+  document.getElementById('next-kana').textContent = nextChar;
   if (board[0][active.x].filled) { endGame(); return; }
   render();
+  startTimer();
 }
-
-function canMoveTo(x, y) {
-  return x >= 0 && x < COLS && y < ROWS && (y < 0 || !board[y][x].filled);
+function ok(x,y) {
+  return x>=0 && x<COLS && y<ROWS && !board[y][x].filled;
 }
-
-function placeKana() {
+function startTimer() {
+  clearInterval(dropTimer);
+  dropTimer = setInterval(tick, DROP_SPEED);
+}
+function tick() {
+  if (!gameRunning||waitSpawn||!active) return;
+  ok(active.x, active.y+1) ? (active.y++, render()) : lock();
+}
+function lock() {
   if (!active) return;
-  if (active.y < 0) { endGame(); return; }
-  board[active.y][active.x] = {filled: true, char: active.char};
-  active = null;
-  waitingForNext = true;
-  checkWords();
+  clearInterval(dropTimer);
+  board[active.y][active.x] = {filled:true, char:active.char};
+  const r=active.y, c=active.x;
+  active=null; waitSpawn=true;
+  render();
+  checkWords(r,c);
+}
+function hardDrop() {
+  if (!active||!gameRunning||waitSpawn) return;
+  while (ok(active.x, active.y+1)) active.y++;
+  render(); lock();
 }
 
-// ══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 //  WORD DETECTION
-// ══════════════════════════════════════════════════════════════════
-function checkWords() {
-  const lv = getLevelDef();
-  const found = [];
-  const seenKana = new Set();
+// ═══════════════════════════════════════════════
+function checkWords(pr, pc) {
+  const found=[], seenK=new Set();
 
-  function scanLine(cells) {
-    const line = cells.map(({r,c}) => board[r][c].filled ? board[r][c].char : '\x00').join('');
-    lv.words.forEach(w => {
-      if (foundInLevel.has(w.kana) || seenKana.has(w.kana)) return;
-      let idx = line.indexOf(w.kana);
-      if (idx !== -1) {
-        seenKana.add(w.kana);
-        found.push({word: w, cells: Array.from({length: w.kana.length}, (_, i) => cells[idx + i])});
+  function scan(cells) {
+    const line = cells.map(({r,c})=>board[r][c].filled?board[r][c].char:'\x00').join('');
+    activeWords.forEach(w => {
+      if (seenK.has(w.kana)) return;
+      let i = line.indexOf(w.kana);
+      while (i!==-1) {
+        seenK.add(w.kana);
+        found.push({word:w, cells: Array.from({length:w.kana.length},(_,j)=>cells[i+j])});
+        i = line.indexOf(w.kana, i+1);
       }
     });
   }
 
-  // Horizontal
-  for (let r = 0; r < ROWS; r++) {
-    scanLine(Array.from({length: COLS}, (_, c) => ({r, c})));
-  }
-  // Vertical
-  for (let c = 0; c < COLS; c++) {
-    scanLine(Array.from({length: ROWS}, (_, r) => ({r, c})));
-  }
+  // Scan the row and column of the placed kana
+  scan(Array.from({length:COLS},(_,c)=>({r:pr,c})));
+  scan(Array.from({length:ROWS},(_,r)=>({r,c:pc})));
 
-  if (found.length > 0) {
-    const allCells = new Set();
-    found.forEach(f => {
-      foundInLevel.add(f.word.kana);
-      f.cells.forEach(cell => allCells.add(`${cell.r},${cell.c}`));
+  if (!found.length) { spawn(); return; }
+
+  const isCombo = found.length >= 2;
+  const allCells = new Set();
+  found.forEach(f=>{
+    f.cells.forEach(cell=>allCells.add(`${cell.r},${cell.c}`));
+    foundRound.add(f.word.kana);
+    f.word.mult = (f.word.mult||1);
+  });
+
+  // Flash
+  allCells.forEach(key=>{
+    const [r,c]=key.split(',').map(Number);
+    const el=gc(r,c);
+    if(el) el.classList.add(isCombo?'combo-flash':'flash');
+  });
+
+  // Points
+  let pts=0;
+  found.forEach(f=>{ pts += f.word.kana.length*100*f.word.mult; f.word.mult++; });
+  score+=pts; updateScore();
+
+  showPopup(found[0].word, pts, isCombo);
+  found.forEach(f=>flashBar(f.word.kana, isCombo));
+  updateMults();
+
+  setTimeout(()=>{
+    allCells.forEach(key=>{
+      const [r,c]=key.split(',').map(Number);
+      board[r][c]={filled:false,char:''};
+      const el=gc(r,c);
+      if(el){el.className='cell empty';el.textContent='';}
     });
+    gravity(); render();
 
-    // Flash
-    allCells.forEach(key => {
-      const [r, c] = key.split(',').map(Number);
-      const el = getCellEl(r, c);
-      if (el) el.classList.add('highlight-word');
-    });
+    const allDone = activeWords.every(w=>foundRound.has(w.kana));
+    if (allDone) {
+      if (wordIntroIdx >= LEVEL_WORDS.length) { setTimeout(levelDone, 400); }
+      else introNext();
+    } else { spawn(); }
+  }, 800);
+}
 
-    const pts = found.reduce((sum, f) => sum + f.word.kana.length * 120 * (currentLevelIdx + 1), 0);
-    score += pts;
-    showWordPopup(found[0].word, pts);
-    found.forEach(f => addToHistory(f.word));
-    updateMissionUI();
-    updateScoreUI();
-
-    setTimeout(() => {
-      allCells.forEach(key => {
-        const [r, c] = key.split(',').map(Number);
-        board[r][c] = {filled: false, char: ''};
-        const el = getCellEl(r, c);
-        if (el) { el.className = 'cell empty'; el.textContent = ''; }
-      });
-      applyGravity();
-      render();
-
-      if (foundInLevel.size >= lv.words.length) {
-        setTimeout(() => showLevelUp(), 300);
-      } else {
-        spawnKana();
-      }
-    }, 800);
-  } else {
-    spawnKana();
+function gravity() {
+  for (let c=0;c<COLS;c++){
+    const ch=[];
+    for(let r=ROWS-1;r>=0;r--) if(board[r][c].filled) ch.push(board[r][c].char);
+    for(let r=ROWS-1;r>=0;r--) board[r][c]=ch.length?{filled:true,char:ch.shift()}:{filled:false,char:''};
   }
 }
 
-function applyGravity() {
-  for (let c = 0; c < COLS; c++) {
-    const chars = [];
-    for (let r = ROWS - 1; r >= 0; r--) {
-      if (board[r][c].filled) chars.push(board[r][c].char);
-    }
-    for (let r = ROWS - 1; r >= 0; r--) {
-      board[r][c] = chars.length > 0
-        ? {filled: true, char: chars.shift()}
-        : {filled: false, char: ''};
-    }
-  }
+// ═══════════════════════════════════════════════
+//  WORD INTRO
+// ═══════════════════════════════════════════════
+function introNext() {
+  if (wordIntroIdx>=LEVEL_WORDS.length) return;
+  const w=LEVEL_WORDS[wordIntroIdx++];
+  w.mult=1;
+  activeWords.push(w);
+  foundRound=new Set(); // all words must be done again
+  rebuildPool();
+  renderPanel();        // panel grows → board shrinks → recalc rows
+  setTimeout(()=>spawn(), 350);
 }
 
-// ══════════════════════════════════════════════════════════════════
-//  RENDERING
-// ══════════════════════════════════════════════════════════════════
-function getCellEl(r, c) {
-  return document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+// ═══════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════
+function ghostY() {
+  if(!active) return -1;
+  let g=active.y;
+  while(g+1<ROWS&&!board[g+1][active.x].filled) g++;
+  return g;
 }
-
-function buildBoard() {
-  const boardEl = document.getElementById('board');
-  boardEl.innerHTML = '';
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const cell = document.createElement('div');
-      cell.className = 'cell empty';
-      cell.dataset.r = r; cell.dataset.c = c;
-      boardEl.appendChild(cell);
-    }
-  }
-}
-
-function getGhostY() {
-  if (!active) return -1;
-  let gy = active.y;
-  while (gy + 1 < ROWS && !board[gy + 1][active.x].filled) gy++;
-  return gy;
-}
-
 function render() {
-  const gy = active ? getGhostY() : -1;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const el = getCellEl(r, c);
-      if (!el || el.classList.contains('highlight-word')) continue;
-
-      if (active && r === active.y && c === active.x) {
-        el.className = 'cell active'; el.textContent = active.char;
-      } else if (active && r === gy && c === active.x && gy !== active.y) {
-        el.className = 'cell ghost'; el.textContent = active.char;
-      } else if (board[r][c].filled) {
-        el.className = 'cell filled'; el.textContent = board[r][c].char;
-      } else {
-        el.className = 'cell empty'; el.textContent = '';
-      }
-    }
+  const gy=ghostY();
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const el=gc(r,c);
+    if(!el||el.classList.contains('flash')||el.classList.contains('combo-flash')) continue;
+    if(active&&r===active.y&&c===active.x){el.className='cell active';el.textContent=active.char;}
+    else if(active&&r===gy&&c===active.x&&gy!==active.y){el.className='cell ghost';el.textContent=active.char;}
+    else if(board[r][c].filled){el.className='cell filled';el.textContent=board[r][c].char;}
+    else{el.className='cell empty';el.textContent='';}
   }
 }
-
-function renderNext() {
-  const display = document.getElementById('next-display');
-  display.innerHTML = '';
-  const cell = document.createElement('div');
-  cell.className = 'next-kana-cell';
-  cell.textContent = nextChar;
-  display.appendChild(cell);
+function updateScore() {
+  document.getElementById('score-val').textContent=score.toLocaleString();
 }
 
-function renderMissions() {
-  const lv = getLevelDef();
-  const list = document.getElementById('mission-list');
-  list.innerHTML = '';
-  lv.words.forEach(w => {
-    const item = document.createElement('div');
-    const done = foundInLevel.has(w.kana);
-    item.className = 'mission-item' + (done ? ' found' : '');
-    item.dataset.kana = w.kana;
-    item.innerHTML = `
-      <div class="m-emoji">${w.emoji}</div>
-      <div class="m-info">
-        <div class="m-kana">${w.kana}</div>
-        <div class="m-sub">${w.romaji} · ${w.meaning}</div>
+// ═══════════════════════════════════════════════
+//  WORD PANEL
+// ═══════════════════════════════════════════════
+function renderPanel() {
+  const p=document.getElementById('word-panel');
+  p.innerHTML='';
+  activeWords.forEach(w=>{
+    const row=document.createElement('div');
+    row.className='word-row'+(w.boss?' boss':'');
+    row.id='wr-'+w.kana;
+    row.innerHTML=`
+      <div class="wr-emoji">${w.emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div class="wr-kana">${w.kana}</div>
+        <div class="wr-sub">${w.romaji} · ${w.meaning}</div>
       </div>
-      <div class="m-check">✓</div>`;
-    list.appendChild(item);
+      <div class="wr-mult" id="wm-${w.kana}">x${w.mult||1}</div>`;
+    p.appendChild(row);
   });
-  document.getElementById('level-badge').textContent = `NIVEAU ${lv.id}`;
-  document.getElementById('level-theme').textContent = lv.theme;
-  const pct = (foundInLevel.size / lv.words.length) * 100;
-  document.getElementById('level-progress').style.width = pct + '%';
-}
-
-function updateMissionUI() {
-  const lv = getLevelDef();
-  document.querySelectorAll('.mission-item').forEach(item => {
-    if (foundInLevel.has(item.dataset.kana)) item.classList.add('found');
+  // Board must shrink — recalc after paint
+  requestAnimationFrame(()=>{
+    const panH=p.offsetHeight;
+    calcRows();
+    buildDOM();
+    initBoard();
   });
-  const pct = (foundInLevel.size / lv.words.length) * 100;
-  document.getElementById('level-progress').style.width = pct + '%';
+}
+function updateMults() {
+  activeWords.forEach(w=>{
+    const el=document.getElementById('wm-'+w.kana);
+    if(!el) return;
+    el.textContent='x'+w.mult;
+    el.classList.add('bump');
+    setTimeout(()=>el.classList.remove('bump'),200);
+  });
+}
+function flashBar(kana, isCombo) {
+  const row=document.getElementById('wr-'+kana);
+  if(!row) return;
+  row.classList.remove('bar-flash','bar-combo');
+  void row.offsetWidth;
+  row.classList.add(isCombo?'bar-combo':'bar-flash');
+  setTimeout(()=>row.classList.remove('bar-flash','bar-combo'),650);
 }
 
-function showWordPopup(word, pts) {
-  document.querySelectorAll('.word-popup').forEach(p => p.remove());
-  const popup = document.createElement('div');
-  popup.className = 'word-popup';
-  popup.innerHTML = `
-    <span class="pop-emoji">${word.emoji}</span>
-    <span class="pop-kana">${word.kana}</span>
-    <div class="pop-romaji">${word.romaji}</div>
-    <div class="pop-meaning">${word.meaning}</div>
-    <div class="pop-score">+${pts} pts</div>`;
-  document.getElementById('board-container').appendChild(popup);
-  setTimeout(() => popup.remove(), 1900);
-}
+// ═══════════════════════════════════════════════
+//  POPUP
+// ═══════════════════════════════════════════════
+let popTimer=null;
+function showPopup(word, pts, isCombo) {
+  const p=document.getElementById('word-popup');
+  p.querySelector('.wp-emoji').textContent=word.emoji;
+  p.querySelector('.wp-kana').textContent=word.kana;
+  p.querySelector('.wp-romaji').textContent=word.romaji;
+  p.querySelector('.wp-meaning').textContent=word.meaning;
+  p.querySelector('.wp-pts').textContent=(isCombo?'🔥 COMBO! ':'')+'+'+(pts)+' pts';
+  p.className=isCombo?'combo show':'show';
+  void p.offsetWidth;
 
-function addToHistory(word) {
-  const hist = document.getElementById('word-history');
-  const entry = document.createElement('div');
-  entry.className = 'word-entry';
-  entry.innerHTML = `<div class="w-kana">${word.emoji} ${word.kana}</div><div class="w-sub">${word.romaji} · ${word.meaning}</div>`;
-  hist.insertBefore(entry, hist.firstChild);
-  if (hist.children.length > 10) hist.removeChild(hist.lastChild);
-}
-
-function updateScoreUI() {
-  document.getElementById('score-display').textContent = score.toLocaleString();
-}
-
-// ══════════════════════════════════════════════════════════════════
-//  LEVEL TRANSITIONS
-// ══════════════════════════════════════════════════════════════════
-function showLevelUp() {
-  clearInterval(dropInterval);
-  gameRunning = false;
-  active = null;
-
-  const nextIdx = currentLevelIdx + 1;
-  const isLast = nextIdx >= LEVELS.length;
-  const overlay = document.createElement('div');
-  overlay.className = 'overlay';
-
-  if (isLast) {
-    overlay.innerHTML = `
-      <h1>🎉 Félicitations !<br><span style="font-size:14px;color:var(--dim)">Tous les niveaux complétés !</span></h1>
-      <p>Score final : <strong style="color:var(--accent)">${score.toLocaleString()} pts</strong><br>Tu maîtrises les hiraganas !</p>
-      <button class="btn" id="restart-final-btn">Rejouer depuis le début</button>`;
-    document.getElementById('board-container').appendChild(overlay);
-    document.getElementById('restart-final-btn').onclick = () => { currentLevelIdx = 0; score = 0; updateScoreUI(); startLevel(); };
-    return;
+  if (isCombo) {
+    const b=document.getElementById('combo-banner');
+    const maxMult=Math.max(...activeWords.map(w=>w.mult||1));
+    b.textContent='🔥 COMBO x'+maxMult;
+    b.className='show'; void b.offsetWidth;
+    setTimeout(()=>b.className='',1600);
   }
 
-  const nextLv = LEVELS[nextIdx];
-  overlay.innerHTML = `
-    <h1>ステージクリア！<br><span style="font-size:13px;color:var(--dim)">Niveau ${getLevelDef().id} terminé !</span></h1>
-    <p style="color:var(--accent2);font-size:12px;letter-spacing:1px;margin-bottom:4px">
-      NIVEAU ${nextLv.id} — ${nextLv.theme}
-    </p>
-    <div class="levelup-words" id="lw-preview"></div>
-    <button class="btn" id="nextlevel-btn">Niveau suivant →</button>`;
-  document.getElementById('board-container').appendChild(overlay);
+  clearTimeout(popTimer);
+  popTimer=setTimeout(()=>p.className='',1950);
+}
 
-  const preview = document.getElementById('lw-preview');
-  nextLv.words.forEach(w => {
-    const d = document.createElement('div');
-    d.className = 'lw-item';
-    d.innerHTML = `<div class="lw-kana">${w.emoji} ${w.kana}</div><div class="lw-sub">${w.romaji} · ${w.meaning}</div>`;
-    preview.appendChild(d);
+// ═══════════════════════════════════════════════
+//  OVERLAY
+// ═══════════════════════════════════════════════
+function showOverlay({title,sub,words=[],btn1,act1,btn2=null,act2=null}) {
+  clearInterval(dropTimer); gameRunning=false;
+  document.getElementById('ov-title').innerHTML=title;
+  document.getElementById('ov-sub').innerHTML=sub;
+  const ow=document.getElementById('ov-words');
+  ow.innerHTML='';
+  words.forEach(w=>{
+    const d=document.createElement('div'); d.className='ov-word';
+    d.innerHTML=`<div class="ow-kana">${w.emoji} ${w.kana}</div><div class="ow-sub">${w.romaji} · ${w.meaning}</div>`;
+    ow.appendChild(d);
   });
-
-  document.getElementById('nextlevel-btn').onclick = () => {
-    currentLevelIdx = nextIdx;
-    startLevel();
-  };
+  const b1=document.getElementById('ov-btn');
+  b1.textContent=btn1; b1.onclick=act1;
+  const b2=document.getElementById('ov-btn2');
+  if(btn2){b2.textContent=btn2;b2.onclick=act2;b2.style.display='';}
+  else b2.style.display='none';
+  document.getElementById('board-overlay').classList.remove('hidden');
+}
+function hideOverlay() {
+  document.getElementById('board-overlay').classList.add('hidden');
 }
 
-// ══════════════════════════════════════════════════════════════════
-//  GAME LOOP
-// ══════════════════════════════════════════════════════════════════
-function drop() {
-  if (!gameRunning || paused || !active || waitingForNext) return;
-  if (canMoveTo(active.x, active.y + 1)) {
-    active.y++;
-    render();
-  } else {
-    placeKana();
-  }
-}
+// ═══════════════════════════════════════════════
+//  GAME FLOW
+// ═══════════════════════════════════════════════
+function startGame() {
+  score=0; updateScore();
+  activeWords=[]; wordIntroIdx=0; foundRound=new Set();
+  LEVEL_WORDS.forEach(w=>w.mult=1);
+  document.getElementById('word-panel').innerHTML='';
 
-function startLevel() {
-  document.getElementById('board-container').querySelectorAll('.overlay').forEach(o => o.remove());
-  document.querySelectorAll('.word-popup').forEach(p => p.remove());
-  initBoard();
-  foundInLevel = new Set();
-  waitingForNext = false;
-  buildKanaPool();
-  active = null;
-  nextChar = randomKana();
-  gameRunning = true;
-  paused = false;
-  document.getElementById('pause-btn').textContent = '❚❚ Pause';
-  buildBoard();
-  renderMissions();
-  spawnKana();
-  clearInterval(dropInterval);
-  dropInterval = setInterval(drop, getLevelDef().speed);
+  calcRows(); buildDOM(); initBoard();
+  hideOverlay();
+  gameRunning=true; waitSpawn=false;
+
+  // Introduce word 1
+  const w=LEVEL_WORDS[wordIntroIdx++];
+  w.mult=1; activeWords.push(w);
+  rebuildPool(); renderPanel();
+
+  nextChar=rndKana();
+  document.getElementById('next-kana').textContent=nextChar;
+  setTimeout(()=>spawn(), 500);
 }
 
 function endGame() {
-  gameRunning = false;
-  active = null;
-  clearInterval(dropInterval);
-  const overlay = document.createElement('div');
-  overlay.className = 'overlay';
-  overlay.innerHTML = `
-    <h1>ゲームオーバー<br><span style="font-size:14px;color:var(--dim)">Game Over</span></h1>
-    <p>Score : <strong style="color:var(--accent)">${score.toLocaleString()}</strong><br>
-    Niveau <strong style="color:var(--accent2)">${getLevelDef().id}</strong> —
-    ${foundInLevel.size} / ${getLevelDef().words.length} mots trouvés</p>
-    <button class="btn" id="retry-btn">Réessayer ce niveau</button>
-    <button class="btn-secondary" id="restart-btn">Recommencer depuis le début</button>`;
-  document.getElementById('board-container').appendChild(overlay);
-  document.getElementById('retry-btn').onclick = startLevel;
-  document.getElementById('restart-btn').onclick = () => { currentLevelIdx = 0; score = 0; updateScoreUI(); startLevel(); };
+  clearInterval(dropTimer); gameRunning=false;
+  showOverlay({
+    title:'ゲームオーバー',
+    sub:`Score : <strong style="color:var(--glow-y)">${score.toLocaleString()}</strong>`,
+    btn1:'Réessayer', act1:startGame
+  });
 }
 
-function togglePause() {
-  if (!gameRunning) return;
-  paused = !paused;
-  document.getElementById('pause-btn').textContent = paused ? '▶ Jouer' : '❚❚ Pause';
-  if (!paused) { dropInterval = setInterval(drop, getLevelDef().speed); }
-  else clearInterval(dropInterval);
+function levelDone() {
+  clearInterval(dropTimer); gameRunning=false;
+  showOverlay({
+    title:'🎉 クリア！<br><small style="font-size:14px;color:var(--dim)">Niveau 1 terminé !</small>',
+    sub:`Score : <strong style="color:var(--glow-y)">${score.toLocaleString()}</strong><br>Tu connais les animaux en japonais !`,
+    words:LEVEL_WORDS,
+    btn1:'Rejouer', act1:startGame
+  });
 }
 
-// ══════════════════════════════════════════════════════════════════
-//  INPUT
-// ══════════════════════════════════════════════════════════════════
-document.addEventListener('keydown', e => {
-  if (!gameRunning || paused || !active || waitingForNext) return;
-  switch(e.key) {
-    case 'ArrowLeft':
-      e.preventDefault();
-      if (canMoveTo(active.x - 1, active.y)) { active.x--; render(); } break;
-    case 'ArrowRight':
-      e.preventDefault();
-      if (canMoveTo(active.x + 1, active.y)) { active.x++; render(); } break;
-    case 'ArrowDown':
-      e.preventDefault();
-      if (canMoveTo(active.x, active.y + 1)) { active.y++; render(); }
-      else placeKana();
-      break;
-    case ' ':
-      e.preventDefault();
-      while (canMoveTo(active.x, active.y + 1)) active.y++;
-      placeKana(); render(); break;
-    case 'p': case 'P': togglePause(); break;
+// ═══════════════════════════════════════════════
+//  TOUCH
+// ═══════════════════════════════════════════════
+const BW=document.getElementById('board-wrap');
+
+BW.addEventListener('touchstart', e=>{
+  const t=e.touches[0];
+  txStart=t.clientX; tyStart=t.clientY; ttStart=Date.now();
+  // double-tap
+  const now=Date.now();
+  if(now-lastTap<280){ if(gameRunning&&!waitSpawn&&active) hardDrop(); lastTap=0; return; }
+  lastTap=now;
+},{passive:true});
+
+BW.addEventListener('touchend', e=>{
+  if(!gameRunning||waitSpawn||!active) return;
+  const t=e.changedTouches[0];
+  const dx=t.clientX-txStart, dy=t.clientY-tyStart, dt=Date.now()-ttStart;
+  const adx=Math.abs(dx), ady=Math.abs(dy);
+  if(dt<200&&adx<12&&ady<12) return; // handled by double-tap
+  if(ady>adx&&dy>50){ hardDrop(); return; } // swipe down
+  if(adx>ady&&adx>10){
+    const cellW=Math.floor((window.innerWidth>480?480:window.innerWidth)/COLS);
+    const steps=Math.max(1,Math.round(adx/cellW));
+    const dir=dx>0?1:-1;
+    for(let i=0;i<steps;i++){
+      if(ok(active.x+dir,active.y)) active.x+=dir; else break;
+    }
+    render();
   }
+},{passive:true});
+
+// keyboard (desktop)
+document.addEventListener('keydown',e=>{
+  if(!gameRunning||waitSpawn||!active) return;
+  if(e.key==='ArrowLeft'&&ok(active.x-1,active.y)){e.preventDefault();active.x--;render();}
+  if(e.key==='ArrowRight'&&ok(active.x+1,active.y)){e.preventDefault();active.x++;render();}
+  if(e.key==='ArrowDown'){e.preventDefault(); ok(active.x,active.y+1)?(active.y++,render()):lock();}
+  if(e.key===' '){e.preventDefault();hardDrop();}
 });
-document.getElementById('pause-btn').onclick = togglePause;
 
-// ══════════════════════════════════════════════════════════════════
-//  START SCREEN
-// ══════════════════════════════════════════════════════════════════
-function showStartScreen() {
-  buildBoard();
-  const lv = LEVELS[0];
-  const overlay = document.createElement('div');
-  overlay.className = 'overlay';
-  overlay.innerHTML = `
-    <h1>ひらがな<br>テトリス</h1>
-    <p>Un hiragana tombe à la fois. Place-les pour former<br>
-    les mots du niveau, <strong style="color:var(--accent)">horizontalement<br>ou verticalement</strong> !<br><br>
-    Seuls les hiraganas utiles apparaissent.<br>Les mots à trouver sont à droite.<br><br>
-    <span style="color:var(--accent)">← →</span> déplacer &nbsp;
-    <span style="color:var(--accent)">↓</span> accélérer &nbsp;
-    <span style="color:var(--accent)">Espace</span> chute</p>
-    <div class="levelup-words">
-      ${lv.words.map(w=>`<div class="lw-item"><div class="lw-kana">${w.emoji} ${w.kana}</div><div class="lw-sub">${w.meaning}</div></div>`).join('')}
-    </div>
-    <button class="btn" id="start-btn">はじめる — Commencer</button>`;
-  document.getElementById('board-container').appendChild(overlay);
-  document.getElementById('start-btn').onclick = () => {
-    currentLevelIdx = 0; score = 0; updateScoreUI(); startLevel();
-  };
-}
+window.addEventListener('resize',()=>{
+  if(!gameRunning) return;
+  calcRows(); buildDOM(); initBoard(); if(active) render();
+});
 
-showStartScreen();
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+calcRows(); buildDOM();
+showOverlay({
+  title:'かなDROP',
+  sub:`Fais tomber les hiraganas pour former des mots<br>
+       <strong style="color:var(--glow-b)">horizontalement ou verticalement</strong><br><br>
+       ← Glisse gauche/droite →<br>
+       Double-tap · Swipe ↓ = chute<br><br>
+       <span style="color:var(--glow-y)">Niveau 1 · Les animaux</span>`,
+  words:LEVEL_WORDS.slice(0,3),
+  btn1:'はじめる — Jouer', act1:startGame
+});
 </script>
 </body>
 </html>
