@@ -358,6 +358,101 @@ body::after {
   z-index:35; display:none;
 }
 
+/* ── ENCOURAGEMENT BANNER ── */
+#encourage-banner {
+  position:absolute; left:50%; bottom:18%;
+  transform:translateX(-50%);
+  font-family:"Fredoka One",sans-serif; font-size:15px;
+  color:var(--green); text-shadow:0 0 12px rgba(77,255,176,0.7);
+  pointer-events:none; z-index:42; white-space:nowrap;
+  text-align:center; line-height:1.4; display:none;
+  background:rgba(2,8,20,0.7); border-radius:12px;
+  padding:6px 14px; border:1px solid rgba(77,255,176,0.25);
+}
+#encourage-banner.show { display:block; animation:encourageAnim 2.2s ease forwards; }
+@keyframes encourageAnim {
+  0%   { opacity:0; transform:translateX(-50%) translateY(10px); }
+  12%  { opacity:1; transform:translateX(-50%) translateY(0px); }
+  70%  { opacity:1; transform:translateX(-50%) translateY(-8px); }
+  100% { opacity:0; transform:translateX(-50%) translateY(-20px); }
+}
+
+/* ── SCREEN SHAKE ── */
+@keyframes shakeLight {
+  0%,100% { transform:translate(0,0) rotate(0deg); }
+  20%  { transform:translate(-3px, 1px) rotate(-0.4deg); }
+  40%  { transform:translate(3px, -1px) rotate(0.4deg); }
+  60%  { transform:translate(-2px, 2px) rotate(-0.3deg); }
+  80%  { transform:translate(2px, -2px) rotate(0.3deg); }
+}
+@keyframes shakeHard {
+  0%,100% { transform:translate(0,0) rotate(0deg); }
+  15%  { transform:translate(-6px, 2px) rotate(-0.7deg); }
+  30%  { transform:translate(6px,-2px) rotate(0.7deg); }
+  45%  { transform:translate(-4px, 3px) rotate(-0.5deg); }
+  60%  { transform:translate(5px,-3px) rotate(0.5deg); }
+  75%  { transform:translate(-3px, 1px) rotate(-0.3deg); }
+  90%  { transform:translate(2px,-1px) rotate(0.2deg); }
+}
+#board-col.shake-light { animation:shakeLight 0.35s ease; }
+#board-col.shake-hard  { animation:shakeHard  0.5s ease; }
+
+/* ── HINT GLOW on filled cells that could complete a word ── */
+.cell.hint {
+  border-color:rgba(255,233,77,0.7) !important;
+  box-shadow:0 0 10px rgba(255,233,77,0.45), inset 0 0 6px rgba(255,233,77,0.15) !important;
+  color:#ffe94d !important;
+}
+
+/* ── SIDE COMBO COLUMN ── */
+#side-events {
+  flex:1;
+  width:100%;
+  pointer-events:none;
+  display:flex; flex-direction:column; align-items:center;
+  gap:4px; padding:2px;
+  overflow:hidden;
+  justify-content:flex-end;
+}
+.side-event {
+  font-family:'Fredoka One',sans-serif;
+  font-size:clamp(11px,3vw,15px);
+  text-align:center; line-height:1.2;
+  padding:5px 8px; border-radius:10px;
+  width:90%;
+  animation:sideEventIn 2.4s ease forwards;
+}
+@keyframes sideEventIn {
+  0%   { opacity:0; transform:scale(0.6) translateY(8px); }
+  12%  { opacity:1; transform:scale(1.08) translateY(0); }
+  70%  { opacity:1; transform:scale(1) translateY(-4px); }
+  100% { opacity:0; transform:scale(0.9) translateY(-16px); }
+}
+.side-event.ev-combo {
+  background:rgba(0,229,255,0.12); border:1.5px solid rgba(0,229,255,0.4);
+  color:var(--cyan); text-shadow:0 0 8px rgba(0,229,255,0.6);
+}
+.side-event.ev-cascade {
+  background:rgba(77,255,176,0.12); border:1.5px solid rgba(77,255,176,0.4);
+  color:var(--green); text-shadow:0 0 8px rgba(77,255,176,0.6);
+}
+.side-event.ev-streak {
+  background:rgba(255,233,77,0.12); border:1.5px solid rgba(255,233,77,0.4);
+  color:var(--gold); text-shadow:0 0 8px rgba(255,233,77,0.6);
+}
+
+/* ── SPEED INDICATOR ── */
+#speed-bar {
+  position:absolute; bottom:0; left:0; right:0; height:3px;
+  background:var(--border); overflow:hidden;
+}
+#speed-fill {
+  height:100%; width:0%;
+  background:linear-gradient(90deg, var(--teal), var(--cyan));
+  transition:width 0.6s ease, background 0.6s ease;
+  box-shadow:0 0 6px var(--cyan);
+}
+
 /* ── MUTE ── */
 #mute-btn {
   position:absolute; bottom:6px; width:100%; left:0;
@@ -387,6 +482,7 @@ body::after {
         <div class="wp-pts"></div>
       </div>
       <div id="combo-banner"></div>
+      <div id="encourage-banner"></div>
       <div id="streak"></div>
       <div id="board-overlay">
         <div class="ov-title" id="ov-title">かなDROP</div>
@@ -409,6 +505,12 @@ body::after {
       </div>
       <div class="side-block">
         <div id="level-badge">Lv.1<br>🐾</div>
+      </div>
+      <!-- Side event feed -->
+      <div id="side-events"></div>
+      <!-- Speed bar at bottom of side panel -->
+      <div id="speed-bar" style="margin-top:auto;width:90%;border-radius:4px;overflow:hidden;">
+        <div id="speed-fill"></div>
       </div>
     </div>
   </div>
@@ -462,6 +564,192 @@ document.getElementById('mute-toggle').onclick=()=>{
 };
 
 // ════════════════════════════════════════════════════════
+//  SCREEN SHAKE
+// ════════════════════════════════════════════════════════
+function screenShake(hard=false){
+  const el=document.getElementById('board-col');
+  el.classList.remove('shake-light','shake-hard');
+  void el.offsetWidth;
+  el.classList.add(hard?'shake-hard':'shake-light');
+  setTimeout(()=>el.classList.remove('shake-light','shake-hard'), hard?500:350);
+}
+
+// ════════════════════════════════════════════════════════
+//  HINT GLOW — highlight cells that could extend a word
+//  Called each time the active piece moves/spawns
+// ════════════════════════════════════════════════════════
+let hintCells=new Set();
+function updateHints(){
+  // Clear old hints
+  hintCells.forEach(key=>{
+    const [r,c]=key.split(',').map(Number);
+    const el=gc(r,c);
+    if(el&&board[r][c].filled) el.classList.remove('hint');
+  });
+  hintCells=new Set();
+  if(!active) return;
+
+  activeWords.forEach(wd=>{
+    const ks=[...wd.kana];
+    // Scan all rows and cols looking for partial prefixes
+    // If row/col has ks[0..len-1] somewhere AND the next needed kana
+    // equals active.char, light up the cells of the partial match
+    for(let r=0;r<ROWS;r++){
+      const line=Array.from({length:COLS},(_,c)=>board[r][c].filled?board[r][c].char:'\x00').join('');
+      for(let len=1;len<ks.length;len++){
+        const prefix=ks.slice(0,len).join('');
+        const nextNeeded=ks[len];
+        if(nextNeeded!==active.char) continue;
+        let i=line.indexOf(prefix);
+        while(i!==-1){
+          // Light up the prefix cells
+          for(let j=0;j<len;j++){
+            const key=`${r},${i+j}`;
+            hintCells.add(key);
+            const el=gc(r,i+j);
+            if(el) el.classList.add('hint');
+          }
+          i=line.indexOf(prefix,i+1);
+        }
+      }
+    }
+    for(let c=0;c<COLS;c++){
+      const line=Array.from({length:ROWS},(_,r)=>board[r][c].filled?board[r][c].char:'\x00').join('');
+      for(let len=1;len<ks.length;len++){
+        const prefix=ks.slice(0,len).join('');
+        const nextNeeded=ks[len];
+        if(nextNeeded!==active.char) continue;
+        let i=line.indexOf(prefix);
+        while(i!==-1){
+          for(let j=0;j<len;j++){
+            const key=`${i+j},${c}`;
+            hintCells.add(key);
+            const el=gc(i+j,c);
+            if(el) el.classList.add('hint');
+          }
+          i=line.indexOf(prefix,i+1);
+        }
+      }
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  SIDE EVENT FEED
+// ════════════════════════════════════════════════════════
+function sideEvent(text, type){
+  const feed=document.getElementById('side-events');
+  const el=document.createElement('div');
+  el.className=`side-event ev-${type}`;
+  el.innerHTML=text;
+  feed.prepend(el);
+  // Keep max 4 events visible
+  while(feed.children.length>4) feed.removeChild(feed.lastChild);
+  setTimeout(()=>el.remove(), 2500);
+}
+
+// ════════════════════════════════════════════════════════
+//  SPEED PROGRESSION
+//  DROP_SPEED starts at 1400ms, loses 40ms per word found
+//  Floor at 400ms. Speed bar in side panel shows progress.
+// ════════════════════════════════════════════════════════
+const SPEED_START=1400, SPEED_FLOOR=400, SPEED_STEP=40;
+let wordsFoundTotal=0;
+
+function updateSpeedBar(){
+  const range=SPEED_START-SPEED_FLOOR;
+  const used=SPEED_START-DROP_SPEED;
+  const pct=Math.min(100, Math.round(used/range*100));
+  const fill=document.getElementById('speed-fill');
+  fill.style.width=pct+'%';
+  // Colour shifts teal→cyan→gold→coral as it heats up
+  if(pct<40)       fill.style.background='linear-gradient(90deg,var(--teal),var(--cyan))';
+  else if(pct<70)  fill.style.background='linear-gradient(90deg,var(--cyan),var(--gold))';
+  else             fill.style.background='linear-gradient(90deg,var(--gold),var(--coral))';
+}
+
+function onWordFound(count=1){
+  wordsFoundTotal+=count;
+  const newSpeed=Math.max(SPEED_FLOOR, SPEED_START - wordsFoundTotal*SPEED_STEP);
+  if(newSpeed!==DROP_SPEED){
+    DROP_SPEED=newSpeed;
+    // Restart timer at new speed only if a piece is currently falling
+    if(active&&gameRunning&&!resolvingWords) startTimer();
+  }
+  updateSpeedBar();
+}
+
+// ════════════════════════════════════════════════════════
+//  KANA AUDIO — fetch mp3s from GitHub raw URLs
+//  Format: https://raw.githubusercontent.com/emmanuel971-source/hirakataquizz/main/あ.mp3
+// ════════════════════════════════════════════════════════
+const kanaAudioCache={};
+const AUDIO_BASE='https://raw.githubusercontent.com/emmanuel971-source/hirakataquizz/main/';
+
+function loadKanaAudio(kana){
+  if(kanaAudioCache[kana]) return;
+  kanaAudioCache[kana]='loading';
+  fetch(AUDIO_BASE+encodeURIComponent(kana)+'.mp3')
+    .then(r=>r.arrayBuffer())
+    .then(buf=>getCtx().decodeAudioData(buf))
+    .then(decoded=>{ kanaAudioCache[kana]=decoded; })
+    .catch(()=>{ kanaAudioCache[kana]=null; });
+}
+
+function preloadAllKanaAudio(){
+  // Preload all kana that appear in active words
+  const allKana=new Set(activeWords.flatMap(w=>[...w.kana]));
+  allKana.forEach(k=>loadKanaAudio(k));
+}
+
+function playKanaAudio(kana){
+  if(muted) return;
+  const buf=kanaAudioCache[kana];
+  if(!buf||buf==='loading') return;
+  try{
+    const ctx=getCtx();
+    const src=ctx.createBufferSource();
+    src.buffer=buf;
+    const gain=ctx.createGain(); gain.gain.value=0.7;
+    src.connect(gain); gain.connect(ctx.destination);
+    src.start();
+  }catch(e){}
+}
+
+function playWordAudio(kana){
+  // Play each kana of a word sequentially with 250ms gap
+  [...kana].forEach((k,i)=>setTimeout(()=>playKanaAudio(k), i*250));
+}
+
+// Encouragement messages in Japanese + FR translation
+const ENCOURAGEMENTS=[
+  {jp:'すごい！',   fr:'Incroyable !'},
+  {jp:'やった！',   fr:'Ouais !'},
+  {jp:'かんぺき！', fr:'Parfait !'},
+  {jp:'さいこう！', fr:'Génial !'},
+  {jp:'どんどん！', fr:'Continue !'},
+  {jp:'がんばれ！', fr:'Courage !'},
+  {jp:'うまい！',   fr:'Bien joué !'},
+  {jp:'れんぞく！', fr:'Enchaîné !'},
+];
+let lastEncourageIdx=-1;
+function showEncouragement(){
+  let idx; do { idx=Math.floor(Math.random()*ENCOURAGEMENTS.length); } while(idx===lastEncourageIdx);
+  lastEncourageIdx=idx;
+  const e=ENCOURAGEMENTS[idx];
+  const el=document.getElementById('encourage-banner');
+  el.innerHTML=e.jp+'<br><span style="font-size:11px;color:var(--dim)">'+e.fr+'</span>';
+  el.className='show'; void el.offsetWidth;
+  setTimeout(()=>el.className='',2300);
+  playEncouragement();
+}
+
+function playEncouragement(){
+  // Short ascending chime to accompany encouragement banner
+  [880,1108,1318].forEach((f,i)=>playTone(f,'sine',0.15,0.12,i*0.06));
+}
+
+// ════════════════════════════════════════════════════════
 //  STARFIELD
 // ════════════════════════════════════════════════════════
 (function(){
@@ -502,7 +790,8 @@ function spawnParticles(cellEl, count=12){
 //  STATE
 // ════════════════════════════════════════════════════════
 const COLS=8;
-let ROWS=12;
+const ROWS_FIXED=18;  // always 18 rows, same difficulty on all devices
+let ROWS=ROWS_FIXED;
 let board=[];
 let active=null;
 let nextChar='';
@@ -512,6 +801,7 @@ let activeWords=[], wordIntroIdx=0, foundRound=new Set(), kanaPool=[];
 let gameRunning=false;
 let dropTimer=null;
 let DROP_SPEED=1400;
+let lastKana='';
 
 // ── CONCURRENCY GUARD ──────────────────────────────────
 // A single "sequence lock" prevents two word-resolution
@@ -530,14 +820,49 @@ function safeSpawn(){
 //  SIZING
 // ════════════════════════════════════════════════════════
 function calcRows(){
-  const panH=document.getElementById('word-panel').offsetHeight||0;
-  const avail=(window.innerHeight||document.documentElement.clientHeight)-panH;
-  const screenW=Math.min(window.innerWidth,480);
-  const cellW=Math.floor(screenW*0.75/COLS);
-  ROWS=Math.max(8,Math.floor(avail/cellW));
+  // Fixed 18 rows always — consistent difficulty across all devices.
+  // The board CSS uses flex:1 so it stretches to fill remaining space;
+  // cells are NOT square on small screens but that is intentional.
+  ROWS=ROWS_FIXED;
 }
-function rebuildPool(){ kanaPool=activeWords.flatMap(w=>[...w.kana]); }
-function rndKana(){ return kanaPool[Math.floor(Math.random()*kanaPool.length)]; }
+function rebuildPool(){
+  kanaPool=activeWords.flatMap(w=>[...w.kana]);
+  // Preload audio for all kana now in play
+  if(typeof preloadAllKanaAudio==='function') preloadAllKanaAudio();
+}
+
+// Need-weighted draw + anti-repeat ─────────────────────
+// Each kana gets base weight 2 per active word that contains it.
+// +3 bonus if that kana would extend a prefix already on the board.
+// Never draws same kana twice in a row (if alternatives exist).
+function neededKanas(){
+  const w={};
+  activeWords.forEach(wd=>{
+    [...wd.kana].forEach(k=>{ w[k]=(w[k]||0)+2; });
+  });
+  activeWords.forEach(wd=>{
+    const ks=[...wd.kana];
+    for(let r=0;r<ROWS;r++){
+      let seq=''; for(let c=0;c<COLS;c++) seq+=board[r][c].filled?board[r][c].char:'';
+      for(let len=1;len<ks.length;len++){ if(seq.includes(ks.slice(0,len).join(''))) w[ks[len]]=(w[ks[len]]||0)+3; }
+    }
+    for(let c=0;c<COLS;c++){
+      let seq=''; for(let r=0;r<ROWS;r++) seq+=board[r][c].filled?board[r][c].char:'';
+      for(let len=1;len<ks.length;len++){ if(seq.includes(ks.slice(0,len).join(''))) w[ks[len]]=(w[ks[len]]||0)+3; }
+    }
+  });
+  return w;
+}
+function rndKana(){
+  const w=neededKanas();
+  const keys=Object.keys(w);
+  if(!keys.length) return kanaPool[0]||'あ';
+  const pool=(keys.filter(k=>k!==lastKana).length ? keys.filter(k=>k!==lastKana) : keys);
+  const tot=pool.reduce((s,k)=>s+w[k],0);
+  let r=Math.random()*tot;
+  for(const k of pool){ r-=w[k]; if(r<=0){lastKana=k;return k;} }
+  lastKana=pool[pool.length-1]; return lastKana;
+}
 
 // ════════════════════════════════════════════════════════
 //  BOARD DOM
@@ -602,6 +927,7 @@ function lock(){
 function hardDrop(){
   if(!active||!gameRunning||resolvingWords) return;
   while(ok(active.x,active.y+1)) active.y++;
+  screenShake(false);
   render(); lock();
 }
 
@@ -701,6 +1027,17 @@ function processCascade(found, isCascade){
   // Cascade bonus label
   if(isCascade){ soundCombo(); }
   else { isCombo ? soundCombo() : soundWord(); }
+  // Kana pronunciation of first matched word
+  playWordAudio(found[0].word.kana);
+  // Screen shake: hard on cascade/big combo, light otherwise
+  if(isCascade||found.length>=3) screenShake(true);
+  else if(isCombo) screenShake(false);
+  // Side event feed
+  if(isCascade)      sideEvent('🌊<br>CASCADE!','cascade');
+  else if(isCombo)   sideEvent('⚡ COMBO<br>×'+found.length,'combo');
+  else if(streak>=3) sideEvent('🔥 ×'+streak,'streak');
+  // Speed up on each word found
+  onWordFound(found.length);
 
   showPopup(found[0].word, pts, isCombo || isCascade);
   const barDone = new Set();
@@ -708,6 +1045,8 @@ function processCascade(found, isCascade){
   updateMults();
   updateScore();
   updateStreak();
+  // Show encouragement on every 3rd streak or cascade
+  if(streak>0&&streak%3===0||isCascade) showEncouragement();
 
   // Wait for flash, then remove cells → gravity → check cascade
   setTimeout(() => {
@@ -778,9 +1117,18 @@ function render(){
     if(!el||el.classList.contains('flash')||el.classList.contains('combo-flash')||el.classList.contains('land')) continue;
     if(active&&r===active.y&&c===active.x){el.className='cell active';el.textContent=active.char;}
     else if(active&&r===gy&&c===active.x&&gy!==active.y){el.className='cell ghost';el.textContent=active.char;}
-    else if(board[r][c].filled){el.className='cell filled';el.textContent=board[r][c].char;}
+    else if(board[r][c].filled){
+      el.className='cell filled';el.textContent=board[r][c].char;
+    }
     else{el.className='cell empty';el.textContent='';}
   }
+  // Re-apply hint glow (render clears classes so we redo hints)
+  hintCells.forEach(key=>{
+    const [r,c]=key.split(',').map(Number);
+    const el=gc(r,c);
+    if(el&&board[r][c].filled) el.classList.add('hint');
+  });
+  updateHints();
 }
 function updateScore(){
   const el=document.getElementById('score-val');
@@ -892,9 +1240,10 @@ function hideOverlay(){ document.getElementById('board-overlay').classList.add('
 //  GAME FLOW
 // ════════════════════════════════════════════════════════
 function startGame(){
-  score=0; streak=0;
+  score=0; streak=0; wordsFoundTotal=0; DROP_SPEED=SPEED_START;
   document.getElementById('streak').style.display='none';
-  updateScore();
+  document.getElementById('side-events').innerHTML='';
+  updateScore(); updateSpeedBar();
   activeWords=[]; wordIntroIdx=0; foundRound=new Set();
   LEVEL_WORDS.forEach(w=>w.mult=1);
   document.getElementById('word-panel').innerHTML='';
@@ -930,26 +1279,36 @@ function levelDone(){
 }
 
 // ════════════════════════════════════════════════════════
-//  TOUCH
+//  TOUCH — full-screen zone, long-press = hard drop
 // ════════════════════════════════════════════════════════
-let txStart=0,tyStart=0,ttStart=0,lastTap=0;
-const BW=document.getElementById('board-col');
-BW.addEventListener('touchstart',e=>{
+let txStart=0,tyStart=0,ttStart=0,holdTimer=null;
+
+// Listen on the entire shell (full screen), not just the board column
+const TOUCH_ZONE=document.getElementById('shell');
+
+TOUCH_ZONE.addEventListener('touchstart',e=>{
   getCtx();
   const t=e.touches[0];
   txStart=t.clientX; tyStart=t.clientY; ttStart=Date.now();
-  const now=Date.now();
-  if(now-lastTap<280){ if(gameRunning&&!resolvingWords&&active) hardDrop(); lastTap=0; return; }
-  lastTap=now;
+  // Long press (400ms) = hard drop
+  clearTimeout(holdTimer);
+  holdTimer=setTimeout(()=>{
+    if(gameRunning&&!resolvingWords&&active){ hardDrop(); }
+  },400);
 },{passive:true});
-BW.addEventListener('touchend',e=>{
+
+TOUCH_ZONE.addEventListener('touchend',e=>{
+  clearTimeout(holdTimer);
   if(!gameRunning||resolvingWords||!active) return;
   const t=e.changedTouches[0];
   const dx=t.clientX-txStart, dy=t.clientY-tyStart, dt=Date.now()-ttStart;
   const adx=Math.abs(dx), ady=Math.abs(dy);
-  if(dt<200&&adx<12&&ady<12) return;
-  if(ady>adx&&dy>50){ hardDrop(); return; }
-  if(adx>ady&&adx>10){
+  // Ignore taps (no movement, no hold)
+  if(dt<380&&adx<14&&ady<14) return;
+  // Swipe down = hard drop (only if not already triggered by long press)
+  if(ady>adx&&dy>60){ hardDrop(); return; }
+  // Swipe horizontal = move
+  if(adx>ady&&adx>12){
     const screenW=Math.min(window.innerWidth,480);
     const cellW=Math.floor(screenW*0.75/COLS);
     const steps=Math.max(1,Math.round(adx/cellW));
@@ -957,6 +1316,12 @@ BW.addEventListener('touchend',e=>{
     for(let i=0;i<steps;i++){ if(ok(active.x+dir,active.y)) active.x+=dir; else break; }
     render();
   }
+},{passive:true});
+
+// Cancel long press if finger moves significantly
+TOUCH_ZONE.addEventListener('touchmove',e=>{
+  const t=e.touches[0];
+  if(Math.abs(t.clientX-txStart)>15||Math.abs(t.clientY-tyStart)>15) clearTimeout(holdTimer);
 },{passive:true});
 document.addEventListener('keydown',e=>{
   if(!gameRunning||resolvingWords||!active) return;
