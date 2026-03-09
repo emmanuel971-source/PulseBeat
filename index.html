@@ -40,53 +40,63 @@ body::after {
 
 #shell {
   display:flex; flex-direction:column;
-  height:100dvh; max-width:480px; margin:0 auto;
+  height:100dvh; max-width:600px; /* Élargi pour accueillir le panneau latéral */ 
+  margin:0 auto;
 }
 
-/* ── TOP BAR ── */
-#topbar {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:8px 14px 6px;
+/* ── LAYOUT PRINCIPAL ── */
+#main-area {
+  display: flex; flex: 1; overflow: hidden;
+}
+
+#board-wrap {
+  flex: 3; /* Prend environ 75% de la largeur */
+  position:relative; overflow:hidden;
+  display:flex; align-items:stretch;
+}
+
+#side-panel {
+  flex: 1; /* Prend environ 25% de la largeur */
   background:var(--surface);
-  border-bottom:1px solid var(--border);
-  flex-shrink:0; gap:10px;
+  border-left:1px solid var(--border);
+  display:flex; flex-direction:column;
+  align-items:center; 
+  padding: 20px 5px 10px; 
+  gap: 25px;
+  z-index: 10;
 }
+
 #title-logo {
-  font-family:'DotGothic16',monospace; font-size:16px;
+  font-family:'DotGothic16',monospace; font-size:18px;
   color:var(--glow-b); text-shadow:0 0 10px var(--glow-b);
-  letter-spacing:2px; white-space:nowrap;
+  letter-spacing:2px; text-align:center; line-height:1.2;
 }
-#score-block { display:flex; flex-direction:column; align-items:flex-end; }
-#score-label { font-family:'DotGothic16',monospace; font-size:9px; color:var(--dim); letter-spacing:1px; }
-#score-val   { font-family:'DotGothic16',monospace; font-size:22px; color:var(--glow-y); text-shadow:0 0 8px var(--glow-y); line-height:1; }
-#next-block  { display:flex; flex-direction:column; align-items:center; gap:2px; }
+#score-block { display:flex; flex-direction:column; align-items:center; width: 100%; }
+#score-label { font-family:'DotGothic16',monospace; font-size:9px; color:var(--dim); letter-spacing:1px; margin-bottom:4px; }
+#score-val   { font-family:'DotGothic16',monospace; font-size:18px; color:var(--glow-y); text-shadow:0 0 8px var(--glow-y); line-height:1; word-break: break-all; text-align: center; }
+#next-block  { display:flex; flex-direction:column; align-items:center; gap:6px; }
 #next-label  { font-family:'DotGothic16',monospace; font-size:9px; color:var(--dim); letter-spacing:1px; }
 #next-kana   {
-  width:42px; height:42px; border-radius:8px;
+  width:48px; height:48px; border-radius:8px;
   background:linear-gradient(135deg,#0a2040,#1a0840);
   border:1px solid rgba(0,229,255,0.4);
   box-shadow:0 0 12px rgba(0,229,255,0.2);
   display:flex; align-items:center; justify-content:center;
-  font-size:22px; font-weight:900; color:#fff;
+  font-size:26px; font-weight:900; color:#fff;
 }
 
 /* ── BOARD AREA ── */
-#board-wrap {
-  flex:1; position:relative; overflow:hidden;
-  display:flex; align-items:stretch;
-}
 #board {
   display:grid;
   grid-template-columns:repeat(8,1fr);
   width:100%;
   background:var(--surface);
-  border-left:2px solid var(--border);
-  border-right:2px solid var(--border);
 }
 .cell {
   aspect-ratio:1;
   display:flex; align-items:center; justify-content:center;
-  font-size:clamp(15px,5.5vw,26px); font-weight:900;
+  font-size:clamp(20px, 7vw, 32px); /* Taille de police augmentée ! */
+  font-weight:900;
   border:1px solid rgba(255,255,255,0.03);
   user-select:none; position:relative;
 }
@@ -260,34 +270,36 @@ body::after {
 <body>
 <div id="shell">
 
-  <div id="topbar">
-    <div id="title-logo">かなDROP</div>
-    <div id="next-block">
-      <div id="next-label">NEXT</div>
-      <div id="next-kana">？</div>
+  <div id="main-area">
+    <div id="board-wrap">
+      <div id="board"></div>
+      <div id="word-popup">
+        <span class="wp-emoji"></span>
+        <span class="wp-kana"></span>
+        <div class="wp-romaji"></div>
+        <div class="wp-meaning"></div>
+        <div class="wp-pts"></div>
+      </div>
+      <div id="combo-banner"></div>
+      <div id="board-overlay">
+        <div class="ov-title" id="ov-title">かなDROP</div>
+        <div class="ov-sub"  id="ov-sub"></div>
+        <div class="ov-words" id="ov-words"></div>
+        <button class="btn" id="ov-btn">はじめる</button>
+        <button class="btn secondary" id="ov-btn2" style="display:none">Recommencer</button>
+      </div>
     </div>
-    <div id="score-block">
-      <div id="score-label">SCORE</div>
-      <div id="score-val">0</div>
-    </div>
-  </div>
-
-  <div id="board-wrap">
-    <div id="board"></div>
-    <div id="word-popup">
-      <span class="wp-emoji"></span>
-      <span class="wp-kana"></span>
-      <div class="wp-romaji"></div>
-      <div class="wp-meaning"></div>
-      <div class="wp-pts"></div>
-    </div>
-    <div id="combo-banner"></div>
-    <div id="board-overlay">
-      <div class="ov-title" id="ov-title">かなDROP</div>
-      <div class="ov-sub"  id="ov-sub"></div>
-      <div class="ov-words" id="ov-words"></div>
-      <button class="btn" id="ov-btn">はじめる</button>
-      <button class="btn secondary" id="ov-btn2" style="display:none">Recommencer</button>
+    
+    <div id="side-panel">
+      <div id="title-logo">かな<br>DROP</div>
+      <div id="next-block">
+        <div id="next-label">NEXT</div>
+        <div id="next-kana">？</div>
+      </div>
+      <div id="score-block">
+        <div id="score-label">SCORE</div>
+        <div id="score-val">0</div>
+      </div>
     </div>
   </div>
 
@@ -335,10 +347,11 @@ let txStart=0, tyStart=0, ttStart=0, lastTap=0;
 //  BOARD SIZING
 // ═══════════════════════════════════════════════
 function calcRows() {
-  const topH  = document.getElementById('topbar').offsetHeight || 54;
   const panH  = document.getElementById('word-panel').offsetHeight || 0;
-  const avail = (window.innerHeight || document.documentElement.clientHeight) - topH - panH - 4;
-  const cellW = Math.floor((window.innerWidth > 480 ? 480 : window.innerWidth) / COLS);
+  const avail = (window.innerHeight || document.documentElement.clientHeight) - panH - 4;
+  // Largeur ajustée à board-wrap au lieu de window
+  const boardWrapW = document.getElementById('board-wrap').offsetWidth || (window.innerWidth * 0.75);
+  const cellW = Math.floor(boardWrapW / COLS);
   ROWS = Math.max(7, Math.floor(avail / cellW));
 }
 
@@ -430,7 +443,7 @@ function checkWords(pr, pc) {
     });
   }
 
-  // Scan the row and column of the placed kana
+  // Scan horizontal ET vertical
   scan(Array.from({length:COLS},(_,c)=>({r:pr,c})));
   scan(Array.from({length:ROWS},(_,r)=>({r,c:pc})));
 
@@ -486,8 +499,21 @@ function gravity() {
 }
 
 // ═══════════════════════════════════════════════
-//  WORD INTRO
+//  WORD INTRO & SHIFT UP
 // ═══════════════════════════════════════════════
+function shiftBoardUp() {
+  // Fait remonter tous les blocs d'une ligne
+  for (let r = 0; r < ROWS - 1; r++) {
+    for (let c = 0; c < COLS; c++) {
+      board[r][c] = { ...board[r+1][c] };
+    }
+  }
+  // Vide la dernière ligne
+  for (let c = 0; c < COLS; c++) {
+    board[ROWS-1][c] = {filled: false, char: ''};
+  }
+}
+
 function introNext() {
   if (wordIntroIdx>=LEVEL_WORDS.length) return;
   const w=LEVEL_WORDS[wordIntroIdx++];
@@ -495,7 +521,8 @@ function introNext() {
   activeWords.push(w);
   foundRound=new Set(); // all words must be done again
   rebuildPool();
-  renderPanel();        // panel grows → board shrinks → recalc rows
+  window._isIntroducingWord = true; // Déclenche le shift up dans renderPanel
+  renderPanel();
   setTimeout(()=>spawn(), 350);
 }
 
@@ -542,14 +569,42 @@ function renderPanel() {
       <div class="wr-mult" id="wm-${w.kana}">x${w.mult||1}</div>`;
     p.appendChild(row);
   });
-  // Board must shrink — recalc after paint
+
+  // Board must shrink/grow — recalc after paint
   requestAnimationFrame(()=>{
-    const panH=p.offsetHeight;
+    const oldRows = ROWS;
+    const oldBoard = JSON.parse(JSON.stringify(board)); // Copie de l'état
+    
     calcRows();
-    buildDOM();
-    initBoard();
+    
+    // On ne reconstruit le DOM que si la hauteur a changé ou si la grille est vide
+    if (oldRows !== ROWS || board.length === 0) {
+      buildDOM();
+      initBoard();
+      
+      // Restauration intelligente des pièces (alignement par le bas)
+      if (oldBoard.length > 0) {
+        const rOffset = Math.max(0, oldRows - ROWS);
+        for(let r=0; r<ROWS; r++){
+          for(let c=0; c<COLS; c++){
+             if (r + rOffset < oldRows) {
+                 board[r][c] = oldBoard[r + rOffset][c] || {filled:false, char:''};
+             }
+          }
+        }
+      }
+    }
+
+    // Remonte la grille au lieu de l'effacer lors d'un nouveau mot
+    if (window._isIntroducingWord) {
+        shiftBoardUp();
+        window._isIntroducingWord = false;
+    }
+    
+    render();
   });
 }
+
 function updateMults() {
   activeWords.forEach(w=>{
     const el=document.getElementById('wm-'+w.kana);
@@ -683,7 +738,7 @@ BW.addEventListener('touchend', e=>{
   if(dt<200&&adx<12&&ady<12) return; // handled by double-tap
   if(ady>adx&&dy>50){ hardDrop(); return; } // swipe down
   if(adx>ady&&adx>10){
-    const cellW=Math.floor((window.innerWidth>480?480:window.innerWidth)/COLS);
+    const cellW=Math.floor(BW.offsetWidth/COLS);
     const steps=Math.max(1,Math.round(adx/cellW));
     const dir=dx>0?1:-1;
     for(let i=0;i<steps;i++){
