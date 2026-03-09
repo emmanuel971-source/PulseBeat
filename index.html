@@ -606,91 +606,145 @@ function hardDrop(){
 }
 
 // ════════════════════════════════════════════════════════
-//  WORD DETECTION  (lock held throughout)
+//  WORD DETECTION — entry point after a piece locks
+//  Scans only row+col of placed cell, then hands off
+//  to the cascade engine.
 // ════════════════════════════════════════════════════════
-function checkWords(pr,pc){
-  const found=[];
-  const rowCells=Array.from({length:COLS},(_,c)=>({r:pr,c}));
-  const colCells=Array.from({length:ROWS},(_,r)=>({r,c:pc}));
-  const rowLine=rowCells.map(({r,c})=>board[r][c].filled?board[r][c].char:'\x00').join('');
-  const colLine=colCells.map(({r,c})=>board[r][c].filled?board[r][c].char:'\x00').join('');
+function checkWords(pr, pc){
+  // First pass: only scan the row and col of the placed cell
+  const found = scanRowCol(pr, pc);
+  if(!found.length){ safeSpawn(); return; }
+  processCascade(found, false);
+}
 
-  function scan(line,cells){
-    activeWords.forEach(w=>{
-      let i=line.indexOf(w.kana);
-      while(i!==-1){
-        found.push({word:w,cells:Array.from({length:w.kana.length},(_,j)=>cells[i+j]),dir:cells===rowCells?'H':'V'});
-        i=line.indexOf(w.kana,i+1);
-      }
-    });
+// ════════════════════════════════════════════════════════
+//  SCAN helpers
+// ════════════════════════════════════════════════════════
+
+// Scan a single row+col, return found matches
+function scanRowCol(r, c){
+  const found = [];
+  const rowCells = Array.from({length:COLS}, (_, cc) => ({r, c:cc}));
+  const colCells = Array.from({length:ROWS}, (_, rr) => ({r:rr, c}));
+  scanLine(rowCells, found);
+  scanLine(colCells, found);
+  return found;
+}
+
+// Scan the ENTIRE board (all rows + all cols), return found matches
+function scanFullBoard(){
+  const found = [];
+  for(let r=0; r<ROWS; r++){
+    const cells = Array.from({length:COLS}, (_, c) => ({r, c}));
+    scanLine(cells, found);
   }
-  scan(rowLine,rowCells);
-  scan(colLine,colCells);
+  for(let c=0; c<COLS; c++){
+    const cells = Array.from({length:ROWS}, (_, r) => ({r, c}));
+    scanLine(cells, found);
+  }
+  return found;
+}
 
-  if(!found.length){ safeSpawn(); return; }  // ← release lock + spawn
-
-  const isCombo=found.length>=2;
-  const cellSet=new Set();
-  found.forEach(f=>f.cells.forEach(cell=>cellSet.add(`${cell.r},${cell.c}`)));
-
-  // Flash
-  const flashEls=[];
-  cellSet.forEach(key=>{
-    const [r,c]=key.split(',').map(Number);
-    const el=gc(r,c);
-    if(el){ el.classList.add(isCombo?'combo-flash':'flash'); flashEls.push(el); }
+// Scan one line of cells, push matches into found[]
+function scanLine(cells, found){
+  const line = cells.map(({r,c}) => board[r][c].filled ? board[r][c].char : '\x00').join('');
+  activeWords.forEach(w => {
+    let i = line.indexOf(w.kana);
+    while(i !== -1){
+      // Deduplicate: don't add if exact same cells already queued
+      const key = cells.slice(i, i+w.kana.length).map(cc=>`${cc.r},${cc.c}`).join('|');
+      if(!found.some(f => f.key === key)){
+        found.push({
+          word: w,
+          cells: Array.from({length:w.kana.length}, (_, j) => cells[i+j]),
+          key
+        });
+      }
+      i = line.indexOf(w.kana, i+1);
+    }
   });
-  if(flashEls.length) spawnParticles(flashEls[Math.floor(flashEls.length/2)],isCombo?20:12);
+}
+
+// ════════════════════════════════════════════════════════
+//  CASCADE ENGINE
+//  cascadeDepth > 0 means we're in a post-gravity cascade
+// ════════════════════════════════════════════════════════
+function processCascade(found, isCascade){
+  const isCombo = found.length >= 2;
+  const cellSet = new Set();
+  found.forEach(f => f.cells.forEach(cell => cellSet.add(`${cell.r},${cell.c}`)));
+
+  // Flash cells
+  const flashEls = [];
+  cellSet.forEach(key => {
+    const [r,c] = key.split(',').map(Number);
+    const el = gc(r,c);
+    if(el){ el.classList.add(isCombo ? 'combo-flash' : 'flash'); flashEls.push(el); }
+  });
+  if(flashEls.length) spawnParticles(flashEls[Math.floor(flashEls.length/2)], isCombo ? 20 : 12);
 
   // Score
-  let pts=0;
-  found.forEach(f=>{
-    pts+=f.word.kana.length*100*(f.word.mult||1);
-    f.word.mult=(f.word.mult||1)+1;
+  let pts = 0;
+  found.forEach(f => {
+    pts += f.word.kana.length * 100 * (f.word.mult || 1);
+    f.word.mult = (f.word.mult || 1) + 1;
     foundRound.add(f.word.kana);
   });
-  // Streak bonus
-  const now=Date.now();
-  if(now-lastWordTime<4000) streak++; else streak=1;
-  lastWordTime=now;
-  if(streak>1) pts=Math.round(pts*(1+streak*0.08));
-  score+=pts;
 
-  isCombo?soundCombo():soundWord();
-  showPopup(found[0].word,pts,isCombo);
-  const barDone=new Set();
-  found.forEach(f=>{ if(!barDone.has(f.word.kana)){flashBar(f.word.kana,isCombo);barDone.add(f.word.kana);} });
+  // Streak — cascades count as rapid words
+  const now = Date.now();
+  if(now - lastWordTime < 4000) streak++; else streak = 1;
+  lastWordTime = now;
+  if(streak > 1) pts = Math.round(pts * (1 + streak * 0.08));
+  score += pts;
+
+  // Cascade bonus label
+  if(isCascade){ soundCombo(); }
+  else { isCombo ? soundCombo() : soundWord(); }
+
+  showPopup(found[0].word, pts, isCombo || isCascade);
+  const barDone = new Set();
+  found.forEach(f => { if(!barDone.has(f.word.kana)){ flashBar(f.word.kana, isCombo||isCascade); barDone.add(f.word.kana); }});
   updateMults();
   updateScore();
   updateStreak();
 
-  // Remove cells after flash, then continue
-  setTimeout(()=>{
-    cellSet.forEach(key=>{
-      const [r,c]=key.split(',').map(Number);
-      board[r][c]={filled:false,char:''};
-      const el=gc(r,c);
-      if(el){el.className='cell empty';el.textContent='';}
+  // Wait for flash, then remove cells → gravity → check cascade
+  setTimeout(() => {
+    cellSet.forEach(key => {
+      const [r,c] = key.split(',').map(Number);
+      board[r][c] = {filled:false, char:''};
+      const el = gc(r,c);
+      if(el){ el.className = 'cell empty'; el.textContent = ''; }
     });
+
     gravity();
     render();
 
-    const allDone=activeWords.every(w=>foundRound.has(w.kana));
-    if(allDone){
-      if(wordIntroIdx>=LEVEL_WORDS.length){ setTimeout(levelDone,400); }
-      else introNext();
-      // introNext calls safeSpawn after panel rebuild
-    } else {
-      safeSpawn();   // ← release lock + spawn
+    // ── CASCADE: scan full board after gravity ──
+    const cascadeFound = scanFullBoard();
+    if(cascadeFound.length){
+      // More matches found — keep the chain going
+      setTimeout(() => processCascade(cascadeFound, true), 300);
+      return;
     }
-  }, 850);
+
+    // No more matches — check progression then spawn
+    const allDone = activeWords.every(w => foundRound.has(w.kana));
+    if(allDone){
+      if(wordIntroIdx >= LEVEL_WORDS.length){ setTimeout(levelDone, 400); }
+      else introNext();
+    } else {
+      safeSpawn();
+    }
+  }, 820);
 }
 
 function gravity(){
-  for(let c=0;c<COLS;c++){
-    const ch=[];
-    for(let r=ROWS-1;r>=0;r--) if(board[r][c].filled) ch.push(board[r][c].char);
-    for(let r=ROWS-1;r>=0;r--) board[r][c]=ch.length?{filled:true,char:ch.shift()}:{filled:false,char:''};
+  for(let c=0; c<COLS; c++){
+    const ch = [];
+    for(let r=ROWS-1; r>=0; r--) if(board[r][c].filled) ch.push(board[r][c].char);
+    for(let r=ROWS-1; r>=0; r--) board[r][c] = ch.length ? {filled:true, char:ch.shift()} : {filled:false, char:''};
   }
 }
 
