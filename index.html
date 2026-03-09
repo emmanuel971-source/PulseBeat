@@ -3,418 +3,984 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>かなDROP ✨ PRO</title>
+<title>かなDROP ✨</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Fredoka+One&display=swap');
 
 :root {
-  --bg: #030d1a; --surface: #061528; --border: #0a3050;
-  --cyan: #00e5ff; --teal: #00c9a7; --green: #4dffb0;
-  --blue: #2979ff; --gold: #ffe94d; --coral: #ff6b6b;
-  --text: #d0f4ff; --dim: #2a6080;
+  --bg:       #030d1a;
+  --surface:  #061528;
+  --border:   #0a3050;
+  --cyan:     #00e5ff;
+  --teal:     #00c9a7;
+  --green:    #4dffb0;
+  --blue:     #2979ff;
+  --aqua:     #00bcd4;
+  --gold:     #ffe94d;
+  --coral:    #ff6b6b;
+  --text:     #d0f4ff;
+  --dim:      #2a6080;
+  --cell-bg:  #020a14;
+  --cell-bdr: #0a2540;
 }
 
 * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
-body { background:var(--bg); color:var(--text); font-family:'Noto Sans JP', sans-serif; overflow:hidden; touch-action:none; height:100dvh; }
 
-/* --- ANIMATIONS --- */
-@keyframes shake {
-  0%, 100% { transform:translate(0,0); }
-  20% { transform:translate(-4px, 4px); }
-  40% { transform:translate(4px, -4px); }
-  60% { transform:translate(-4px, -4px); }
-  80% { transform:translate(4px, 4px); }
-}
-.shake-anim { animation: shake 0.2s ease-in-out; }
-
-@keyframes praiseAnim {
-  0% { transform:translateY(30px); opacity:0; }
-  20% { transform:translateY(0); opacity:1; }
-  80% { transform:translateY(-10px); opacity:1; }
-  100% { transform:translateY(-40px); opacity:0; }
-}
-.praise-banner {
-    position:absolute; width:100%; text-align:center; top:20%;
-    font-family:'Fredoka One'; font-size:2rem; color:var(--gold);
-    text-shadow:0 0 15px rgba(255,233,77,0.8); z-index:100;
-    pointer-events:none; animation:praiseAnim 1.8s forwards;
+html, body {
+  width:100%; height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Noto Sans JP', sans-serif;
+  overflow:hidden;
+  touch-action:none;
 }
 
-@keyframes mascotJump {
-  0%, 100% { transform:translateY(0) scale(1); }
-  50% { transform:translateY(-35px) scale(1.1) rotate(10deg); }
+/* ── ANIMATED OCEAN BACKGROUND ── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 110%, rgba(0,201,167,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% -10%, rgba(0,229,255,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(41,121,255,0.06) 0%, transparent 70%);
+  pointer-events:none; z-index:0;
+  animation:bgShift 8s ease-in-out infinite alternate;
 }
-.mascot-jump { animation: mascotJump 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes bgShift {
+  from { opacity:0.7; }
+  to   { opacity:1; }
+}
 
-/* --- STRUCTURE --- */
-#shell { display:flex; flex-direction:column; height:100dvh; max-width:480px; margin:0 auto; background:var(--bg); border:1px solid var(--border); }
-#top-bar { height:60px; display:flex; align-items:center; justify-content:space-between; padding:0 20px; border-bottom:2px solid var(--border); background:var(--surface); }
-#middle { flex:1; display:flex; min-height:0; position:relative; }
+/* scanlines */
+body::after {
+  content:''; position:fixed; inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);
+  pointer-events:none; z-index:0;
+}
 
-#board-container { flex:3; position:relative; background:#020a14; overflow:hidden; display:flex; flex-direction:column; }
-#board { display:grid; grid-template-columns:repeat(8, 1fr); grid-template-rows:repeat(12, 1fr); flex:1; }
+/* ── STARFIELD ── */
+#stars { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+.star {
+  position:absolute; border-radius:50%;
+  background:var(--cyan); opacity:0;
+  animation:twinkle var(--d) ease-in-out var(--delay) infinite;
+}
+@keyframes twinkle {
+  0%,100% { opacity:0; transform:scale(0.4); }
+  50%     { opacity:var(--op); transform:scale(1); }
+}
 
-.cell { display:flex; align-items:center; justify-content:center; font-size:clamp(1rem, 6vw, 1.8rem); font-weight:900; border:1px solid rgba(10,37,64,0.5); position:relative; }
-.cell.filled { background:linear-gradient(160deg,#031a30,#04253d); color:var(--cyan); transition: background 0.2s; }
-.cell.active { color:#fff; text-shadow:0 0 10px var(--cyan); border-color:var(--cyan); z-index:10; }
-.cell.ghost { color:rgba(0,229,255,0.1); border:1px dashed rgba(0,229,255,0.05); }
-.cell.glowing { animation: glow 0.5s infinite alternate; }
-@keyframes glow { from { opacity:1; } to { opacity:0.5; text-shadow:0 0 10px var(--gold); } }
+/* ── LAYOUT ── */
+#shell {
+  position:relative; z-index:1;
+  display:flex; flex-direction:column;
+  height:100dvh; max-width:480px; margin:0 auto;
+}
+#middle { flex:1; display:flex; min-height:0; }
 
-#side-panel { width:90px; background:var(--surface); border-left:2px solid var(--border); display:flex; flex-direction:column; align-items:center; padding:15px 0; gap:15px; }
-#next-box { width:55px; height:55px; background:#042040; border:2px solid var(--cyan); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:bold; }
-.mascot-area { flex:1; display:flex; align-items:flex-end; padding-bottom:30px; font-size:3.5rem; }
+/* ── BOARD COLUMN ── */
+#board-col {
+  flex:3; display:flex; flex-direction:column; min-height:0; position:relative;
+}
+#board {
+  flex:1;
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  background:var(--cell-bg);
+  border-left:3px solid var(--border);
+  border-right:2px solid var(--border);
+  border-top:3px solid var(--border);
+  overflow:hidden;
+}
 
-#word-panel { height:120px; background:var(--surface); border-top:3px solid var(--border); padding:10px; overflow-y:auto; }
+/* ── CELLS ── */
+.cell {
+  display:flex; align-items:center; justify-content:center;
+  font-size:clamp(18px,6.2vw,30px); font-weight:900;
+  border:1px solid var(--cell-bdr);
+  user-select:none; position:relative;
+}
+.cell.empty  { background:var(--cell-bg); color:transparent; }
+.cell.filled {
+  background:linear-gradient(160deg,#031a30,#04253d);
+  border-color:rgba(0,229,255,0.18);
+  color:#7ee8fa;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.cell.active {
+  background:linear-gradient(160deg,#043a6e,#065a8e);
+  border-color:rgba(0,229,255,0.8);
+  color:#fff;
+  animation:activePulse 0.65s ease infinite alternate;
+}
+@keyframes activePulse {
+  from { box-shadow:0 0 6px rgba(0,229,255,0.5); }
+  to   { box-shadow:0 0 22px rgba(0,229,255,0.95), 0 0 40px rgba(0,201,167,0.3); }
+}
+.cell.ghost {
+  background:var(--cell-bg);
+  border:1px dashed rgba(0,229,255,0.18);
+  color:rgba(0,229,255,0.28);
+}
+.cell.land { animation:landBounce 0.32s cubic-bezier(0.36,0.07,0.19,0.97) forwards; }
+@keyframes landBounce {
+  0%   { transform:scaleY(1.35) scaleX(0.78); }
+  35%  { transform:scaleY(0.82) scaleX(1.12); }
+  65%  { transform:scaleY(1.06) scaleX(0.96); }
+  100% { transform:scaleY(1) scaleX(1); }
+}
+.cell.flash       { animation:cellFlash 0.65s ease forwards !important; }
+.cell.combo-flash { animation:comboFlash 0.65s ease forwards !important; }
+@keyframes cellFlash {
+  0%   { background:var(--gold); color:#000; transform:scale(1.2); z-index:10; }
+  40%  { background:var(--green); color:#000; }
+  100% { opacity:0; transform:scale(0.6) rotate(12deg); }
+}
+@keyframes comboFlash {
+  0%   { background:var(--cyan); color:#000; transform:scale(1.25) rotate(-4deg); z-index:10; }
+  30%  { background:var(--gold); color:#000; transform:scale(1.1) rotate(4deg); }
+  100% { opacity:0; transform:scale(0.5) rotate(18deg); }
+}
 
-#overlay { position:absolute; inset:0; background:rgba(2,8,20,0.95); z-index:500; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; }
-.hidden { display:none !important; }
-.btn-start { background:var(--cyan); color:#001a28; border:none; padding:18px 40px; border-radius:50px; font-family:'Fredoka One'; cursor:pointer; font-size:1.2rem; box-shadow:0 5px 20px rgba(0,229,255,0.4); margin-top:20px; }
+/* ── PARTICLES ── */
+.particle {
+  position:absolute; border-radius:50%; pointer-events:none; z-index:30;
+  animation:particleFly var(--dur) ease-out forwards;
+}
+@keyframes particleFly {
+  0%   { opacity:1; transform:translate(0,0) scale(1); }
+  100% { opacity:0; transform:translate(var(--tx),var(--ty)) scale(0); }
+}
+
+/* ── SIDE PANEL ── */
+#side-panel {
+  flex:1; display:flex; flex-direction:column;
+  background:var(--surface);
+  border-left:2px solid var(--border);
+  border-right:3px solid var(--border);
+  border-top:3px solid var(--border);
+  padding:10px 5px 8px;
+  gap:16px; align-items:center;
+}
+.side-label {
+  font-family:'Fredoka One',sans-serif;
+  font-size:9px; color:var(--dim); letter-spacing:1.5px; text-transform:uppercase; text-align:center;
+}
+#next-kana {
+  width:88%; aspect-ratio:1; max-width:58px;
+  border-radius:12px;
+  background:linear-gradient(135deg,#042040,#063060);
+  border:2px solid rgba(0,229,255,0.45);
+  box-shadow:0 0 16px rgba(0,229,255,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+  display:flex; align-items:center; justify-content:center;
+  font-size:clamp(18px,5.5vw,28px); font-weight:900; color:#fff;
+}
+#next-kana.pop { animation:nextPop 0.28s ease forwards; }
+@keyframes nextPop {
+  0%   { transform:scale(0.65) rotate(-12deg); opacity:0.4; }
+  65%  { transform:scale(1.1) rotate(3deg); }
+  100% { transform:scale(1) rotate(0deg); opacity:1; }
+}
+#score-val {
+  font-family:'Fredoka One',sans-serif;
+  font-size:clamp(13px,3.8vw,20px);
+  color:var(--gold);
+  text-shadow:0 0 10px rgba(255,233,77,0.4);
+  line-height:1; text-align:center; word-break:break-all;
+}
+#score-val.bump { animation:scoreBump 0.38s ease; }
+@keyframes scoreBump {
+  0%   { transform:scale(1); }
+  40%  { transform:scale(1.4); color:var(--cyan); }
+  100% { transform:scale(1); }
+}
+.side-block { display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; }
+#level-badge {
+  font-family:'Fredoka One',sans-serif;
+  font-size:11px; color:var(--teal); text-align:center; line-height:1.4;
+}
+
+/* ── WORD PANEL ── */
+#word-panel {
+  background:var(--surface);
+  border-top:3px solid var(--border);
+  flex-shrink:0;
+  padding:7px 8px 9px;
+  display:flex; flex-direction:column; gap:5px;
+}
+.word-row {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(0,229,255,0.03);
+  border:1.5px solid var(--border);
+  border-radius:12px; padding:6px 10px;
+  animation:rowSlideIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  position:relative; overflow:hidden;
+}
+@keyframes rowSlideIn {
+  from { opacity:0; transform:translateY(10px) scale(0.96); }
+  to   { opacity:1; transform:none; }
+}
+.word-row.boss {
+  border-color:rgba(255,107,107,0.45);
+  background:rgba(255,107,107,0.05);
+  box-shadow:0 0 10px rgba(255,107,107,0.08);
+}
+.wr-emoji {
+  font-size:24px; flex-shrink:0; line-height:1;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+.wr-info { flex:1; min-width:0; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.wr-kana    { font-size:18px; font-weight:900; color:var(--text); line-height:1; }
+.wr-romaji  { font-size:13px; color:var(--cyan); font-weight:700; }
+.wr-meaning { font-size:12px; color:var(--dim); }
+.wr-mult {
+  font-family:'Fredoka One',sans-serif;
+  font-size:16px; color:var(--green);
+  text-shadow:0 0 6px rgba(77,255,176,0.55);
+  min-width:32px; text-align:right; flex-shrink:0;
+}
+.word-row.boss .wr-mult { color:var(--coral); text-shadow:0 0 6px rgba(255,107,107,0.55); }
+.wr-mult.bump { animation:multBump 0.32s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes multBump {
+  0%   { transform:scale(1); }
+  50%  { transform:scale(1.75) rotate(-5deg); }
+  100% { transform:scale(1); }
+}
+/* sweep flash */
+.word-row::after { content:''; position:absolute; inset:0; opacity:0; pointer-events:none; border-radius:12px; }
+.word-row.bar-flash::after {
+  background:linear-gradient(90deg,transparent,rgba(0,229,255,0.3),transparent);
+  animation:barSweep 0.5s ease forwards;
+}
+.word-row.bar-combo::after {
+  background:linear-gradient(90deg,transparent,rgba(255,233,77,0.4),transparent);
+  animation:barSweep 0.5s ease forwards;
+}
+@keyframes barSweep {
+  from { opacity:1; transform:translateX(-110%); }
+  to   { opacity:0; transform:translateX(110%); }
+}
+
+/* ── OVERLAY ── */
+#board-overlay {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:rgba(2,8,20,0.94); backdrop-filter:blur(8px);
+  z-index:50; gap:14px; padding:28px 18px;
+}
+#board-overlay.hidden { display:none; }
+.ov-title {
+  font-family:'Fredoka One',sans-serif; font-size:34px;
+  color:var(--cyan); text-shadow:0 0 24px rgba(0,229,255,0.55);
+  text-align:center; line-height:1.2;
+}
+.ov-sub { font-size:13px; color:var(--dim); text-align:center; line-height:2; max-width:260px; }
+.ov-words { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:280px; }
+.ov-word {
+  background:rgba(0,229,255,0.06); border:1.5px solid rgba(0,229,255,0.2);
+  border-radius:12px; padding:6px 12px; text-align:center;
+  animation:ovWordPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.ov-word:nth-child(1){animation-delay:0.05s}
+.ov-word:nth-child(2){animation-delay:0.1s}
+.ov-word:nth-child(3){animation-delay:0.15s}
+.ov-word:nth-child(4){animation-delay:0.2s}
+@keyframes ovWordPop {
+  from { opacity:0; transform:scale(0.6) rotate(-6deg); }
+  to   { opacity:1; transform:none; }
+}
+.ov-word .ow-emoji { font-size:26px; display:block; margin-bottom:2px; }
+.ov-word .ow-kana  { font-size:15px; font-weight:900; color:var(--cyan); display:block; }
+.ov-word .ow-sub   { font-size:10px; color:var(--dim); }
+.btn {
+  font-family:'Fredoka One',sans-serif; font-size:18px; letter-spacing:1px;
+  background:linear-gradient(135deg,var(--cyan),var(--teal));
+  color:#001a28;
+  border:none; border-radius:50px; padding:14px 36px; cursor:pointer;
+  box-shadow:0 4px 20px rgba(0,229,255,0.35), 0 0 0 2px rgba(255,255,255,0.08);
+  width:100%; max-width:260px; transition:all 0.15s;
+  text-shadow:0 1px 2px rgba(0,0,0,0.2);
+}
+.btn:active { transform:scale(0.95); }
+.btn.secondary {
+  background:transparent; color:var(--dim);
+  border:1.5px solid var(--border); box-shadow:none;
+  font-size:13px; padding:10px 24px; border-radius:50px;
+  text-shadow:none;
+}
+
+/* ── WORD POPUP ── */
+#word-popup {
+  position:absolute; left:8px; right:8px; top:28%;
+  transform:translateY(-50%);
+  background:rgba(2,8,20,0.97);
+  border:2.5px solid var(--gold);
+  border-radius:20px; padding:14px 16px;
+  text-align:center; z-index:40; pointer-events:none; display:none;
+  box-shadow:0 0 30px rgba(255,233,77,0.2);
+}
+#word-popup.show   { display:block; animation:popupIn 2.1s ease forwards; }
+#word-popup.combo  { border-color:var(--cyan); box-shadow:0 0 30px rgba(0,229,255,0.35); }
+.wp-emoji   { font-size:42px; display:block; line-height:1.1; }
+.wp-kana    { font-family:'Fredoka One',sans-serif; font-size:32px; color:var(--gold); text-shadow:0 0 12px rgba(255,233,77,0.55); display:block; line-height:1; }
+#word-popup.combo .wp-kana { color:var(--cyan); text-shadow:0 0 12px rgba(0,229,255,0.6); }
+.wp-romaji  { font-size:13px; color:var(--teal); letter-spacing:2px; margin:3px 0; }
+.wp-meaning { font-size:14px; color:var(--text); }
+.wp-pts     { font-family:'Fredoka One',sans-serif; font-size:20px; color:var(--cyan); margin-top:6px; }
+@keyframes popupIn {
+  0%   { opacity:0; transform:translateY(-56%) scale(0.7) rotate(-2deg); }
+  10%  { opacity:1; transform:translateY(-63%) scale(1.05) rotate(1deg); }
+  75%  { opacity:1; transform:translateY(-63%) scale(1) rotate(0deg); }
+  100% { opacity:0; transform:translateY(-70%) scale(0.92); }
+}
+
+/* ── COMBO BANNER ── */
+#combo-banner {
+  position:absolute; left:50%; top:6%;
+  transform:translateX(-50%);
+  font-family:'Fredoka One',sans-serif; font-size:28px;
+  color:var(--cyan); text-shadow:0 0 20px rgba(0,229,255,0.8);
+  pointer-events:none; z-index:41; white-space:nowrap; display:none;
+}
+#combo-banner.show { display:block; animation:comboBannerAnim 1.6s ease forwards; }
+@keyframes comboBannerAnim {
+  0%   { opacity:0; transform:translateX(-50%) scale(0.6) rotate(-6deg); }
+  15%  { opacity:1; transform:translateX(-50%) scale(1.15) rotate(2deg); }
+  70%  { opacity:1; transform:translateX(-50%) scale(1) rotate(0deg); }
+  100% { opacity:0; }
+}
+
+/* ── STREAK ── */
+#streak {
+  position:absolute; right:6px; top:8px;
+  font-family:'Fredoka One',sans-serif; font-size:13px;
+  color:var(--gold); text-shadow:0 0 8px rgba(255,233,77,0.7);
+  z-index:35; display:none;
+}
+
+/* ── MUTE ── */
+#mute-btn {
+  position:absolute; bottom:6px; width:100%; left:0;
+  display:flex; justify-content:center; pointer-events:none;
+}
+#mute-btn button {
+  pointer-events:all;
+  background:transparent; border:none; color:var(--dim);
+  font-size:11px; cursor:pointer; font-family:'Fredoka One',sans-serif;
+  letter-spacing:1px; opacity:0.55;
+}
 </style>
 </head>
 <body>
+<div id="stars"></div>
 
 <div id="shell">
-    <div id="top-bar">
-        <div style="font-family:'Fredoka One'; color:var(--cyan)">かなDROP</div>
-        <div id="score-val" style="font-family:'Fredoka One'; color:var(--gold); font-size:1.4rem;">0</div>
+  <div id="middle">
+
+    <div id="board-col">
+      <div id="board"></div>
+      <div id="word-popup">
+        <span class="wp-emoji"></span>
+        <span class="wp-kana"></span>
+        <div class="wp-romaji"></div>
+        <div class="wp-meaning"></div>
+        <div class="wp-pts"></div>
+      </div>
+      <div id="combo-banner"></div>
+      <div id="streak"></div>
+      <div id="board-overlay">
+        <div class="ov-title" id="ov-title">かなDROP</div>
+        <div class="ov-sub"   id="ov-sub"></div>
+        <div class="ov-words" id="ov-words"></div>
+        <button class="btn"           id="ov-btn">はじめる ✨</button>
+        <button class="btn secondary" id="ov-btn2" style="display:none">Recommencer</button>
+      </div>
+      <div id="mute-btn"><button id="mute-toggle">🔊 Son</button></div>
     </div>
 
-    <div id="middle">
-        <div id="board-container">
-            <div id="board"></div>
-            <div id="overlay">
-                <h1 style="color:var(--cyan); font-family:'Fredoka One'; font-size:2.5rem; margin-bottom:10px;">PRET ?</h1>
-                <p>Formez des mots Japonais !<br>← → Swipe | Appui long = Drop</p>
-                <button class="btn-start" id="start-btn">JOUER ✨</button>
-            </div>
-        </div>
-
-        <div id="side-panel">
-            <div style="font-size:10px; color:var(--teal)">NEXT</div>
-            <div id="next-box">?</div>
-            <div class="mascot-area" id="mascot">🐱</div>
-        </div>
+    <div id="side-panel">
+      <div class="side-block">
+        <div class="side-label">NEXT</div>
+        <div id="next-kana">？</div>
+      </div>
+      <div class="side-block">
+        <div class="side-label">SCORE</div>
+        <div id="score-val">0</div>
+      </div>
+      <div class="side-block">
+        <div id="level-badge">Lv.1<br>🐾</div>
+      </div>
     </div>
+  </div>
 
-    <div id="word-panel" id="word-list"></div>
+  <div id="word-panel"></div>
 </div>
 
 <script>
 // ════════════════════════════════════════════════════════
-//  CONFIGURATION & DATA
+//  WORDS
 // ════════════════════════════════════════════════════════
-const COLS=8, ROWS=12; // Nombre de lignes FIXE
-let gameRunning = false, resolvingWords = false;
-let board = [], active = null, nextChar = '', score = 0, speed = 1200;
-let lastChar = '', foundRound = new Set();
-
-const LEVELS = [
-  { words: [
-    {kana:'いぬ', romaji:'inu', meaning:'chien', emoji:'🐶'},
-    {kana:'ねこ', romaji:'neko', meaning:'chat', emoji:'🐱'},
-    {kana:'うし', romaji:'ushi', meaning:'vache', emoji:'🐮'},
-    {kana:'うま', romaji:'uma', meaning:'cheval', emoji:'🐴'},
-    {kana:'ねずみ',romaji:'nezumi', meaning:'souris', emoji:'🐭', boss:true}
-  ]}
-];
-const currentLevel = 0;
-const PRAISES = [
-    {jp:"やったー！", fr:"Réussi !"}, {jp:"すごい！", fr:"Génial !"},
-    {jp:"素晴らしい！", fr:"Magnifique !"}, {jp:"完璧！", fr:"Parfait !"}
+const LEVEL_WORDS = [
+  {kana:'いぬ',  romaji:'inu',    meaning:'chien',  emoji:'🐶', boss:false},
+  {kana:'ねこ',  romaji:'neko',   meaning:'chat',   emoji:'🐱', boss:false},
+  {kana:'うし',  romaji:'ushi',   meaning:'vache',  emoji:'🐮', boss:false},
+  {kana:'うま',  romaji:'uma',    meaning:'cheval', emoji:'🐴', boss:false},
+  {kana:'くま',  romaji:'kuma',   meaning:'ours',   emoji:'🐻', boss:false},
+  {kana:'ねずみ',romaji:'nezumi', meaning:'souris', emoji:'🐭', boss:true},
 ];
 
 // ════════════════════════════════════════════════════════
-//  AUDIO ENGINE (PRO BUFFER)
+//  SOUND
 // ════════════════════════════════════════════════════════
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-const audioBuffers = {};
-
-async function preloadSfx(name, url) {
-    try {
-        const res = await fetch(url);
-        const arrayBuf = await res.arrayBuffer();
-        audioBuffers[name] = await audioCtx.decodeAudioData(arrayBuf);
-    } catch(e) {}
+let audioCtx=null, muted=false;
+function getCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
 }
-
-function playSfx(name) {
-    if (!audioBuffers[name] || audioCtx.state === 'suspended') return;
-    const source = audioCtx.createBufferSource();
-    source.buffer = audioBuffers[name];
-    source.connect(audioCtx.destination);
-    source.start(0);
+function playTone(freq,type,dur,vol=0.18,delay=0){
+  if(muted) return;
+  try{
+    const ctx=getCtx(), osc=ctx.createOscillator(), gain=ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type=type; osc.frequency.value=freq;
+    const t=ctx.currentTime+delay;
+    gain.gain.setValueAtTime(vol,t);
+    gain.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    osc.start(t); osc.stop(t+dur);
+  }catch(e){}
 }
-
-function playVoice(charOrWord) {
-    const url = `https://raw.githubusercontent.com/emmanuel971-source/hirakataquizz/main/${encodeURIComponent(charOrWord)}.mp3`;
-    new Audio(url).play().catch(()=>{});
-}
-
-// ════════════════════════════════════════════════════════
-//  GAME LOGIC
-// ════════════════════════════════════════════════════════
-function initBoard() {
-    const grid = document.getElementById('board');
-    grid.innerHTML = '';
-    board = Array.from({length: ROWS}, () => Array.from({length: COLS}, () => ({filled: false, char: ''})));
-    for(let i=0; i<ROWS*COLS; i++) {
-        const c = document.createElement('div');
-        c.className = 'cell';
-        grid.appendChild(c);
-    }
-}
-
-function getSmartChar() {
-    let pool = [];
-    LEVELS[currentLevel].words.forEach(w => {
-        pool.push(...w.kana.split('')); // Toujours là
-        if (!foundRound.has(w.kana)) pool.push(...w.kana.split('')); // Bonus si pas encore fait
-    });
-    let filtered = pool.filter(c => c !== lastChar);
-    if (filtered.length === 0) filtered = pool;
-    const chosen = filtered[Math.floor(Math.random() * filtered.length)];
-    lastChar = chosen;
-    return chosen;
-}
-
-function spawn() {
-    if (!nextChar) nextChar = getSmartChar();
-    active = { x: 3, y: 0, char: nextChar };
-    nextChar = getSmartChar();
-    document.getElementById('next-box').textContent = nextChar;
-    if (board[active.y][active.x].filled) return gameOver();
-    render();
-}
-
-function render() {
-    const cells = document.querySelectorAll('.cell');
-    const gy = getGhostY();
-    board.forEach((row, r) => {
-        row.forEach((col, c) => {
-            const idx = r * COLS + c;
-            const el = cells[idx];
-            el.className = 'cell' + (col.filled ? ' filled' : '');
-            el.textContent = col.char || '';
-
-            if (active && r === active.y && c === active.x) {
-                el.classList.add('active');
-                el.textContent = active.char;
-            } else if (active && r === gy && c === active.x && !col.filled) {
-                el.classList.add('ghost');
-                el.textContent = active.char;
-            }
-        });
-    });
-    // Optionnel : Indices visuels (brillance)
-    highlightHints();
-}
-
-function getGhostY() {
-    if (!active) return -1;
-    let y = active.y;
-    while (y + 1 < ROWS && !board[y+1][active.x].filled) y++;
-    return y;
-}
-
-// ════════════════════════════════════════════════════════
-//  CASQUADE & DÉTECTION (Ta logique originale optimisée)
-// ════════════════════════════════════════════════════════
-async function checkWords() {
-    resolvingWords = true;
-    let found = [];
-
-    // Horizontal
-    for(let r=0; r<ROWS; r++) {
-        let rowStr = board[r].map(c => c.char || ' ').join('');
-        LEVELS[currentLevel].words.forEach(w => {
-            let startIdx = rowStr.indexOf(w.kana);
-            if (startIdx !== -1) found.push({word: w, coords: w.kana.split('').map((_,i)=>[r, startIdx+i])});
-        });
-    }
-
-    // Vertical
-    for(let c=0; c<COLS; c++) {
-        let colStr = "";
-        for(let r=0; r<ROWS; r++) colStr += board[r][c].char || ' ';
-        LEVELS[currentLevel].words.forEach(w => {
-            let startIdx = colStr.indexOf(w.kana);
-            if (startIdx !== -1) found.push({word: w, coords: w.kana.split('').map((_,i)=>[startIdx+i, c])});
-        });
-    }
-
-    if (found.length > 0) {
-        for (let item of found) {
-            await resolveFoundWord(item);
-        }
-        await applyGravity();
-        return checkWords(); // Récursif pour les cascades
-    }
-    resolvingWords = false;
-    if (gameRunning) spawn();
-}
-
-async function resolveFoundWord(item) {
-    const {word, coords} = item;
-    foundRound.add(word.kana);
-    score += word.kana.length * 100;
-    speed = Math.max(300, speed - 50);
-    document.getElementById('score-val').textContent = score;
-
-    playVoice(word.kana);
-    showPraise();
-    animateMascot(word.emoji);
-
-    coords.forEach(([r,c]) => { board[r][c] = {filled:false, char:''}; });
-
-    if (word.boss) {
-        triggerShake();
-        // Efface la ligne la plus basse
-        for(let r=ROWS-1; r>=0; r--) {
-            if (board[r].some(cell => cell.filled)) {
-                board[r] = Array.from({length: COLS}, () => ({filled: false, char: ''}));
-                break;
-            }
-        }
-    }
-    render();
-    await new Promise(r => setTimeout(r, 300));
-}
-
-async function applyGravity() {
-    let moved = true;
-    while(moved) {
-        moved = false;
-        for(let c=0; c<COLS; c++) {
-            for(let r=ROWS-2; r>=0; r--) {
-                if (board[r][c].filled && !board[r+1][c].filled) {
-                    board[r+1][c] = board[r][c];
-                    board[r][c] = {filled:false, char:''};
-                    moved = true;
-                }
-            }
-        }
-        if (moved) { render(); await new Promise(r => setTimeout(r, 80)); }
-    }
-}
-
-// ════════════════════════════════════════════════════════
-//  INTERACTION & FEEDBACK
-// ════════════════════════════════════════════════════════
-let touchStart = {x:0, y:0, t:0}, longPressTimer;
-
-document.addEventListener('touchstart', e => {
-    if (!gameRunning || resolvingWords) return;
-    const t = e.touches[0];
-    touchStart = {x: t.clientX, y: t.clientY, t: Date.now()};
-
-    longPressTimer = setTimeout(() => {
-        if (active) { hardDrop(); }
-    }, 500);
-});
-
-document.addEventListener('touchend', e => {
-    clearTimeout(longPressTimer);
-    if (!gameRunning || resolvingWords || !active) return;
-    
-    const duration = Date.now() - touchStart.t;
-    if (duration < 500) {
-        const dx = e.changedTouches[0].clientX - touchStart.x;
-        const dy = e.changedTouches[0].clientY - touchStart.y;
-        
-        if (Math.abs(dx) > 30) {
-            const dir = dx > 0 ? 1 : -1;
-            if (ok(active.x + dir, active.y)) { active.x += dir; render(); }
-        } else if (dy > 40) {
-            moveDown();
-        }
-    }
-});
-
-function ok(x, y) { return x>=0 && x<COLS && y>=0 && y<ROWS && !board[y][x].filled; }
-
-function moveDown() {
-    if (!active) return;
-    if (ok(active.x, active.y + 1)) {
-        active.y++;
-        render();
-    } else {
-        lock();
-    }
-}
-
-function hardDrop() {
-    if (!active) return;
-    while(ok(active.x, active.y + 1)) active.y++;
-    triggerShake();
-    lock();
-}
-
-function lock() {
-    board[active.y][active.x] = {filled:true, char:active.char};
-    playSfx('drop');
-    active = null;
-    checkWords();
-}
-
-function triggerShake() {
-    const bc = document.getElementById('board-container');
-    bc.classList.add('shake-anim');
-    setTimeout(() => bc.classList.remove('shake-anim'), 300);
-}
-
-function showPraise() {
-    const p = PRAISES[Math.floor(Math.random()*PRAISES.length)];
-    const b = document.createElement('div');
-    b.className = 'praise-banner';
-    b.innerHTML = `${p.jp}<br><span style="font-size:1.1rem">${p.fr}</span>`;
-    document.getElementById('board-container').appendChild(b);
-    setTimeout(() => b.remove(), 1800);
-}
-
-function animateMascot(emoji) {
-    const m = document.getElementById('mascot');
-    m.textContent = emoji;
-    m.classList.remove('mascot-jump');
-    void m.offsetWidth;
-    m.classList.add('mascot-jump');
-}
-
-function highlightHints() {
-    if (!active) return;
-    const gy = getGhostY();
-    LEVELS[currentLevel].words.forEach(w => {
-        // Logique de brillance si le placement complète un mot...
-    });
-}
-
-function gameOver() {
-    gameRunning = false;
-    alert("Fin de partie ! Score : " + score);
-    document.getElementById('overlay').classList.remove('hidden');
-}
-
-// ════════════════════════════════════════════════════════
-//  MAIN LOOP
-// ════════════════════════════════════════════════════════
-function loop() {
-    if (!gameRunning) return;
-    if (!resolvingWords) moveDown();
-    setTimeout(loop, speed);
-}
-
-document.getElementById('start-btn').onclick = () => {
-    audioCtx.resume();
-    document.getElementById('overlay').classList.add('hidden');
-    initBoard();
-    score = 0; speed = 1200; foundRound.clear();
-    gameRunning = true;
-    spawn();
-    loop();
+const soundDrop    = ()=>playTone(200,'sine',0.07,0.10);
+const soundWord    = ()=>[523,659,784,1047].forEach((f,i)=>playTone(f,'sine',0.18,0.20,i*0.07));
+const soundCombo   = ()=>{[523,659,784,1047,1319,1568].forEach((f,i)=>playTone(f,'sine',0.22,0.22,i*0.055));setTimeout(()=>playTone(1568,'square',0.28,0.14),400);};
+const soundNewWord = ()=>[440,554,659].forEach((f,i)=>playTone(f,'triangle',0.18,0.14,i*0.08));
+const soundGameOver= ()=>[440,370,311,261].forEach((f,i)=>playTone(f,'sawtooth',0.22,0.16,i*0.13));
+const soundLevelUp = ()=>[523,659,784,1047,784,1047,1319].forEach((f,i)=>playTone(f,'sine',0.20,0.22,i*0.08));
+document.getElementById('mute-toggle').onclick=()=>{
+  muted=!muted;
+  document.getElementById('mute-toggle').textContent=muted?'🔇 Son off':'🔊 Son';
 };
 
-// Préchargement
-preloadSfx('drop', 'https://actions.google.com/sounds/v1/water/drop_water_bucket.ogg');
+// ════════════════════════════════════════════════════════
+//  STARFIELD
+// ════════════════════════════════════════════════════════
+(function(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<55;i++){
+    const s=document.createElement('div'); s.className='star';
+    const sz=Math.random()*2.5+0.8;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${(Math.random()*4+2).toFixed(1)}s;--delay:${(Math.random()*5).toFixed(1)}s;--op:${(Math.random()*0.5+0.15).toFixed(2)};`;
+    c.appendChild(s);
+  }
+})();
+
+// ════════════════════════════════════════════════════════
+//  PARTICLES
+// ════════════════════════════════════════════════════════
+const P_COLORS=['#00e5ff','#00c9a7','#4dffb0','#2979ff','#ffe94d','#ffffff'];
+function spawnParticles(cellEl, count=12){
+  if(!cellEl) return;
+  const rect=cellEl.getBoundingClientRect();
+  const bRect=document.getElementById('board-col').getBoundingClientRect();
+  const cx=rect.left-bRect.left+rect.width/2;
+  const cy=rect.top-bRect.top+rect.height/2;
+  const container=document.getElementById('board-col');
+  for(let i=0;i<count;i++){
+    const p=document.createElement('div'); p.className='particle';
+    const sz=Math.random()*8+3;
+    const angle=(Math.PI*2/count)*i+Math.random()*0.5;
+    const dist=Math.random()*55+25;
+    const col=P_COLORS[Math.floor(Math.random()*P_COLORS.length)];
+    const dur=(Math.random()*0.35+0.4).toFixed(2)+'s';
+    p.style.cssText=`width:${sz}px;height:${sz}px;left:${cx-sz/2}px;top:${cy-sz/2}px;background:${col};--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist-18}px;--dur:${dur};box-shadow:0 0 ${sz}px ${col};`;
+    container.appendChild(p);
+    setTimeout(()=>p.remove(),950);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+const COLS=8;
+let ROWS=12;
+let board=[];
+let active=null;
+let nextChar='';
+let score=0, streak=0, lastWordTime=0;
+
+let activeWords=[], wordIntroIdx=0, foundRound=new Set(), kanaPool=[];
+let gameRunning=false;
+let dropTimer=null;
+let DROP_SPEED=1400;
+
+// ── CONCURRENCY GUARD ──────────────────────────────────
+// A single "sequence lock" prevents two word-resolution
+// paths from running simultaneously.  Only one checkWords
+// chain may be active at a time.
+let resolvingWords=false;
+
+function safeSpawn(){
+  // Always called once the resolution chain is done.
+  resolvingWords=false;
+  if(!gameRunning) return;
+  spawn();
+}
+
+// ════════════════════════════════════════════════════════
+//  SIZING
+// ════════════════════════════════════════════════════════
+function calcRows(){
+  const panH=document.getElementById('word-panel').offsetHeight||0;
+  const avail=(window.innerHeight||document.documentElement.clientHeight)-panH;
+  const screenW=Math.min(window.innerWidth,480);
+  const cellW=Math.floor(screenW*0.75/COLS);
+  ROWS=Math.max(8,Math.floor(avail/cellW));
+}
+function rebuildPool(){ kanaPool=activeWords.flatMap(w=>[...w.kana]); }
+function rndKana(){ return kanaPool[Math.floor(Math.random()*kanaPool.length)]; }
+
+// ════════════════════════════════════════════════════════
+//  BOARD DOM
+// ════════════════════════════════════════════════════════
+function initBoard(){
+  board=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));
+}
+function buildDOM(){
+  const el=document.getElementById('board');
+  el.innerHTML='';
+  el.style.gridTemplateRows=`repeat(${ROWS},1fr)`;
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const d=document.createElement('div');
+    d.className='cell empty'; d.dataset.r=r; d.dataset.c=c;
+    el.appendChild(d);
+  }
+}
+function rebuildDOMKeepContent(){
+  const oldRows=board.length;
+  const oldBoard=board.map(row=>row.map(c=>({...c})));
+  calcRows();
+  const nb=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));
+  const copy=Math.min(ROWS,oldRows);
+  for(let r=0;r<copy;r++) nb[ROWS-1-r]=oldBoard[oldRows-1-r].map(c=>({...c}));
+  board=nb;
+  buildDOM();
+}
+const gc=(r,c)=>document.querySelector(`#board [data-r="${r}"][data-c="${c}"]`);
+
+// ════════════════════════════════════════════════════════
+//  SPAWN / MOVE / LOCK
+// ════════════════════════════════════════════════════════
+function spawn(){
+  active={char:nextChar||rndKana(), x:Math.floor(COLS/2), y:0};
+  nextChar=rndKana();
+  const nk=document.getElementById('next-kana');
+  nk.textContent=nextChar;
+  nk.classList.remove('pop'); void nk.offsetWidth; nk.classList.add('pop');
+  if(board[0][active.x].filled){ endGame(); return; }
+  render();
+  startTimer();
+}
+function ok(x,y){ return x>=0&&x<COLS&&y>=0&&y<ROWS&&!board[y][x].filled; }
+function startTimer(){ clearInterval(dropTimer); dropTimer=setInterval(tick,DROP_SPEED); }
+function tick(){
+  if(!gameRunning||resolvingWords||!active) return;
+  ok(active.x,active.y+1)?(active.y++,render()):lock();
+}
+function lock(){
+  if(!active||resolvingWords) return;
+  clearInterval(dropTimer);
+  resolvingWords=true;          // ← LOCK acquired
+  board[active.y][active.x]={filled:true,char:active.char};
+  const pr=active.y, pc=active.x;
+  const el=gc(pr,pc);
+  if(el){el.className='cell filled land';el.textContent=active.char;setTimeout(()=>el.classList.remove('land'),380);}
+  active=null;
+  soundDrop();
+  render();
+  checkWords(pr,pc);            // will call safeSpawn() when done
+}
+function hardDrop(){
+  if(!active||!gameRunning||resolvingWords) return;
+  while(ok(active.x,active.y+1)) active.y++;
+  render(); lock();
+}
+
+// ════════════════════════════════════════════════════════
+//  WORD DETECTION — entry point after a piece locks
+//  Scans only row+col of placed cell, then hands off
+//  to the cascade engine.
+// ════════════════════════════════════════════════════════
+function checkWords(pr, pc){
+  // First pass: only scan the row and col of the placed cell
+  const found = scanRowCol(pr, pc);
+  if(!found.length){ safeSpawn(); return; }
+  processCascade(found, false);
+}
+
+// ════════════════════════════════════════════════════════
+//  SCAN helpers
+// ════════════════════════════════════════════════════════
+
+// Scan a single row+col, return found matches
+function scanRowCol(r, c){
+  const found = [];
+  const rowCells = Array.from({length:COLS}, (_, cc) => ({r, c:cc}));
+  const colCells = Array.from({length:ROWS}, (_, rr) => ({r:rr, c}));
+  scanLine(rowCells, found);
+  scanLine(colCells, found);
+  return found;
+}
+
+// Scan the ENTIRE board (all rows + all cols), return found matches
+function scanFullBoard(){
+  const found = [];
+  for(let r=0; r<ROWS; r++){
+    const cells = Array.from({length:COLS}, (_, c) => ({r, c}));
+    scanLine(cells, found);
+  }
+  for(let c=0; c<COLS; c++){
+    const cells = Array.from({length:ROWS}, (_, r) => ({r, c}));
+    scanLine(cells, found);
+  }
+  return found;
+}
+
+// Scan one line of cells, push matches into found[]
+function scanLine(cells, found){
+  const line = cells.map(({r,c}) => board[r][c].filled ? board[r][c].char : '\x00').join('');
+  activeWords.forEach(w => {
+    let i = line.indexOf(w.kana);
+    while(i !== -1){
+      // Deduplicate: don't add if exact same cells already queued
+      const key = cells.slice(i, i+w.kana.length).map(cc=>`${cc.r},${cc.c}`).join('|');
+      if(!found.some(f => f.key === key)){
+        found.push({
+          word: w,
+          cells: Array.from({length:w.kana.length}, (_, j) => cells[i+j]),
+          key
+        });
+      }
+      i = line.indexOf(w.kana, i+1);
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  CASCADE ENGINE
+//  cascadeDepth > 0 means we're in a post-gravity cascade
+// ════════════════════════════════════════════════════════
+function processCascade(found, isCascade){
+  const isCombo = found.length >= 2;
+  const cellSet = new Set();
+  found.forEach(f => f.cells.forEach(cell => cellSet.add(`${cell.r},${cell.c}`)));
+
+  // Flash cells
+  const flashEls = [];
+  cellSet.forEach(key => {
+    const [r,c] = key.split(',').map(Number);
+    const el = gc(r,c);
+    if(el){ el.classList.add(isCombo ? 'combo-flash' : 'flash'); flashEls.push(el); }
+  });
+  if(flashEls.length) spawnParticles(flashEls[Math.floor(flashEls.length/2)], isCombo ? 20 : 12);
+
+  // Score
+  let pts = 0;
+  found.forEach(f => {
+    pts += f.word.kana.length * 100 * (f.word.mult || 1);
+    f.word.mult = (f.word.mult || 1) + 1;
+    foundRound.add(f.word.kana);
+  });
+
+  // Streak — cascades count as rapid words
+  const now = Date.now();
+  if(now - lastWordTime < 4000) streak++; else streak = 1;
+  lastWordTime = now;
+  if(streak > 1) pts = Math.round(pts * (1 + streak * 0.08));
+  score += pts;
+
+  // Cascade bonus label
+  if(isCascade){ soundCombo(); }
+  else { isCombo ? soundCombo() : soundWord(); }
+
+  showPopup(found[0].word, pts, isCombo || isCascade);
+  const barDone = new Set();
+  found.forEach(f => { if(!barDone.has(f.word.kana)){ flashBar(f.word.kana, isCombo||isCascade); barDone.add(f.word.kana); }});
+  updateMults();
+  updateScore();
+  updateStreak();
+
+  // Wait for flash, then remove cells → gravity → check cascade
+  setTimeout(() => {
+    cellSet.forEach(key => {
+      const [r,c] = key.split(',').map(Number);
+      board[r][c] = {filled:false, char:''};
+      const el = gc(r,c);
+      if(el){ el.className = 'cell empty'; el.textContent = ''; }
+    });
+
+    gravity();
+    render();
+
+    // ── CASCADE: scan full board after gravity ──
+    const cascadeFound = scanFullBoard();
+    if(cascadeFound.length){
+      // More matches found — keep the chain going
+      setTimeout(() => processCascade(cascadeFound, true), 300);
+      return;
+    }
+
+    // No more matches — check progression then spawn
+    const allDone = activeWords.every(w => foundRound.has(w.kana));
+    if(allDone){
+      if(wordIntroIdx >= LEVEL_WORDS.length){ setTimeout(levelDone, 400); }
+      else introNext();
+    } else {
+      safeSpawn();
+    }
+  }, 820);
+}
+
+function gravity(){
+  for(let c=0; c<COLS; c++){
+    const ch = [];
+    for(let r=ROWS-1; r>=0; r--) if(board[r][c].filled) ch.push(board[r][c].char);
+    for(let r=ROWS-1; r>=0; r--) board[r][c] = ch.length ? {filled:true, char:ch.shift()} : {filled:false, char:''};
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  WORD INTRO — board preserved
+// ════════════════════════════════════════════════════════
+function introNext(){
+  if(wordIntroIdx>=LEVEL_WORDS.length) return;
+  const w=LEVEL_WORDS[wordIntroIdx++];
+  w.mult=1;
+  activeWords.push(w);
+  foundRound=new Set();
+  rebuildPool();
+  soundNewWord();
+  renderPanel(); // calls rebuildDOMKeepContent + setTimeout then safeSpawn
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════════
+function ghostY(){
+  if(!active) return -1;
+  let g=active.y;
+  while(g+1<ROWS&&!board[g+1][active.x].filled) g++;
+  return g;
+}
+function render(){
+  const gy=ghostY();
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const el=gc(r,c);
+    if(!el||el.classList.contains('flash')||el.classList.contains('combo-flash')||el.classList.contains('land')) continue;
+    if(active&&r===active.y&&c===active.x){el.className='cell active';el.textContent=active.char;}
+    else if(active&&r===gy&&c===active.x&&gy!==active.y){el.className='cell ghost';el.textContent=active.char;}
+    else if(board[r][c].filled){el.className='cell filled';el.textContent=board[r][c].char;}
+    else{el.className='cell empty';el.textContent='';}
+  }
+}
+function updateScore(){
+  const el=document.getElementById('score-val');
+  el.textContent=score.toLocaleString();
+  el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+}
+function updateStreak(){
+  const el=document.getElementById('streak');
+  if(streak>=2){
+    el.style.display='block';
+    el.textContent='🔥'.repeat(Math.min(streak,5))+' x'+streak;
+    el.style.animation='none'; void el.offsetWidth; el.style.animation='streakAnim 0.4s ease';
+  } else {
+    el.style.display='none';
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  WORD PANEL
+// ════════════════════════════════════════════════════════
+function renderPanel(){
+  const p=document.getElementById('word-panel');
+  p.innerHTML='';
+  activeWords.forEach(w=>{
+    const row=document.createElement('div');
+    row.className='word-row'+(w.boss?' boss':'');
+    row.id='wr-'+w.kana;
+    row.innerHTML=`
+      <div class="wr-emoji">${w.emoji}</div>
+      <div class="wr-info">
+        <span class="wr-kana">${w.kana}</span>
+        <span class="wr-romaji">${w.romaji}</span>
+        <span class="wr-meaning">${w.meaning}</span>
+      </div>
+      <div class="wr-mult" id="wm-${w.kana}">x${w.mult||1}</div>`;
+    p.appendChild(row);
+  });
+  // Rebuild board geometry, then spawn
+  requestAnimationFrame(()=>{
+    rebuildDOMKeepContent();
+    render();
+    setTimeout(()=>safeSpawn(), 350);
+  });
+}
+function updateMults(){
+  activeWords.forEach(w=>{
+    const el=document.getElementById('wm-'+w.kana);
+    if(!el) return;
+    el.textContent='x'+w.mult;
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  });
+}
+function flashBar(kana,isCombo){
+  const row=document.getElementById('wr-'+kana);
+  if(!row) return;
+  row.classList.remove('bar-flash','bar-combo');
+  void row.offsetWidth;
+  row.classList.add(isCombo?'bar-combo':'bar-flash');
+  setTimeout(()=>row.classList.remove('bar-flash','bar-combo'),650);
+}
+
+// ════════════════════════════════════════════════════════
+//  POPUP
+// ════════════════════════════════════════════════════════
+let popTimer=null;
+function showPopup(word,pts,isCombo){
+  const p=document.getElementById('word-popup');
+  p.querySelector('.wp-emoji').textContent=word.emoji;
+  p.querySelector('.wp-kana').textContent=word.kana;
+  p.querySelector('.wp-romaji').textContent=word.romaji;
+  p.querySelector('.wp-meaning').textContent=word.meaning;
+  p.querySelector('.wp-pts').textContent=(isCombo?'🔥 COMBO! ':'')+(streak>1?'🔥×'+streak+' ':'')+'+'+pts+' pts';
+  p.className=isCombo?'combo show':'show';
+  void p.offsetWidth;
+  if(isCombo){
+    const b=document.getElementById('combo-banner');
+    const maxM=Math.max(...activeWords.map(w=>w.mult||1));
+    b.textContent='🔥 COMBO ×'+maxM;
+    b.className='show'; void b.offsetWidth;
+    setTimeout(()=>b.className='',1700);
+  }
+  clearTimeout(popTimer);
+  popTimer=setTimeout(()=>p.className='',2100);
+}
+
+// ════════════════════════════════════════════════════════
+//  OVERLAY
+// ════════════════════════════════════════════════════════
+function showOverlay({title,sub,words=[],btn1,act1,btn2=null,act2=null}){
+  clearInterval(dropTimer); gameRunning=false;
+  document.getElementById('ov-title').innerHTML=title;
+  document.getElementById('ov-sub').innerHTML=sub;
+  const ow=document.getElementById('ov-words');
+  ow.innerHTML='';
+  words.forEach(w=>{
+    const d=document.createElement('div'); d.className='ov-word';
+    d.innerHTML=`<span class="ow-emoji">${w.emoji}</span><span class="ow-kana">${w.kana}</span><div class="ow-sub">${w.romaji} · ${w.meaning}</div>`;
+    ow.appendChild(d);
+  });
+  const b1=document.getElementById('ov-btn'); b1.textContent=btn1; b1.onclick=act1;
+  const b2=document.getElementById('ov-btn2');
+  if(btn2){b2.textContent=btn2;b2.onclick=act2;b2.style.display='';}
+  else b2.style.display='none';
+  document.getElementById('board-overlay').classList.remove('hidden');
+}
+function hideOverlay(){ document.getElementById('board-overlay').classList.add('hidden'); }
+
+// ════════════════════════════════════════════════════════
+//  GAME FLOW
+// ════════════════════════════════════════════════════════
+function startGame(){
+  score=0; streak=0;
+  document.getElementById('streak').style.display='none';
+  updateScore();
+  activeWords=[]; wordIntroIdx=0; foundRound=new Set();
+  LEVEL_WORDS.forEach(w=>w.mult=1);
+  document.getElementById('word-panel').innerHTML='';
+  resolvingWords=false;
+  calcRows(); buildDOM(); initBoard();
+  hideOverlay();
+  gameRunning=true;
+
+  const w=LEVEL_WORDS[wordIntroIdx++];
+  w.mult=1; activeWords.push(w);
+  rebuildPool(); renderPanel(); // renderPanel → safeSpawn
+  nextChar=rndKana();
+  document.getElementById('next-kana').textContent=nextChar;
+}
+function endGame(){
+  clearInterval(dropTimer); gameRunning=false; resolvingWords=false;
+  soundGameOver();
+  showOverlay({
+    title:'ゲームオーバー 💔',
+    sub:`Score : <strong style="color:var(--gold)">${score.toLocaleString()}</strong>`,
+    btn1:'Réessayer 🔄', act1:startGame
+  });
+}
+function levelDone(){
+  clearInterval(dropTimer); gameRunning=false; resolvingWords=false;
+  soundLevelUp();
+  showOverlay({
+    title:'🎉 クリア！',
+    sub:`Score : <strong style="color:var(--gold)">${score.toLocaleString()}</strong><br>Tu connais les animaux en japonais ! 🐾`,
+    words:LEVEL_WORDS,
+    btn1:'Rejouer 🌊', act1:startGame
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  TOUCH
+// ════════════════════════════════════════════════════════
+let txStart=0,tyStart=0,ttStart=0,lastTap=0;
+const BW=document.getElementById('board-col');
+BW.addEventListener('touchstart',e=>{
+  getCtx();
+  const t=e.touches[0];
+  txStart=t.clientX; tyStart=t.clientY; ttStart=Date.now();
+  const now=Date.now();
+  if(now-lastTap<280){ if(gameRunning&&!resolvingWords&&active) hardDrop(); lastTap=0; return; }
+  lastTap=now;
+},{passive:true});
+BW.addEventListener('touchend',e=>{
+  if(!gameRunning||resolvingWords||!active) return;
+  const t=e.changedTouches[0];
+  const dx=t.clientX-txStart, dy=t.clientY-tyStart, dt=Date.now()-ttStart;
+  const adx=Math.abs(dx), ady=Math.abs(dy);
+  if(dt<200&&adx<12&&ady<12) return;
+  if(ady>adx&&dy>50){ hardDrop(); return; }
+  if(adx>ady&&adx>10){
+    const screenW=Math.min(window.innerWidth,480);
+    const cellW=Math.floor(screenW*0.75/COLS);
+    const steps=Math.max(1,Math.round(adx/cellW));
+    const dir=dx>0?1:-1;
+    for(let i=0;i<steps;i++){ if(ok(active.x+dir,active.y)) active.x+=dir; else break; }
+    render();
+  }
+},{passive:true});
+document.addEventListener('keydown',e=>{
+  if(!gameRunning||resolvingWords||!active) return;
+  if(e.key==='ArrowLeft'&&ok(active.x-1,active.y)){e.preventDefault();active.x--;render();}
+  if(e.key==='ArrowRight'&&ok(active.x+1,active.y)){e.preventDefault();active.x++;render();}
+  if(e.key==='ArrowDown'){e.preventDefault();ok(active.x,active.y+1)?(active.y++,render()):lock();}
+  if(e.key===' '){e.preventDefault();hardDrop();}
+});
+window.addEventListener('resize',()=>{ if(!gameRunning) return; rebuildDOMKeepContent(); if(active) render(); });
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+calcRows(); buildDOM();
+showOverlay({
+  title:'かなDROP 🌊',
+  sub:`Forme des mots en hiragana<br>
+       <strong style="color:var(--cyan)">horizontalement ou verticalement</strong> !<br><br>
+       ← Glisse gauche/droite →<br>
+       Double-tap · Swipe ↓ = chute<br><br>
+       <span style="color:var(--gold)">Niveau 1 · Les animaux 🐾</span>`,
+  words:LEVEL_WORDS.slice(0,4),
+  btn1:'はじめる 🌊', act1:startGame
+});
 </script>
 </body>
 </html>
