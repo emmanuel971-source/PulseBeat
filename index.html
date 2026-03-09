@@ -3,21 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>かなDROP</title>
+<title>かなDROP ✨</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=DotGothic16&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Fredoka+One&display=swap');
 
 :root {
-  --bg:      #080c10;
-  --surface: #0d1520;
-  --border:  #1a2a3a;
-  --glow-b:  #00e5ff;
-  --glow-g:  #39ff14;
-  --glow-p:  #ff2d78;
-  --glow-y:  #ffe600;
-  --text:    #ddeeff;
-  --dim:     #4a6a8a;
-  --cell-bg: #0a1520;
+  --bg:       #1a0a2e;
+  --surface:  #241040;
+  --border:   #3d1f6e;
+  --pink:     #ff6eb4;
+  --mint:     #4dffd2;
+  --yellow:   #ffe94d;
+  --lavender: #c084fc;
+  --coral:    #ff7b6b;
+  --text:     #f0e6ff;
+  --dim:      #8866aa;
+  --cell-bg:  #160828;
+  --cell-border: #2d1255;
 }
 
 * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -31,268 +33,370 @@ html, body {
   touch-action:none;
 }
 
-/* scanlines */
-body::after {
-  content:''; position:fixed; inset:0;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
-  pointer-events:none; z-index:100;
+/* ── STARFIELD ── */
+#stars {
+  position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+}
+.star {
+  position:absolute; border-radius:50%;
+  background:#fff; opacity:0;
+  animation:twinkle var(--d) ease-in-out var(--delay) infinite;
+}
+@keyframes twinkle {
+  0%,100% { opacity:0; transform:scale(0.5); }
+  50%      { opacity:var(--op); transform:scale(1); }
 }
 
-/* ═══ MAIN LAYOUT ═══
-   Left: narrow grid (75% width)   Right: side panel (25% width)
-   Bottom: word panel
-*/
+/* ── LAYOUT ── */
 #shell {
+  position:relative; z-index:1;
   display:flex; flex-direction:column;
   height:100dvh;
   max-width:480px; margin:0 auto;
 }
-
-/* Middle row: grid + side panel */
-#middle {
-  flex:1; display:flex; min-height:0;
-}
+#middle { flex:1; display:flex; min-height:0; }
 
 /* ── BOARD COLUMN ── */
 #board-col {
-  /* 75% of available width */
-  flex: 3;
-  display:flex; flex-direction:column;
-  min-height:0; position:relative;
+  flex:3; display:flex; flex-direction:column; min-height:0; position:relative;
 }
-
 #board {
   flex:1;
   display:grid;
-  grid-template-columns:repeat(8, 1fr);
-  background:var(--surface);
-  border-left:2px solid var(--border);
-  border-right:1px solid var(--border);
+  grid-template-columns:repeat(8,1fr);
+  background:var(--cell-bg);
+  border-left:3px solid var(--border);
+  border-right:2px solid var(--border);
+  border-top:3px solid var(--border);
   overflow:hidden;
+  border-radius:0 0 0 12px;
 }
-
 .cell {
-  /* aspect-ratio removed — cells fill available height */
   display:flex; align-items:center; justify-content:center;
-  font-size:clamp(18px, 6vw, 30px); font-weight:900;
-  border:1px solid rgba(255,255,255,0.03);
-  user-select:none; position:relative;
-  min-height:0;
+  font-size:clamp(18px,6.2vw,30px); font-weight:900;
+  border:1px solid var(--cell-border);
+  user-select:none; position:relative; overflow:visible;
+  transition:background 0.08s;
 }
-.cell.empty  { background:var(--cell-bg); color:transparent; }
+.cell.empty { background:var(--cell-bg); color:transparent; }
 .cell.filled {
-  background:linear-gradient(160deg,#0e2240,#1a0e40);
-  border-color:rgba(0,229,255,0.18);
-  color:#aad4ff;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.07);
+  background:linear-gradient(160deg,#1e0e4a,#2a1060);
+  border-color:rgba(192,132,252,0.25);
+  color:#d8b4fe;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .cell.active {
-  background:linear-gradient(160deg,#0e3a6e,#2a0e6e);
-  border-color:rgba(0,229,255,0.65);
+  background:linear-gradient(160deg,#3b1178,#6b21a8);
+  border-color:rgba(255,110,180,0.8);
   color:#fff;
-  animation:activePulse 0.75s ease infinite alternate;
+  animation:activePulse 0.6s ease infinite alternate;
 }
 @keyframes activePulse {
-  from { box-shadow:0 0 8px rgba(0,229,255,0.4); }
-  to   { box-shadow:0 0 22px rgba(0,229,255,0.75); }
+  from { box-shadow:0 0 6px rgba(255,110,180,0.5); }
+  to   { box-shadow:0 0 20px rgba(255,110,180,0.9), 0 0 40px rgba(255,110,180,0.3); }
 }
 .cell.ghost {
   background:var(--cell-bg);
-  border:1px dashed rgba(0,229,255,0.15);
-  color:rgba(0,229,255,0.25);
+  border:1px dashed rgba(255,110,180,0.2);
+  color:rgba(255,110,180,0.3);
 }
-.cell.flash       { animation:cellFlash 0.7s ease forwards !important; }
-.cell.combo-flash { animation:comboFlash 0.7s ease forwards !important; }
+.cell.land {
+  animation:landBounce 0.35s cubic-bezier(0.36,0.07,0.19,0.97) forwards;
+}
+@keyframes landBounce {
+  0%   { transform:scaleY(1.3) scaleX(0.8); }
+  35%  { transform:scaleY(0.85) scaleX(1.1); }
+  60%  { transform:scaleY(1.05) scaleX(0.97); }
+  100% { transform:scaleY(1) scaleX(1); }
+}
+.cell.flash {
+  animation:cellFlash 0.65s ease forwards !important;
+}
+.cell.combo-flash {
+  animation:comboFlash 0.65s ease forwards !important;
+}
 @keyframes cellFlash {
-  0%   { background:var(--glow-y); color:#000; transform:scale(1.15); z-index:5; }
-  40%  { background:var(--glow-g); color:#000; }
-  100% { opacity:0; transform:scale(0.7); }
+  0%   { background:var(--yellow); color:#000; transform:scale(1.2); z-index:10; }
+  40%  { background:var(--mint); color:#000; }
+  100% { opacity:0; transform:scale(0.6) rotate(15deg); }
 }
 @keyframes comboFlash {
-  0%   { background:var(--glow-p); color:#fff; transform:scale(1.2); z-index:5; }
-  40%  { background:var(--glow-y); color:#000; }
-  100% { opacity:0; transform:scale(0.7); }
+  0%   { background:var(--pink); color:#fff; transform:scale(1.25) rotate(-5deg); z-index:10; }
+  30%  { background:var(--yellow); color:#000; transform:scale(1.1) rotate(5deg); }
+  100% { opacity:0; transform:scale(0.5) rotate(20deg); }
 }
 
-/* ── SIDE PANEL (right 25%) ── */
+/* ── PARTICLES ── */
+.particle {
+  position:absolute; border-radius:50%; pointer-events:none; z-index:30;
+  animation:particleFly var(--dur) ease-out forwards;
+}
+@keyframes particleFly {
+  0%   { opacity:1; transform:translate(0,0) scale(1); }
+  100% { opacity:0; transform:translate(var(--tx), var(--ty)) scale(0); }
+}
+
+/* ── SIDE PANEL ── */
 #side-panel {
-  flex:1;
-  display:flex; flex-direction:column;
+  flex:1; display:flex; flex-direction:column;
   background:var(--surface);
-  border-left:1px solid var(--border);
-  border-right:2px solid var(--border);
-  padding:10px 6px;
-  gap:12px;
-  align-items:center;
+  border-left:2px solid var(--border);
+  border-right:3px solid var(--border);
+  border-top:3px solid var(--border);
+  padding:10px 5px 8px;
+  gap:14px; align-items:center;
+  border-radius:0 0 12px 0;
 }
 
-#side-title {
-  font-family:'DotGothic16',monospace;
-  font-size:12px; letter-spacing:1px;
-  color:var(--glow-b); text-shadow:0 0 8px var(--glow-b);
-  writing-mode:vertical-rl; text-orientation:mixed;
-  align-self:center;
-}
-
-.side-block { display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; }
 .side-label {
-  font-family:'DotGothic16',monospace; font-size:8px;
-  color:var(--dim); letter-spacing:1px; text-align:center;
+  font-family:'Fredoka One',sans-serif;
+  font-size:9px; color:var(--dim); letter-spacing:1.5px; text-transform:uppercase;
+  text-align:center;
 }
 
 #next-kana {
-  width:90%; aspect-ratio:1; max-width:56px;
-  border-radius:8px;
-  background:linear-gradient(135deg,#0a2040,#1a0840);
-  border:1px solid rgba(0,229,255,0.4);
-  box-shadow:0 0 12px rgba(0,229,255,0.2);
+  width:88%; aspect-ratio:1; max-width:58px;
+  border-radius:12px;
+  background:linear-gradient(135deg,#2d1060,#4a1080);
+  border:2px solid rgba(255,110,180,0.5);
+  box-shadow:0 0 16px rgba(255,110,180,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
   display:flex; align-items:center; justify-content:center;
-  font-size:clamp(18px,5vw,26px); font-weight:900; color:#fff;
+  font-size:clamp(18px,5.5vw,28px); font-weight:900; color:#fff;
+  transition:transform 0.1s;
+}
+#next-kana.pop { animation:nextPop 0.3s ease forwards; }
+@keyframes nextPop {
+  0%   { transform:scale(0.7) rotate(-10deg); opacity:0.5; }
+  70%  { transform:scale(1.1) rotate(3deg); }
+  100% { transform:scale(1) rotate(0deg); opacity:1; }
 }
 
 #score-val {
-  font-family:'DotGothic16',monospace;
-  font-size:clamp(13px,3.5vw,18px);
-  color:var(--glow-y); text-shadow:0 0 8px var(--glow-y);
+  font-family:'Fredoka One',sans-serif;
+  font-size:clamp(14px,4vw,20px);
+  color:var(--yellow);
+  text-shadow:0 0 10px rgba(255,233,77,0.5);
   line-height:1; text-align:center; word-break:break-all;
 }
+#score-val.bump { animation:scoreBump 0.4s ease; }
+@keyframes scoreBump {
+  0%   { transform:scale(1); }
+  40%  { transform:scale(1.35); color:var(--pink); }
+  100% { transform:scale(1); }
+}
 
-/* ── WORD PANEL (bottom) ── */
+.side-block { display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; }
+
+/* Level indicator */
+#level-badge {
+  font-family:'Fredoka One',sans-serif;
+  font-size:11px; color:var(--mint);
+  text-align:center; line-height:1.3;
+}
+
+/* ── WORD PANEL ── */
 #word-panel {
   background:var(--surface);
-  border-top:2px solid var(--border);
+  border-top:3px solid var(--border);
   flex-shrink:0;
-  padding:6px 8px 8px;
+  padding:7px 8px 9px;
   display:flex; flex-direction:column; gap:5px;
 }
 
 .word-row {
   display:flex; align-items:center; gap:8px;
-  background:rgba(255,255,255,0.025);
-  border:1px solid var(--border);
-  border-radius:8px; padding:5px 10px;
-  animation:rowAppear 0.4s ease;
+  background:rgba(255,255,255,0.03);
+  border:1.5px solid var(--border);
+  border-radius:12px; padding:6px 10px;
+  animation:rowSlideIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
   position:relative; overflow:hidden;
 }
-@keyframes rowAppear {
-  from { opacity:0; transform:translateY(6px); }
+@keyframes rowSlideIn {
+  from { opacity:0; transform:translateY(12px) scale(0.95); }
   to   { opacity:1; transform:none; }
 }
-.word-row.boss { border-color:rgba(255,45,120,0.35); background:rgba(255,45,120,0.04); }
-.wr-emoji { font-size:18px; flex-shrink:0; }
-.wr-kana  { font-size:16px; font-weight:900; color:var(--text); }
-.wr-sub   { font-size:9px; color:var(--dim); }
-.wr-mult  {
-  font-family:'DotGothic16',monospace; font-size:14px; font-weight:900;
-  color:var(--glow-g); text-shadow:0 0 5px var(--glow-g);
-  min-width:28px; text-align:right; flex-shrink:0;
+.word-row.boss {
+  border-color:rgba(255,107,107,0.5);
+  background:rgba(255,107,107,0.06);
+  box-shadow:0 0 12px rgba(255,107,107,0.1);
+}
+
+.wr-emoji {
+  font-size:24px; flex-shrink:0; line-height:1;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+.wr-info { flex:1; min-width:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.wr-kana { font-size:18px; font-weight:900; color:var(--text); line-height:1; }
+.wr-romaji { font-size:13px; color:var(--mint); font-weight:700; }
+.wr-meaning { font-size:12px; color:var(--dim); }
+
+.wr-mult {
+  font-family:'Fredoka One',sans-serif;
+  font-size:16px; font-weight:900;
+  color:var(--mint);
+  text-shadow:0 0 6px rgba(77,255,210,0.6);
+  min-width:32px; text-align:right; flex-shrink:0;
   transition:transform 0.15s;
 }
-.word-row.boss .wr-mult { color:var(--glow-p); text-shadow:0 0 5px var(--glow-p); }
-.wr-mult.bump { transform:scale(1.5); }
+.word-row.boss .wr-mult {
+  color:var(--coral);
+  text-shadow:0 0 6px rgba(255,123,107,0.6);
+}
+.wr-mult.bump { animation:multBump 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes multBump {
+  0%   { transform:scale(1); }
+  50%  { transform:scale(1.7) rotate(-5deg); }
+  100% { transform:scale(1); }
+}
 
-.word-row::after { content:''; position:absolute; inset:0; opacity:0; pointer-events:none; }
+/* sweep */
+.word-row::after { content:''; position:absolute; inset:0; opacity:0; pointer-events:none; border-radius:12px; }
 .word-row.bar-flash::after {
-  background:linear-gradient(90deg,transparent,rgba(57,255,20,0.3),transparent);
-  animation:barSweep 0.55s ease forwards;
+  background:linear-gradient(90deg,transparent,rgba(77,255,210,0.35),transparent);
+  animation:barSweep 0.5s ease forwards;
 }
 .word-row.bar-combo::after {
-  background:linear-gradient(90deg,transparent,rgba(255,45,120,0.4),transparent);
-  animation:barSweep 0.55s ease forwards;
+  background:linear-gradient(90deg,transparent,rgba(255,110,180,0.45),transparent);
+  animation:barSweep 0.5s ease forwards;
 }
 @keyframes barSweep {
   from { opacity:1; transform:translateX(-110%); }
   to   { opacity:0; transform:translateX(110%); }
 }
 
-/* ── OVERLAYS ── */
+/* ── OVERLAY ── */
 #board-overlay {
   position:absolute; inset:0;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  background:rgba(8,12,16,0.93); backdrop-filter:blur(6px);
-  z-index:50; gap:14px; padding:28px 20px;
+  background:rgba(10,4,24,0.93); backdrop-filter:blur(8px);
+  z-index:50; gap:14px; padding:28px 18px;
+  border-radius:0;
 }
 #board-overlay.hidden { display:none; }
+
 .ov-title {
-  font-family:'DotGothic16',monospace; font-size:22px;
-  color:var(--glow-b); text-shadow:0 0 12px var(--glow-b);
-  text-align:center; line-height:1.4;
+  font-family:'Fredoka One',sans-serif; font-size:32px;
+  color:var(--pink); text-shadow:0 0 20px rgba(255,110,180,0.6);
+  text-align:center; line-height:1.2;
 }
-.ov-sub { font-size:13px; color:var(--dim); text-align:center; line-height:1.9; max-width:260px; }
+.ov-sub {
+  font-size:13px; color:var(--dim); text-align:center;
+  line-height:2; max-width:260px;
+}
 .ov-words { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:280px; }
 .ov-word {
-  background:rgba(0,229,255,0.05); border:1px solid rgba(0,229,255,0.18);
-  border-radius:8px; padding:5px 10px; text-align:center;
+  background:rgba(255,110,180,0.07); border:1.5px solid rgba(255,110,180,0.25);
+  border-radius:12px; padding:6px 12px; text-align:center;
+  animation:ovWordPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
 }
-.ov-word .ow-kana { font-size:16px; font-weight:900; color:var(--glow-b); }
-.ov-word .ow-sub  { font-size:10px; color:var(--dim); }
+.ov-word:nth-child(1){animation-delay:0.05s}
+.ov-word:nth-child(2){animation-delay:0.1s}
+.ov-word:nth-child(3){animation-delay:0.15s}
+@keyframes ovWordPop {
+  from { opacity:0; transform:scale(0.6) rotate(-8deg); }
+  to   { opacity:1; transform:none; }
+}
+.ov-word .ow-emoji { font-size:26px; display:block; margin-bottom:2px; }
+.ov-word .ow-kana  { font-size:15px; font-weight:900; color:var(--pink); display:block; }
+.ov-word .ow-sub   { font-size:10px; color:var(--dim); }
 
 .btn {
-  font-family:'DotGothic16',monospace; font-size:14px; letter-spacing:1px;
-  background:var(--glow-b); color:#000;
-  border:none; border-radius:8px; padding:12px 28px; cursor:pointer;
-  box-shadow:0 0 20px rgba(0,229,255,0.4);
-  width:100%; max-width:240px; transition:all 0.15s;
+  font-family:'Fredoka One',sans-serif; font-size:18px; letter-spacing:1px;
+  background:linear-gradient(135deg,var(--pink),var(--lavender));
+  color:#fff;
+  border:none; border-radius:50px; padding:14px 36px; cursor:pointer;
+  box-shadow:0 4px 20px rgba(255,110,180,0.4), 0 0 0 2px rgba(255,255,255,0.1);
+  width:100%; max-width:260px;
+  transition:all 0.15s;
+  text-shadow:0 1px 3px rgba(0,0,0,0.3);
 }
-.btn:active { transform:scale(0.96); }
+.btn:active { transform:scale(0.95); box-shadow:0 2px 10px rgba(255,110,180,0.3); }
 .btn.secondary {
   background:transparent; color:var(--dim);
-  border:1px solid var(--border); box-shadow:none; font-size:12px;
+  border:1.5px solid var(--border); box-shadow:none;
+  font-size:13px; padding:10px 24px;
+  border-radius:50px;
 }
 
 /* ── WORD POPUP ── */
 #word-popup {
-  position:absolute; left:12px; right:12px; top:30%;
+  position:absolute; left:8px; right:8px; top:28%;
   transform:translateY(-50%);
-  background:rgba(8,12,16,0.96);
-  border:2px solid var(--glow-y);
-  border-radius:14px; padding:12px 16px;
+  background:rgba(10,4,24,0.97);
+  border:2.5px solid var(--yellow);
+  border-radius:20px; padding:14px 16px;
   text-align:center; z-index:40; pointer-events:none; display:none;
+  box-shadow:0 0 30px rgba(255,233,77,0.25);
 }
-#word-popup.show { display:block; animation:popupIn 1.9s ease forwards; }
-#word-popup.combo { border-color:var(--glow-p); }
-.wp-emoji  { font-size:28px; display:block; }
-.wp-kana   { font-family:'DotGothic16',monospace; font-size:24px; color:var(--glow-y); text-shadow:0 0 10px var(--glow-y); display:block; line-height:1.2; }
-#word-popup.combo .wp-kana { color:var(--glow-p); text-shadow:0 0 10px var(--glow-p); }
-.wp-romaji { font-size:11px; color:var(--glow-b); letter-spacing:2px; }
-.wp-meaning{ font-size:13px; color:var(--text); margin:2px 0; }
-.wp-pts    { font-family:'DotGothic16',monospace; font-size:16px; color:var(--glow-p); margin-top:4px; }
-
+#word-popup.show { display:block; animation:popupIn 2s ease forwards; }
+#word-popup.combo { border-color:var(--pink); box-shadow:0 0 30px rgba(255,110,180,0.4); }
+.wp-emoji   { font-size:40px; display:block; line-height:1.1; }
+.wp-kana    { font-family:'Fredoka One',sans-serif; font-size:32px; color:var(--yellow); text-shadow:0 0 12px rgba(255,233,77,0.6); display:block; line-height:1; }
+#word-popup.combo .wp-kana { color:var(--pink); text-shadow:0 0 12px rgba(255,110,180,0.6); }
+.wp-romaji  { font-size:13px; color:var(--mint); letter-spacing:2px; margin:3px 0; }
+.wp-meaning { font-size:14px; color:var(--text); }
+.wp-pts     { font-family:'Fredoka One',sans-serif; font-size:20px; color:var(--pink); margin-top:6px; }
 @keyframes popupIn {
-  0%   { opacity:0; transform:translateY(-60%) scale(0.75); }
-  12%  { opacity:1; transform:translateY(-55%) scale(1.04); }
-  75%  { opacity:1; transform:translateY(-55%) scale(1); }
-  100% { opacity:0; transform:translateY(-62%) scale(0.92); }
+  0%   { opacity:0; transform:translateY(-58%) scale(0.7) rotate(-3deg); }
+  10%  { opacity:1; transform:translateY(-64%) scale(1.06) rotate(1deg); }
+  75%  { opacity:1; transform:translateY(-64%) scale(1) rotate(0deg); }
+  100% { opacity:0; transform:translateY(-72%) scale(0.9); }
 }
 
 /* ── COMBO BANNER ── */
 #combo-banner {
-  position:absolute; left:50%; top:8%;
+  position:absolute; left:50%; top:6%;
   transform:translateX(-50%);
-  font-family:'DotGothic16',monospace; font-size:24px;
-  color:var(--glow-p); text-shadow:0 0 16px var(--glow-p);
+  font-family:'Fredoka One',sans-serif; font-size:28px;
+  color:var(--pink); text-shadow:0 0 20px rgba(255,110,180,0.8);
   pointer-events:none; z-index:41; white-space:nowrap; display:none;
 }
-#combo-banner.show { display:block; animation:comboBannerAnim 1.5s ease forwards; }
+#combo-banner.show { display:block; animation:comboBannerAnim 1.6s ease forwards; }
 @keyframes comboBannerAnim {
-  0%   { opacity:0; transform:translateX(-50%) scale(0.8); }
-  15%  { opacity:1; transform:translateX(-50%) scale(1.12); }
-  70%  { opacity:1; transform:translateX(-50%) scale(1); }
-  100% { opacity:0; }
+  0%   { opacity:0; transform:translateX(-50%) scale(0.6) rotate(-8deg); }
+  15%  { opacity:1; transform:translateX(-50%) scale(1.15) rotate(2deg); }
+  70%  { opacity:1; transform:translateX(-50%) scale(1) rotate(0deg); }
+  100% { opacity:0; transform:translateX(-50%) scale(0.9); }
+}
+
+/* ── STREAK INDICATOR ── */
+#streak {
+  position:absolute; right:6px; top:8px;
+  font-family:'Fredoka One',sans-serif; font-size:13px;
+  color:var(--coral); text-shadow:0 0 8px var(--coral);
+  z-index:35; display:none;
+  animation:streakAnim 0.5s ease;
+}
+@keyframes streakAnim {
+  0%   { transform:scale(0.5) translateY(4px); opacity:0; }
+  60%  { transform:scale(1.2); opacity:1; }
+  100% { transform:scale(1); }
+}
+
+/* ── MUTE BTN ── */
+#mute-btn {
+  position:absolute; bottom:6px; width:100%; left:0;
+  display:flex; justify-content:center;
+}
+#mute-btn button {
+  background:transparent; border:none; color:var(--dim);
+  font-size:11px; cursor:pointer; font-family:'Fredoka One',sans-serif;
+  letter-spacing:1px; opacity:0.6;
 }
 </style>
 </head>
 <body>
-<div id="shell">
 
-  <!-- MIDDLE: board + side panel -->
+<!-- STARFIELD -->
+<div id="stars"></div>
+
+<div id="shell">
   <div id="middle">
 
     <!-- BOARD COLUMN -->
     <div id="board-col">
       <div id="board"></div>
 
-      <!-- popups inside board column -->
       <div id="word-popup">
         <span class="wp-emoji"></span>
         <span class="wp-kana"></span>
@@ -301,60 +405,172 @@ body::after {
         <div class="wp-pts"></div>
       </div>
       <div id="combo-banner"></div>
+      <div id="streak"></div>
 
-      <!-- overlay covers only the board column -->
       <div id="board-overlay">
         <div class="ov-title" id="ov-title">かなDROP</div>
         <div class="ov-sub"   id="ov-sub"></div>
         <div class="ov-words" id="ov-words"></div>
-        <button class="btn"       id="ov-btn">はじめる</button>
+        <button class="btn"       id="ov-btn">はじめる ✨</button>
         <button class="btn secondary" id="ov-btn2" style="display:none">Recommencer</button>
       </div>
+
+      <div id="mute-btn"><button id="mute-toggle">🔊 Son</button></div>
     </div>
 
     <!-- SIDE PANEL -->
     <div id="side-panel">
-      <div id="side-title">かなDROP</div>
-
       <div class="side-block">
         <div class="side-label">NEXT</div>
         <div id="next-kana">？</div>
       </div>
-
       <div class="side-block">
         <div class="side-label">SCORE</div>
         <div id="score-val">0</div>
       </div>
+      <div class="side-block">
+        <div id="level-badge">Lv.1<br>🐾</div>
+      </div>
     </div>
   </div>
 
-  <!-- WORD PANEL -->
   <div id="word-panel"></div>
-
 </div>
+
 <script>
-// ═══════════════════════════════════════════════
-//  WORD LIST
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  WORD LIST — animal head emojis, 2-3 kana only
+// ════════════════════════════════════════════════════════
 const LEVEL_WORDS = [
-  {kana:'いぬ',  romaji:'inu',    meaning:'chien',  emoji:'🐕', boss:false},
-  {kana:'ねこ',  romaji:'neko',   meaning:'chat',   emoji:'🐈', boss:false},
-  {kana:'うし',  romaji:'ushi',   meaning:'vache',  emoji:'🐄', boss:false},
-  {kana:'うま',  romaji:'uma',    meaning:'cheval', emoji:'🐎', boss:false},
-  {kana:'くま',  romaji:'kuma',   meaning:'ours',   emoji:'🐻', boss:false},
-  {kana:'ねずみ',romaji:'nezumi', meaning:'souris', emoji:'🐭', boss:true},
+  {kana:'いぬ',  romaji:'inu',    meaning:'chien',   emoji:'🐶', boss:false},
+  {kana:'ねこ',  romaji:'neko',   meaning:'chat',    emoji:'🐱', boss:false},
+  {kana:'うし',  romaji:'ushi',   meaning:'vache',   emoji:'🐮', boss:false},
+  {kana:'うま',  romaji:'uma',    meaning:'cheval',  emoji:'🐴', boss:false},
+  {kana:'くま',  romaji:'kuma',   meaning:'ours',    emoji:'🐻', boss:false},
+  {kana:'ねずみ',romaji:'nezumi', meaning:'souris',  emoji:'🐭', boss:true},
 ];
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  SOUND ENGINE (Web Audio API)
+// ════════════════════════════════════════════════════════
+let audioCtx = null;
+let muted = false;
+
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(freq, type, dur, vol=0.18, delay=0) {
+  if (muted) return;
+  try {
+    const ctx = getCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type; osc.frequency.value = freq;
+    const t = ctx.currentTime + delay;
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.start(t); osc.stop(t + dur);
+  } catch(e){}
+}
+
+function soundDrop() {
+  playTone(220, 'sine', 0.08, 0.12);
+}
+function soundWord() {
+  // Ascending arpeggio
+  [523, 659, 784, 1047].forEach((f,i) => playTone(f,'sine',0.18,0.2,i*0.07));
+}
+function soundCombo() {
+  [523,659,784,1047,1319,1568].forEach((f,i) => playTone(f,'sine',0.22,0.22,i*0.055));
+  setTimeout(()=>playTone(1568,'square',0.3,0.15), 400);
+}
+function soundNewWord() {
+  [440,554,659].forEach((f,i) => playTone(f,'triangle',0.2,0.15,i*0.08));
+}
+function soundGameOver() {
+  [440,370,311,261].forEach((f,i) => playTone(f,'sawtooth',0.25,0.18,i*0.12));
+}
+function soundLevelUp() {
+  [523,659,784,1047,784,1047,1319].forEach((f,i)=>playTone(f,'sine',0.2,0.22,i*0.08));
+}
+
+document.getElementById('mute-toggle').onclick = () => {
+  muted = !muted;
+  document.getElementById('mute-toggle').textContent = muted ? '🔇 Son off' : '🔊 Son';
+};
+
+// ════════════════════════════════════════════════════════
+//  STARFIELD
+// ════════════════════════════════════════════════════════
+function buildStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 3 + 1;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      --d:${(Math.random()*3+2).toFixed(1)}s;
+      --delay:${(Math.random()*4).toFixed(1)}s;
+      --op:${(Math.random()*0.6+0.2).toFixed(2)};
+    `;
+    container.appendChild(s);
+  }
+}
+buildStars();
+
+// ════════════════════════════════════════════════════════
+//  PARTICLES
+// ════════════════════════════════════════════════════════
+const PARTICLE_COLORS = ['#ff6eb4','#4dffd2','#ffe94d','#c084fc','#ff7b6b','#fff'];
+
+function spawnParticles(cellEl, count=12) {
+  if (!cellEl) return;
+  const rect = cellEl.getBoundingClientRect();
+  const boardRect = document.getElementById('board-col').getBoundingClientRect();
+  const cx = rect.left - boardRect.left + rect.width/2;
+  const cy = rect.top  - boardRect.top  + rect.height/2;
+  const container = document.getElementById('board-col');
+
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random()*8+4;
+    const angle = (Math.PI*2/count)*i + Math.random()*0.5;
+    const dist = Math.random()*60+30;
+    const tx = Math.cos(angle)*dist + 'px';
+    const ty = (Math.sin(angle)*dist - 20) + 'px';
+    const color = PARTICLE_COLORS[Math.floor(Math.random()*PARTICLE_COLORS.length)];
+    const dur = (Math.random()*0.4+0.4).toFixed(2)+'s';
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${cx - size/2}px; top:${cy - size/2}px;
+      background:${color};
+      --tx:${tx}; --ty:${ty}; --dur:${dur};
+      box-shadow:0 0 ${size}px ${color};
+    `;
+    container.appendChild(p);
+    setTimeout(()=>p.remove(), 900);
+  }
+}
+
+// ════════════════════════════════════════════════════════
 //  STATE
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 const COLS = 8;
 let ROWS = 12;
-
 let board = [];
 let active = null;
 let nextChar = '';
 let score = 0;
+let streak = 0;
+let lastWordTime = 0;
 
 let activeWords  = [];
 let wordIntroIdx = 0;
@@ -368,21 +584,17 @@ let DROP_SPEED  = 1400;
 
 let txStart=0, tyStart=0, ttStart=0, lastTap=0;
 
-// ═══════════════════════════════════════════════
-//  SIZING — rows fill available height
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  SIZING
+// ════════════════════════════════════════════════════════
 function calcRows() {
   const panH  = document.getElementById('word-panel').offsetHeight || 0;
   const avail = (window.innerHeight || document.documentElement.clientHeight) - panH;
-  // cell width = 75% of screen width / 8 cols
   const screenW = Math.min(window.innerWidth, 480);
   const cellW   = Math.floor(screenW * 0.75 / COLS);
   ROWS = Math.max(8, Math.floor(avail / cellW));
 }
 
-// ═══════════════════════════════════════════════
-//  KANA POOL
-// ═══════════════════════════════════════════════
 function rebuildPool() {
   kanaPool = activeWords.flatMap(w => [...w.kana]);
 }
@@ -390,448 +602,423 @@ function rndKana() {
   return kanaPool[Math.floor(Math.random() * kanaPool.length)];
 }
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  BOARD DOM
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 function initBoard() {
-  board = Array.from({length:ROWS}, () =>
-    Array.from({length:COLS}, () => ({filled:false, char:''}))
+  board = Array.from({length:ROWS}, ()=>
+    Array.from({length:COLS}, ()=>({filled:false, char:''}))
   );
 }
 
 function buildDOM() {
   const el = document.getElementById('board');
   el.innerHTML = '';
-  el.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const d = document.createElement('div');
-      d.className = 'cell empty';
-      d.dataset.r = r; d.dataset.c = c;
-      el.appendChild(d);
-    }
+  el.style.gridTemplateRows = `repeat(${ROWS},1fr)`;
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    const d = document.createElement('div');
+    d.className='cell empty'; d.dataset.r=r; d.dataset.c=c;
+    el.appendChild(d);
   }
 }
 
-// Preserve existing board content after a ROWS change (word panel grows)
 function rebuildDOMKeepContent() {
   const oldRows = board.length;
-  const oldBoard = board.map(row => row.map(cell => ({...cell})));
-
+  const oldBoard = board.map(row => row.map(c=>({...c})));
   calcRows();
-
-  // Shift content: keep bottom rows, discard top if shrinking
-  const newBoard = Array.from({length:ROWS}, () =>
-    Array.from({length:COLS}, () => ({filled:false, char:''}))
+  const newBoard = Array.from({length:ROWS}, ()=>
+    Array.from({length:COLS}, ()=>({filled:false,char:''}))
   );
-  // Copy from the bottom up
-  const copyRows = Math.min(ROWS, oldRows);
-  for (let r = 0; r < copyRows; r++) {
-    newBoard[ROWS - 1 - r] = oldBoard[oldRows - 1 - r].map(c => ({...c}));
-  }
+  const copy = Math.min(ROWS, oldRows);
+  for (let r=0;r<copy;r++) newBoard[ROWS-1-r] = oldBoard[oldRows-1-r].map(c=>({...c}));
   board = newBoard;
   buildDOM();
-  // Don't re-init board — content preserved above
 }
 
 const gc = (r,c) => document.querySelector(`#board [data-r="${r}"][data-c="${c}"]`);
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  SPAWN / MOVE / LOCK
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 function spawn() {
   waitSpawn = false;
-  active = {char: nextChar || rndKana(), x: Math.floor(COLS / 2), y: 0};
+  active = {char: nextChar||rndKana(), x:Math.floor(COLS/2), y:0};
   nextChar = rndKana();
-  document.getElementById('next-kana').textContent = nextChar;
+  const nk = document.getElementById('next-kana');
+  nk.textContent = nextChar;
+  nk.classList.remove('pop');
+  void nk.offsetWidth;
+  nk.classList.add('pop');
   if (board[0][active.x].filled) { endGame(); return; }
   render();
   startTimer();
 }
 
-function ok(x, y) {
-  return x >= 0 && x < COLS && y >= 0 && y < ROWS && !board[y][x].filled;
+function ok(x,y) {
+  return x>=0 && x<COLS && y>=0 && y<ROWS && !board[y][x].filled;
 }
-
 function startTimer() {
   clearInterval(dropTimer);
   dropTimer = setInterval(tick, DROP_SPEED);
 }
-
 function tick() {
-  if (!gameRunning || waitSpawn || !active) return;
-  ok(active.x, active.y + 1) ? (active.y++, render()) : lock();
+  if (!gameRunning||waitSpawn||!active) return;
+  ok(active.x,active.y+1) ? (active.y++,render()) : lock();
 }
-
 function lock() {
   if (!active) return;
   clearInterval(dropTimer);
-  board[active.y][active.x] = {filled:true, char:active.char};
-  const pr = active.y, pc = active.x;
-  active = null;
-  waitSpawn = true;
+  board[active.y][active.x]={filled:true,char:active.char};
+  const pr=active.y, pc=active.x;
+  // Land animation
+  const el=gc(pr,pc);
+  if(el){el.className='cell filled land';el.textContent=active.char;setTimeout(()=>el.classList.remove('land'),400);}
+  active=null; waitSpawn=true;
+  soundDrop();
   render();
-  checkWords(pr, pc);
+  checkWords(pr,pc);
 }
-
 function hardDrop() {
-  if (!active || !gameRunning || waitSpawn) return;
-  while (ok(active.x, active.y + 1)) active.y++;
+  if (!active||!gameRunning||waitSpawn) return;
+  while (ok(active.x,active.y+1)) active.y++;
   render(); lock();
 }
 
-// ═══════════════════════════════════════════════
-//  WORD DETECTION  ← fixed combo logic
-//
-//  Scan the FULL row and FULL column of the placed
-//  cell. Both scans are independent and can each
-//  trigger a match. A combo = matches in BOTH.
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  WORD DETECTION
+// ════════════════════════════════════════════════════════
 function checkWords(pr, pc) {
-  const found  = [];
-  const seenK  = new Set();
+  const found=[];
 
-  // Build full row string (length = COLS)
-  const rowCells = Array.from({length:COLS}, (_, c) => ({r:pr, c}));
-  const rowLine  = rowCells.map(({r,c}) => board[r][c].filled ? board[r][c].char : '\x00').join('');
-
-  // Build full col string (length = ROWS)
-  const colCells = Array.from({length:ROWS}, (_, r) => ({r, c:pc}));
-  const colLine  = colCells.map(({r,c}) => board[r][c].filled ? board[r][c].char : '\x00').join('');
+  const rowCells = Array.from({length:COLS},(_,c)=>({r:pr,c}));
+  const colCells = Array.from({length:ROWS},(_,r)=>({r,c:pc}));
+  const rowLine  = rowCells.map(({r,c})=>board[r][c].filled?board[r][c].char:'\x00').join('');
+  const colLine  = colCells.map(({r,c})=>board[r][c].filled?board[r][c].char:'\x00').join('');
 
   function scanLine(line, cells) {
-    activeWords.forEach(w => {
-      // A word can match multiple times on the same line (e.g. ねこねこ)
-      // but for combo purposes we only need ≥2 *different* words OR
-      // same word horizontal+vertical — so we DON'T skip if already in seenK,
-      // we just add both occurrences.
-      let i = line.indexOf(w.kana);
-      while (i !== -1) {
-        const matchCells = Array.from({length:w.kana.length}, (_, j) => cells[i + j]);
-        found.push({word:w, cells:matchCells, dir: cells === rowCells ? 'H' : 'V'});
-        i = line.indexOf(w.kana, i + 1);
+    activeWords.forEach(w=>{
+      let i=line.indexOf(w.kana);
+      while(i!==-1){
+        found.push({word:w, cells:Array.from({length:w.kana.length},(_,j)=>cells[i+j]), dir:cells===rowCells?'H':'V'});
+        i=line.indexOf(w.kana,i+1);
       }
     });
   }
-
   scanLine(rowLine, rowCells);
   scanLine(colLine, colCells);
 
   if (!found.length) { spawn(); return; }
 
-  // Combo = at least 2 matches (same or different words, H+V)
   const isCombo = found.length >= 2;
-
-  // Collect all cells to remove (union — handles shared cell in H+V)
   const cellSet = new Set();
-  found.forEach(f => f.cells.forEach(cell => cellSet.add(`${cell.r},${cell.c}`)));
+  found.forEach(f=>f.cells.forEach(cell=>cellSet.add(`${cell.r},${cell.c}`)));
 
-  // Flash
-  cellSet.forEach(key => {
-    const [r, c] = key.split(',').map(Number);
-    const el = gc(r, c);
-    if (el) el.classList.add(isCombo ? 'combo-flash' : 'flash');
+  // Flash cells + particles
+  const flashCells = [];
+  cellSet.forEach(key=>{
+    const [r,c]=key.split(',').map(Number);
+    const el=gc(r,c);
+    if(el){
+      el.classList.add(isCombo?'combo-flash':'flash');
+      flashCells.push(el);
+    }
   });
 
-  // Score — count each distinct word match separately, using that word's current mult
-  let pts = 0;
-  found.forEach(f => {
-    pts += f.word.kana.length * 100 * (f.word.mult || 1);
-    f.word.mult = (f.word.mult || 1) + 1;
+  // Spawn particles on first matched cell
+  if (flashCells.length) spawnParticles(flashCells[Math.floor(flashCells.length/2)], isCombo?20:12);
+
+  // Score
+  let pts=0;
+  found.forEach(f=>{
+    pts += f.word.kana.length*100*(f.word.mult||1);
+    f.word.mult=(f.word.mult||1)+1;
     foundRound.add(f.word.kana);
   });
-  score += pts;
+  score+=pts;
+
+  // Streak
+  const now=Date.now();
+  if (now-lastWordTime<4000) { streak++; } else { streak=1; }
+  lastWordTime=now;
+  updateStreak();
+
+  if(streak>1) pts=Math.round(pts*(1+streak*0.1)); // streak bonus
   updateScore();
 
+  // Sound
+  isCombo ? soundCombo() : soundWord();
+
   showPopup(found[0].word, pts, isCombo);
-  // Flash bars for all matched words (deduplicated by kana)
-  const barDone = new Set();
-  found.forEach(f => { if (!barDone.has(f.word.kana)) { flashBar(f.word.kana, isCombo); barDone.add(f.word.kana); }});
+  const barDone=new Set();
+  found.forEach(f=>{if(!barDone.has(f.word.kana)){flashBar(f.word.kana,isCombo);barDone.add(f.word.kana);}});
   updateMults();
 
-  setTimeout(() => {
-    // Clear matched cells
-    cellSet.forEach(key => {
-      const [r, c] = key.split(',').map(Number);
-      board[r][c] = {filled:false, char:''};
-      const el = gc(r, c);
-      if (el) { el.className = 'cell empty'; el.textContent = ''; }
+  setTimeout(()=>{
+    cellSet.forEach(key=>{
+      const [r,c]=key.split(',').map(Number);
+      board[r][c]={filled:false,char:''};
+      const el=gc(r,c);
+      if(el){el.className='cell empty';el.textContent='';}
     });
-    gravity();
-    render();
+    gravity(); render();
 
-    // Check if all active words found at least once this round
-    const allDone = activeWords.every(w => foundRound.has(w.kana));
-    if (allDone) {
-      if (wordIntroIdx >= LEVEL_WORDS.length) { setTimeout(levelDone, 400); }
+    const allDone=activeWords.every(w=>foundRound.has(w.kana));
+    if(allDone){
+      if(wordIntroIdx>=LEVEL_WORDS.length){setTimeout(levelDone,400);}
       else introNext();
-    } else {
-      spawn();
-    }
+    } else { spawn(); }
   }, 820);
 }
 
 function gravity() {
-  for (let c = 0; c < COLS; c++) {
-    const chars = [];
-    for (let r = ROWS - 1; r >= 0; r--) {
-      if (board[r][c].filled) chars.push(board[r][c].char);
-    }
-    for (let r = ROWS - 1; r >= 0; r--) {
-      board[r][c] = chars.length
-        ? {filled:true,  char:chars.shift()}
-        : {filled:false, char:''};
-    }
+  for(let c=0;c<COLS;c++){
+    const ch=[];
+    for(let r=ROWS-1;r>=0;r--) if(board[r][c].filled) ch.push(board[r][c].char);
+    for(let r=ROWS-1;r>=0;r--) board[r][c]=ch.length?{filled:true,char:ch.shift()}:{filled:false,char:''};
   }
 }
 
-// ═══════════════════════════════════════════════
-//  WORD INTRO — board content is PRESERVED
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  WORD INTRO — board preserved
+// ════════════════════════════════════════════════════════
 function introNext() {
-  if (wordIntroIdx >= LEVEL_WORDS.length) return;
-  const w = LEVEL_WORDS[wordIntroIdx++];
-  w.mult = 1;
+  if(wordIntroIdx>=LEVEL_WORDS.length) return;
+  const w=LEVEL_WORDS[wordIntroIdx++];
+  w.mult=1;
   activeWords.push(w);
-  foundRound = new Set();   // need all words done again
+  foundRound=new Set();
   rebuildPool();
-  renderPanel();            // panel grows → board shrinks via rebuildDOMKeepContent
-  setTimeout(() => spawn(), 350);
+  soundNewWord();
+  renderPanel();
+  setTimeout(()=>spawn(), 400);
 }
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  RENDER
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 function ghostY() {
-  if (!active) return -1;
-  let g = active.y;
-  while (g + 1 < ROWS && !board[g + 1][active.x].filled) g++;
+  if(!active) return -1;
+  let g=active.y;
+  while(g+1<ROWS&&!board[g+1][active.x].filled) g++;
   return g;
 }
-
 function render() {
-  const gy = ghostY();
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const el = gc(r, c);
-      if (!el || el.classList.contains('flash') || el.classList.contains('combo-flash')) continue;
-
-      if (active && r === active.y && c === active.x) {
-        el.className = 'cell active'; el.textContent = active.char;
-      } else if (active && r === gy && c === active.x && gy !== active.y) {
-        el.className = 'cell ghost'; el.textContent = active.char;
-      } else if (board[r][c].filled) {
-        el.className = 'cell filled'; el.textContent = board[r][c].char;
-      } else {
-        el.className = 'cell empty'; el.textContent = '';
-      }
-    }
+  const gy=ghostY();
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const el=gc(r,c);
+    if(!el||el.classList.contains('flash')||el.classList.contains('combo-flash')||el.classList.contains('land')) continue;
+    if(active&&r===active.y&&c===active.x){el.className='cell active';el.textContent=active.char;}
+    else if(active&&r===gy&&c===active.x&&gy!==active.y){el.className='cell ghost';el.textContent=active.char;}
+    else if(board[r][c].filled){el.className='cell filled';el.textContent=board[r][c].char;}
+    else{el.className='cell empty';el.textContent='';}
   }
 }
 
 function updateScore() {
-  document.getElementById('score-val').textContent = score.toLocaleString();
+  const el=document.getElementById('score-val');
+  el.textContent=score.toLocaleString();
+  el.classList.remove('bump');
+  void el.offsetWidth;
+  el.classList.add('bump');
 }
 
-// ═══════════════════════════════════════════════
+function updateStreak() {
+  const el=document.getElementById('streak');
+  if(streak>=2){
+    el.style.display='block';
+    el.textContent='🔥'.repeat(Math.min(streak,5))+' x'+streak;
+    el.classList.remove(''); void el.offsetWidth;
+    setTimeout(()=>{if(streak<2)el.style.display='none';},3500);
+  } else {
+    el.style.display='none';
+  }
+}
+
+// ════════════════════════════════════════════════════════
 //  WORD PANEL
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 function renderPanel() {
-  const p = document.getElementById('word-panel');
-  p.innerHTML = '';
-  activeWords.forEach(w => {
-    const row = document.createElement('div');
-    row.className = 'word-row' + (w.boss ? ' boss' : '');
-    row.id = 'wr-' + w.kana;
-    row.innerHTML = `
+  const p=document.getElementById('word-panel');
+  p.innerHTML='';
+  activeWords.forEach(w=>{
+    const row=document.createElement('div');
+    row.className='word-row'+(w.boss?' boss':'');
+    row.id='wr-'+w.kana;
+    row.innerHTML=`
       <div class="wr-emoji">${w.emoji}</div>
-      <div style="flex:1;min-width:0">
-        <div class="wr-kana">${w.kana}</div>
-        <div class="wr-sub">${w.romaji} · ${w.meaning}</div>
+      <div class="wr-info">
+        <span class="wr-kana">${w.kana}</span>
+        <span class="wr-romaji">${w.romaji}</span>
+        <span class="wr-meaning">${w.meaning}</span>
       </div>
       <div class="wr-mult" id="wm-${w.kana}">x${w.mult||1}</div>`;
     p.appendChild(row);
   });
-
-  // Board must shrink to fit — preserve content
-  requestAnimationFrame(() => rebuildDOMKeepContent());
+  requestAnimationFrame(()=>rebuildDOMKeepContent());
 }
 
 function updateMults() {
-  activeWords.forEach(w => {
-    const el = document.getElementById('wm-' + w.kana);
-    if (!el) return;
-    el.textContent = 'x' + w.mult;
-    el.classList.add('bump');
-    setTimeout(() => el.classList.remove('bump'), 200);
+  activeWords.forEach(w=>{
+    const el=document.getElementById('wm-'+w.kana);
+    if(!el) return;
+    el.textContent='x'+w.mult;
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
   });
 }
-
-function flashBar(kana, isCombo) {
-  const row = document.getElementById('wr-' + kana);
-  if (!row) return;
-  row.classList.remove('bar-flash', 'bar-combo');
+function flashBar(kana,isCombo){
+  const row=document.getElementById('wr-'+kana);
+  if(!row) return;
+  row.classList.remove('bar-flash','bar-combo');
   void row.offsetWidth;
-  row.classList.add(isCombo ? 'bar-combo' : 'bar-flash');
-  setTimeout(() => row.classList.remove('bar-flash', 'bar-combo'), 650);
+  row.classList.add(isCombo?'bar-combo':'bar-flash');
+  setTimeout(()=>row.classList.remove('bar-flash','bar-combo'),650);
 }
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  POPUP
-// ═══════════════════════════════════════════════
-let popTimer = null;
-function showPopup(word, pts, isCombo) {
-  const p = document.getElementById('word-popup');
-  p.querySelector('.wp-emoji').textContent   = word.emoji;
-  p.querySelector('.wp-kana').textContent    = word.kana;
-  p.querySelector('.wp-romaji').textContent  = word.romaji;
-  p.querySelector('.wp-meaning').textContent = word.meaning;
-  p.querySelector('.wp-pts').textContent     = (isCombo ? '🔥 COMBO! ' : '') + '+' + pts + ' pts';
-  p.className = isCombo ? 'combo show' : 'show';
+// ════════════════════════════════════════════════════════
+let popTimer=null;
+function showPopup(word,pts,isCombo){
+  const p=document.getElementById('word-popup');
+  p.querySelector('.wp-emoji').textContent=word.emoji;
+  p.querySelector('.wp-kana').textContent=word.kana;
+  p.querySelector('.wp-romaji').textContent=word.romaji;
+  p.querySelector('.wp-meaning').textContent=word.meaning;
+  p.querySelector('.wp-pts').textContent=(isCombo?'🔥 COMBO! ':'')+(streak>1?'🔥x'+streak+' ':'')+('+'+pts+' pts');
+  p.className=isCombo?'combo show':'show';
   void p.offsetWidth;
-
-  if (isCombo) {
-    const b = document.getElementById('combo-banner');
-    const maxM = Math.max(...activeWords.map(w => w.mult || 1));
-    b.textContent = '🔥 COMBO x' + maxM;
-    b.className = 'show'; void b.offsetWidth;
-    setTimeout(() => b.className = '', 1600);
+  if(isCombo){
+    const b=document.getElementById('combo-banner');
+    const maxM=Math.max(...activeWords.map(w=>w.mult||1));
+    b.textContent='🔥 COMBO ×'+maxM;
+    b.className='show'; void b.offsetWidth;
+    setTimeout(()=>b.className='',1700);
   }
-
   clearTimeout(popTimer);
-  popTimer = setTimeout(() => p.className = '', 1950);
+  popTimer=setTimeout(()=>p.className='',2050);
 }
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  OVERLAY
-// ═══════════════════════════════════════════════
-function showOverlay({title, sub, words=[], btn1, act1, btn2=null, act2=null}) {
-  clearInterval(dropTimer); gameRunning = false;
-  document.getElementById('ov-title').innerHTML = title;
-  document.getElementById('ov-sub').innerHTML   = sub;
-  const ow = document.getElementById('ov-words');
-  ow.innerHTML = '';
-  words.forEach(w => {
-    const d = document.createElement('div'); d.className = 'ov-word';
-    d.innerHTML = `<div class="ow-kana">${w.emoji} ${w.kana}</div><div class="ow-sub">${w.romaji} · ${w.meaning}</div>`;
+// ════════════════════════════════════════════════════════
+function showOverlay({title,sub,words=[],btn1,act1,btn2=null,act2=null}){
+  clearInterval(dropTimer); gameRunning=false;
+  document.getElementById('ov-title').innerHTML=title;
+  document.getElementById('ov-sub').innerHTML=sub;
+  const ow=document.getElementById('ov-words');
+  ow.innerHTML='';
+  words.forEach(w=>{
+    const d=document.createElement('div');d.className='ov-word';
+    d.innerHTML=`<span class="ow-emoji">${w.emoji}</span><span class="ow-kana">${w.kana}</span><div class="ow-sub">${w.romaji} · ${w.meaning}</div>`;
     ow.appendChild(d);
   });
-  const b1 = document.getElementById('ov-btn');
-  b1.textContent = btn1; b1.onclick = act1;
-  const b2 = document.getElementById('ov-btn2');
-  if (btn2) { b2.textContent = btn2; b2.onclick = act2; b2.style.display = ''; }
-  else b2.style.display = 'none';
+  const b1=document.getElementById('ov-btn');
+  b1.textContent=btn1; b1.onclick=act1;
+  const b2=document.getElementById('ov-btn2');
+  if(btn2){b2.textContent=btn2;b2.onclick=act2;b2.style.display='';}
+  else b2.style.display='none';
   document.getElementById('board-overlay').classList.remove('hidden');
 }
-function hideOverlay() {
-  document.getElementById('board-overlay').classList.add('hidden');
-}
+function hideOverlay(){ document.getElementById('board-overlay').classList.add('hidden'); }
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  GAME FLOW
-// ═══════════════════════════════════════════════
-function startGame() {
-  score = 0; updateScore();
-  activeWords = []; wordIntroIdx = 0; foundRound = new Set();
-  LEVEL_WORDS.forEach(w => w.mult = 1);
-  document.getElementById('word-panel').innerHTML = '';
-
+// ════════════════════════════════════════════════════════
+function startGame(){
+  score=0; streak=0;
+  document.getElementById('streak').style.display='none';
+  updateScore();
+  activeWords=[]; wordIntroIdx=0; foundRound=new Set();
+  LEVEL_WORDS.forEach(w=>w.mult=1);
+  document.getElementById('word-panel').innerHTML='';
   calcRows(); buildDOM(); initBoard();
   hideOverlay();
-  gameRunning = true; waitSpawn = false;
+  gameRunning=true; waitSpawn=false;
 
-  // Introduce word 1
-  const w = LEVEL_WORDS[wordIntroIdx++];
-  w.mult = 1; activeWords.push(w);
+  const w=LEVEL_WORDS[wordIntroIdx++];
+  w.mult=1; activeWords.push(w);
   rebuildPool(); renderPanel();
-
-  nextChar = rndKana();
-  document.getElementById('next-kana').textContent = nextChar;
-  setTimeout(() => spawn(), 500);
+  nextChar=rndKana();
+  document.getElementById('next-kana').textContent=nextChar;
+  setTimeout(()=>spawn(),500);
 }
 
-function endGame() {
-  clearInterval(dropTimer); gameRunning = false;
+function endGame(){
+  clearInterval(dropTimer); gameRunning=false;
+  soundGameOver();
   showOverlay({
-    title:'ゲームオーバー',
-    sub:`Score : <strong style="color:var(--glow-y)">${score.toLocaleString()}</strong>`,
-    btn1:'Réessayer', act1:startGame
+    title:'ゲームオーバー 💔',
+    sub:`Score : <strong style="color:var(--yellow)">${score.toLocaleString()}</strong>`,
+    btn1:'Réessayer 🔄', act1:startGame
   });
 }
 
-function levelDone() {
-  clearInterval(dropTimer); gameRunning = false;
+function levelDone(){
+  clearInterval(dropTimer); gameRunning=false;
+  soundLevelUp();
   showOverlay({
-    title:'🎉 クリア！<br><small style="font-size:13px;color:var(--dim)">Niveau 1 terminé !</small>',
-    sub:`Score : <strong style="color:var(--glow-y)">${score.toLocaleString()}</strong><br>Tu connais les animaux en japonais !`,
+    title:'🎉 クリア！',
+    sub:`Score : <strong style="color:var(--yellow)">${score.toLocaleString()}</strong><br>Tu connais les animaux en japonais ! 🐾`,
     words:LEVEL_WORDS,
-    btn1:'Rejouer', act1:startGame
+    btn1:'Rejouer 🌸', act1:startGame
   });
 }
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  TOUCH
-// ═══════════════════════════════════════════════
-const BW = document.getElementById('board-col');
+// ════════════════════════════════════════════════════════
+const BW=document.getElementById('board-col');
 
-BW.addEventListener('touchstart', e => {
-  const t = e.touches[0];
-  txStart = t.clientX; tyStart = t.clientY; ttStart = Date.now();
-  const now = Date.now();
-  if (now - lastTap < 280) {
-    if (gameRunning && !waitSpawn && active) hardDrop();
-    lastTap = 0; return;
-  }
-  lastTap = now;
-}, {passive:true});
+BW.addEventListener('touchstart',e=>{
+  // unlock audio context on first touch
+  getCtx();
+  const t=e.touches[0];
+  txStart=t.clientX; tyStart=t.clientY; ttStart=Date.now();
+  const now=Date.now();
+  if(now-lastTap<280){ if(gameRunning&&!waitSpawn&&active) hardDrop(); lastTap=0; return; }
+  lastTap=now;
+},{passive:true});
 
-BW.addEventListener('touchend', e => {
-  if (!gameRunning || waitSpawn || !active) return;
-  const t = e.changedTouches[0];
-  const dx = t.clientX - txStart, dy = t.clientY - tyStart;
-  const dt = Date.now() - ttStart;
-  const adx = Math.abs(dx), ady = Math.abs(dy);
-  if (dt < 200 && adx < 12 && ady < 12) return;
-  if (ady > adx && dy > 50) { hardDrop(); return; }
-  if (adx > ady && adx > 10) {
-    const screenW = Math.min(window.innerWidth, 480);
-    const cellW   = Math.floor(screenW * 0.75 / COLS);
-    const steps   = Math.max(1, Math.round(adx / cellW));
-    const dir     = dx > 0 ? 1 : -1;
-    for (let i = 0; i < steps; i++) {
-      if (ok(active.x + dir, active.y)) active.x += dir; else break;
-    }
+BW.addEventListener('touchend',e=>{
+  if(!gameRunning||waitSpawn||!active) return;
+  const t=e.changedTouches[0];
+  const dx=t.clientX-txStart, dy=t.clientY-tyStart, dt=Date.now()-ttStart;
+  const adx=Math.abs(dx), ady=Math.abs(dy);
+  if(dt<200&&adx<12&&ady<12) return;
+  if(ady>adx&&dy>50){ hardDrop(); return; }
+  if(adx>ady&&adx>10){
+    const screenW=Math.min(window.innerWidth,480);
+    const cellW=Math.floor(screenW*0.75/COLS);
+    const steps=Math.max(1,Math.round(adx/cellW));
+    const dir=dx>0?1:-1;
+    for(let i=0;i<steps;i++){ if(ok(active.x+dir,active.y)) active.x+=dir; else break; }
     render();
   }
-}, {passive:true});
+},{passive:true});
 
-// Keyboard (desktop)
-document.addEventListener('keydown', e => {
-  if (!gameRunning || waitSpawn || !active) return;
-  if (e.key === 'ArrowLeft'  && ok(active.x-1, active.y)) { e.preventDefault(); active.x--; render(); }
-  if (e.key === 'ArrowRight' && ok(active.x+1, active.y)) { e.preventDefault(); active.x++; render(); }
-  if (e.key === 'ArrowDown') { e.preventDefault(); ok(active.x, active.y+1) ? (active.y++, render()) : lock(); }
-  if (e.key === ' ') { e.preventDefault(); hardDrop(); }
+document.addEventListener('keydown',e=>{
+  if(!gameRunning||waitSpawn||!active) return;
+  if(e.key==='ArrowLeft'&&ok(active.x-1,active.y)){e.preventDefault();active.x--;render();}
+  if(e.key==='ArrowRight'&&ok(active.x+1,active.y)){e.preventDefault();active.x++;render();}
+  if(e.key==='ArrowDown'){e.preventDefault();ok(active.x,active.y+1)?(active.y++,render()):lock();}
+  if(e.key===' '){e.preventDefault();hardDrop();}
 });
 
-window.addEventListener('resize', () => {
-  if (!gameRunning) return;
-  rebuildDOMKeepContent(); if (active) render();
-});
+window.addEventListener('resize',()=>{ if(!gameRunning) return; rebuildDOMKeepContent(); if(active) render(); });
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  INIT
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 calcRows(); buildDOM();
 showOverlay({
-  title:'かなDROP',
-  sub:`Fais tomber les hiraganas pour former des mots<br>
-       <strong style="color:var(--glow-b)">horizontalement ou verticalement</strong><br><br>
+  title:'かなDROP ✨',
+  sub:`Forme des mots en hiragana<br>
+       <strong style="color:var(--mint)">horizontalement ou verticalement</strong> !<br><br>
        ← Glisse gauche/droite →<br>
        Double-tap · Swipe ↓ = chute<br><br>
-       <span style="color:var(--glow-y)">Niveau 1 · Les animaux</span>`,
-  words: LEVEL_WORDS.slice(0, 3),
-  btn1:'はじめる — Jouer', act1:startGame
+       <span style="color:var(--yellow)">Niveau 1 · Les animaux 🐾</span>`,
+  words:LEVEL_WORDS.slice(0,4),
+  btn1:'はじめる ✨', act1:startGame
 });
 </script>
 </body>
