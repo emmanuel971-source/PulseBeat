@@ -790,8 +790,7 @@ function spawnParticles(cellEl, count=12){
 //  STATE
 // ════════════════════════════════════════════════════════
 const COLS=8;
-const ROWS_FIXED=18;  // always 18 rows, same difficulty on all devices
-let ROWS=ROWS_FIXED;
+let ROWS=12; // computed once by calcRows() at game start
 let board=[];
 let active=null;
 let nextChar='';
@@ -817,14 +816,9 @@ function safeSpawn(){
 }
 
 // ════════════════════════════════════════════════════════
-//  SIZING
+//  SIZING — always 15 rows × 8 cols, every device
 // ════════════════════════════════════════════════════════
-function calcRows(){
-  // Fixed 18 rows always — consistent difficulty across all devices.
-  // The board CSS uses flex:1 so it stretches to fill remaining space;
-  // cells are NOT square on small screens but that is intentional.
-  ROWS=ROWS_FIXED;
-}
+function calcRows(){ ROWS = 15; }
 function rebuildPool(){
   kanaPool=activeWords.flatMap(w=>[...w.kana]);
   // Preload audio for all kana now in play
@@ -843,11 +837,11 @@ function neededKanas(){
   activeWords.forEach(wd=>{
     const ks=[...wd.kana];
     for(let r=0;r<ROWS;r++){
-      let seq=''; for(let c=0;c<COLS;c++) seq+=board[r][c].filled?board[r][c].char:'';
+      let seq=''; for(let c=0;c<COLS;c++) seq+=board[r][c].filled?board[r][c].char:' ';
       for(let len=1;len<ks.length;len++){ if(seq.includes(ks.slice(0,len).join(''))) w[ks[len]]=(w[ks[len]]||0)+3; }
     }
     for(let c=0;c<COLS;c++){
-      let seq=''; for(let r=0;r<ROWS;r++) seq+=board[r][c].filled?board[r][c].char:'';
+      let seq=''; for(let r=0;r<ROWS;r++) seq+=board[r][c].filled?board[r][c].char:' ';
       for(let len=1;len<ks.length;len++){ if(seq.includes(ks.slice(0,len).join(''))) w[ks[len]]=(w[ks[len]]||0)+3; }
     }
   });
@@ -881,9 +875,9 @@ function buildDOM(){
   }
 }
 function rebuildDOMKeepContent(){
+  // ROWS stays frozen — do NOT call calcRows() here
   const oldRows=board.length;
   const oldBoard=board.map(row=>row.map(c=>({...c})));
-  calcRows();
   const nb=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));
   const copy=Math.min(ROWS,oldRows);
   for(let r=0;r<copy;r++) nb[ROWS-1-r]=oldBoard[oldRows-1-r].map(c=>({...c}));
@@ -1330,7 +1324,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowDown'){e.preventDefault();ok(active.x,active.y+1)?(active.y++,render()):lock();}
   if(e.key===' '){e.preventDefault();hardDrop();}
 });
-window.addEventListener('resize',()=>{ if(!gameRunning) return; rebuildDOMKeepContent(); if(active) render(); });
+window.addEventListener('resize',()=>{ if(!gameRunning) return; if(active) render(); });
 
 // ════════════════════════════════════════════════════════
 //  INIT
