@@ -358,7 +358,19 @@ body::after {
   z-index:35; display:none;
 }
 
-/* ── MUTE ── */
+/* ── SCREEN SHAKE ── */
+@keyframes screenShake {
+  0%,100% { transform:translate(0,0) rotate(0deg); }
+  15%  { transform:translate(-4px, 3px) rotate(-0.4deg); }
+  30%  { transform:translate(4px, -3px) rotate(0.4deg); }
+  45%  { transform:translate(-3px, 2px) rotate(-0.2deg); }
+  60%  { transform:translate(3px, -2px) rotate(0.2deg); }
+  75%  { transform:translate(-2px, 1px) rotate(-0.1deg); }
+  90%  { transform:translate(2px, -1px) rotate(0.1deg); }
+}
+#shell.shake { animation:screenShake 0.38s cubic-bezier(0.36,0.07,0.19,0.97) forwards; }
+#shell.shake-combo { animation:screenShake 0.5s cubic-bezier(0.36,0.07,0.19,0.97) forwards; }
+
 #mute-btn {
   position:absolute; bottom:6px; width:100%; left:0;
   display:flex; justify-content:center; pointer-events:none;
@@ -456,13 +468,67 @@ const soundCombo   = ()=>{[523,659,784,1047,1319,1568].forEach((f,i)=>playTone(f
 const soundNewWord = ()=>[440,554,659].forEach((f,i)=>playTone(f,'triangle',0.18,0.14,i*0.08));
 const soundGameOver= ()=>[440,370,311,261].forEach((f,i)=>playTone(f,'sawtooth',0.22,0.16,i*0.13));
 const soundLevelUp = ()=>[523,659,784,1047,784,1047,1319].forEach((f,i)=>playTone(f,'sine',0.20,0.22,i*0.08));
+function screenShake(isCombo=false){
+  const shell=document.getElementById('shell');
+  shell.classList.remove('shake','shake-combo');
+  void shell.offsetWidth;
+  shell.classList.add(isCombo?'shake-combo':'shake');
+  setTimeout(()=>shell.classList.remove('shake','shake-combo'),500);
+}
 document.getElementById('mute-toggle').onclick=()=>{
   muted=!muted;
   document.getElementById('mute-toggle').textContent=muted?'🔇 Son off':'🔊 Son';
 };
 
 // ════════════════════════════════════════════════════════
-//  STARFIELD
+//  KANA AUDIO — MP3 depuis GitHub
+// ════════════════════════════════════════════════════════
+const KANA_BASE = 'https://raw.githubusercontent.com/emmanuel971-source/hirakataquizz/main/';
+const kanaAudioCache = {};
+function playKanaSound(kana){
+  if(muted) return;
+  try{
+    if(!kanaAudioCache[kana]) kanaAudioCache[kana] = new Audio(KANA_BASE + encodeURIComponent(kana) + '.mp3');
+    const a = kanaAudioCache[kana].cloneNode();
+    a.volume = 0.7;
+    a.play().catch(()=>{});
+  }catch(e){}
+}
+
+
+// ════════════════════════════════════════════════════════
+//  SPEECH SYNTHESIS — prononciation des mots + encouragements
+// ════════════════════════════════════════════════════════
+const ENCOURAGEMENTS = [
+  'すごい！','いいね！','やった！','完璧！','素晴らしい！',
+  'かっこいい！','天才！','最高！','どんどん！','ナイス！'
+];
+const COMBO_ENCOURAGEMENTS = [
+  'コンボ！すごい！','連続！天才！','やばい！最高！','信じられない！','パーフェクト！'
+];
+if(window.speechSynthesis){
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => {};
+}
+function speakWord(kana, isCombo){
+  if(muted || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const voices = window.speechSynthesis.getVoices();
+  const jaVoice = voices.find(v => v.lang && v.lang.startsWith('ja')) || null;
+  const uttWord = new SpeechSynthesisUtterance(kana);
+  uttWord.lang = 'ja-JP'; uttWord.rate = 0.85;
+  uttWord.pitch = isCombo ? 1.3 : 1.1; uttWord.volume = 0.9;
+  if(jaVoice) uttWord.voice = jaVoice;
+  const pool = isCombo ? COMBO_ENCOURAGEMENTS : ENCOURAGEMENTS;
+  const enc = pool[Math.floor(Math.random() * pool.length)];
+  const uttEnc = new SpeechSynthesisUtterance(enc);
+  uttEnc.lang = 'ja-JP'; uttEnc.rate = 1.0;
+  uttEnc.pitch = isCombo ? 1.4 : 1.2; uttEnc.volume = 0.85;
+  if(jaVoice) uttEnc.voice = jaVoice;
+  window.speechSynthesis.speak(uttWord);
+  window.speechSynthesis.speak(uttEnc);
+}
+
 // ════════════════════════════════════════════════════════
 (function(){
   const c=document.getElementById('stars');
@@ -512,6 +578,13 @@ let activeWords=[], wordIntroIdx=0, foundRound=new Set(), kanaPool=[];
 let gameRunning=false;
 let dropTimer=null;
 let DROP_SPEED=1400;
+const DROP_MIN=400; // vitesse max (plancher)
+const DROP_STEP=50; // accélération par mot trouvé
+function increaseSpeed(){
+  DROP_SPEED = Math.max(DROP_MIN, DROP_SPEED - DROP_STEP);
+  // Redémarrer le timer avec la nouvelle vitesse si une pièce est en jeu
+  if(active && gameRunning) startTimer();
+}
 
 // ── CONCURRENCY GUARD ──────────────────────────────────
 // A single "sequence lock" prevents two word-resolution
@@ -536,8 +609,26 @@ function calcRows(){
   const cellW=Math.floor(screenW*0.75/COLS);
   ROWS=Math.max(8,Math.floor(avail/cellW));
 }
-function rebuildPool(){ kanaPool=activeWords.flatMap(w=>[...w.kana]); }
-function rndKana(){ return kanaPool[Math.floor(Math.random()*kanaPool.length)]; }
+// Pool = toutes les lettres des mots déjà introduits (actifs + complétés)
+// → garantit que les kanas des mots validés continuent à apparaître
+function rebuildPool(){
+  const introduced = LEVEL_WORDS.slice(0, wordIntroIdx); // tous les mots introduits jusqu'ici
+  kanaPool = introduced.flatMap(w => [...w.kana]);
+  // Dédoublonner pour équilibrer les fréquences (évite sur-représentation des lettres communes)
+  const unique = [...new Set(kanaPool)];
+  // On garde chaque lettre présente dans les mots actifs en double pour favoriser la progression
+  const activeChars = new Set(activeWords.flatMap(w => [...w.kana]));
+  kanaPool = unique.flatMap(ch => activeChars.has(ch) ? [ch, ch] : [ch]);
+}
+let lastKana = '';
+function rndKana(){
+  if(!kanaPool.length) return 'あ';
+  // Pas de doublon consécutif : on filtre le dernier tiré
+  const pool = kanaPool.length > 1 ? kanaPool.filter(k => k !== lastKana) : kanaPool;
+  const k = pool[Math.floor(Math.random() * pool.length)];
+  lastKana = k;
+  return k;
+}
 
 // ════════════════════════════════════════════════════════
 //  BOARD DOM
@@ -572,6 +663,8 @@ const gc=(r,c)=>document.querySelector(`#board [data-r="${r}"][data-c="${c}"]`);
 // ════════════════════════════════════════════════════════
 function spawn(){
   active={char:nextChar||rndKana(), x:Math.floor(COLS/2), y:0};
+  // Jouer le son du kana qui vient d'apparaître
+  playKanaSound(active.char);
   nextChar=rndKana();
   const nk=document.getElementById('next-kana');
   nk.textContent=nextChar;
@@ -602,6 +695,7 @@ function lock(){
 function hardDrop(){
   if(!active||!gameRunning||resolvingWords) return;
   while(ok(active.x,active.y+1)) active.y++;
+  screenShake(false);
   render(); lock();
 }
 
@@ -697,12 +791,18 @@ function processCascade(found, isCascade){
   lastWordTime = now;
   if(streak > 1) pts = Math.round(pts * (1 + streak * 0.08));
   score += pts;
+  increaseSpeed();
+  // Mettre à jour le badge de niveau avec la vitesse actuelle
+  const lvl = Math.floor((1400 - DROP_SPEED) / DROP_STEP) + 1;
+  const badge = document.getElementById('level-badge');
+  if(badge) badge.innerHTML = `Lv.${lvl}<br>🐾`;
 
   // Cascade bonus label
-  if(isCascade){ soundCombo(); }
-  else { isCombo ? soundCombo() : soundWord(); }
+  if(isCascade){ soundCombo(); screenShake(true); }
+  else { isCombo ? (soundCombo(), screenShake(true)) : soundWord(); }
 
   showPopup(found[0].word, pts, isCombo || isCascade);
+  speakWord(found[0].word.kana, isCombo || isCascade);
   const barDone = new Set();
   found.forEach(f => { if(!barDone.has(f.word.kana)){ flashBar(f.word.kana, isCombo||isCascade); barDone.add(f.word.kana); }});
   updateMults();
@@ -892,7 +992,7 @@ function hideOverlay(){ document.getElementById('board-overlay').classList.add('
 //  GAME FLOW
 // ════════════════════════════════════════════════════════
 function startGame(){
-  score=0; streak=0;
+  score=0; streak=0; DROP_SPEED=1400;
   document.getElementById('streak').style.display='none';
   updateScore();
   activeWords=[]; wordIntroIdx=0; foundRound=new Set();
@@ -932,23 +1032,40 @@ function levelDone(){
 // ════════════════════════════════════════════════════════
 //  TOUCH
 // ════════════════════════════════════════════════════════
-let txStart=0,tyStart=0,ttStart=0,lastTap=0;
-const BW=document.getElementById('board-col');
-BW.addEventListener('touchstart',e=>{
+// ════════════════════════════════════════════════════════
+//  TOUCH — appui long = hard drop, swipe sur tout l'écran
+// ════════════════════════════════════════════════════════
+let txStart=0,tyStart=0,ttStart=0;
+let longPressTimer=null;
+const LONG_PRESS_MS=380; // durée appui long pour hard drop
+
+// Écouter sur tout le document (pas seulement la cuve)
+document.addEventListener('touchstart',e=>{
   getCtx();
   const t=e.touches[0];
   txStart=t.clientX; tyStart=t.clientY; ttStart=Date.now();
-  const now=Date.now();
-  if(now-lastTap<280){ if(gameRunning&&!resolvingWords&&active) hardDrop(); lastTap=0; return; }
-  lastTap=now;
+  // Lancer le timer appui long
+  clearTimeout(longPressTimer);
+  longPressTimer=setTimeout(()=>{
+    if(gameRunning&&!resolvingWords&&active){
+      navigator.vibrate&&navigator.vibrate(30);
+      hardDrop();
+      longPressTimer=null;
+    }
+  }, LONG_PRESS_MS);
 },{passive:true});
-BW.addEventListener('touchend',e=>{
+
+document.addEventListener('touchend',e=>{
+  clearTimeout(longPressTimer); longPressTimer=null;
   if(!gameRunning||resolvingWords||!active) return;
   const t=e.changedTouches[0];
   const dx=t.clientX-txStart, dy=t.clientY-tyStart, dt=Date.now()-ttStart;
   const adx=Math.abs(dx), ady=Math.abs(dy);
-  if(dt<200&&adx<12&&ady<12) return;
+  // Trop court et trop immobile = tap simple, ignorer
+  if(dt<LONG_PRESS_MS&&adx<12&&ady<12) return;
+  // Swipe bas = hard drop
   if(ady>adx&&dy>50){ hardDrop(); return; }
+  // Swipe horizontal = déplacement
   if(adx>ady&&adx>10){
     const screenW=Math.min(window.innerWidth,480);
     const cellW=Math.floor(screenW*0.75/COLS);
@@ -957,6 +1074,13 @@ BW.addEventListener('touchend',e=>{
     for(let i=0;i<steps;i++){ if(ok(active.x+dir,active.y)) active.x+=dir; else break; }
     render();
   }
+},{passive:true});
+
+document.addEventListener('touchmove',e=>{
+  // Si on bouge, annuler l'appui long
+  const t=e.touches[0];
+  const dx=Math.abs(t.clientX-txStart), dy=Math.abs(t.clientY-tyStart);
+  if(dx>10||dy>10){ clearTimeout(longPressTimer); longPressTimer=null; }
 },{passive:true});
 document.addEventListener('keydown',e=>{
   if(!gameRunning||resolvingWords||!active) return;
@@ -976,7 +1100,7 @@ showOverlay({
   sub:`Forme des mots en hiragana<br>
        <strong style="color:var(--cyan)">horizontalement ou verticalement</strong> !<br><br>
        ← Glisse gauche/droite →<br>
-       Double-tap · Swipe ↓ = chute<br><br>
+       Appui long · Swipe ↓ = chute rapide<br><br>
        <span style="color:var(--gold)">Niveau 1 · Les animaux 🐾</span>`,
   words:LEVEL_WORDS.slice(0,4),
   btn1:'はじめる 🌊', act1:startGame
