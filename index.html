@@ -311,8 +311,8 @@ body::after {
 
 /* ── WORD POPUP ── */
 #word-popup {
-  position:absolute; left:8px; right:8px; top:28%;
-  transform:translateY(-50%);
+  position:absolute; left:10px; right:10px;
+  top:50%; transform:translateY(-50%);
   background:rgba(2,8,20,0.97);
   border:2.5px solid var(--gold);
   border-radius:20px; padding:14px 16px;
@@ -328,26 +328,26 @@ body::after {
 .wp-meaning { font-size:14px; color:var(--text); }
 .wp-pts     { font-family:'Fredoka One',sans-serif; font-size:20px; color:var(--cyan); margin-top:6px; }
 @keyframes popupIn {
-  0%   { opacity:0; transform:translateY(-56%) scale(0.7) rotate(-2deg); }
-  10%  { opacity:1; transform:translateY(-63%) scale(1.05) rotate(1deg); }
-  75%  { opacity:1; transform:translateY(-63%) scale(1) rotate(0deg); }
-  100% { opacity:0; transform:translateY(-70%) scale(0.92); }
+  0%   { opacity:0; transform:translateY(-50%) scale(0.72) rotate(-2deg); }
+  10%  { opacity:1; transform:translateY(-50%) scale(1.04) rotate(1deg); }
+  75%  { opacity:1; transform:translateY(-50%) scale(1) rotate(0deg); }
+  100% { opacity:0; transform:translateY(-50%) scale(0.92); }
 }
 
 /* ── COMBO BANNER ── */
 #combo-banner {
-  position:absolute; left:50%; top:6%;
+  position:absolute; left:50%; top:18%;
   transform:translateX(-50%);
   font-family:'Fredoka One',sans-serif; font-size:28px;
   color:var(--cyan); text-shadow:0 0 20px rgba(0,229,255,0.8);
   pointer-events:none; z-index:41; white-space:nowrap; display:none;
 }
-#combo-banner.show { display:block; animation:comboBannerAnim 1.6s ease forwards; }
+#combo-banner.show { display:block; animation:comboBannerAnim 1.8s ease forwards; }
 @keyframes comboBannerAnim {
   0%   { opacity:0; transform:translateX(-50%) scale(0.6) rotate(-6deg); }
-  15%  { opacity:1; transform:translateX(-50%) scale(1.15) rotate(2deg); }
-  70%  { opacity:1; transform:translateX(-50%) scale(1) rotate(0deg); }
-  100% { opacity:0; }
+  15%  { opacity:1; transform:translateX(-50%) scale(1.18) rotate(2deg); }
+  55%  { opacity:1; transform:translateX(-50%) scale(1) rotate(0deg) translateY(0px); }
+  100% { opacity:0; transform:translateX(-50%) scale(0.9) translateY(-60px); }
 }
 
 /* ── STREAK ── */
@@ -356,6 +356,30 @@ body::after {
   font-family:'Fredoka One',sans-serif; font-size:13px;
   color:var(--gold); text-shadow:0 0 8px rgba(255,233,77,0.7);
   z-index:35; display:none;
+}
+
+/* ── ENCOURAGEMENT TOAST ── */
+#enc-toast {
+  position:absolute; left:50%; bottom:30%;
+  transform:translateX(-50%);
+  text-align:center; pointer-events:none; z-index:45;
+  display:none; white-space:nowrap;
+}
+#enc-toast.show { display:block; animation:encRise 2.2s ease forwards; }
+.enc-jp {
+  font-family:'Fredoka One',sans-serif; font-size:30px;
+  color:var(--gold); text-shadow:0 0 18px rgba(255,233,77,0.7);
+  display:block; line-height:1.1;
+}
+.enc-fr {
+  font-size:12px; color:rgba(255,233,77,0.65);
+  letter-spacing:1.5px; display:block; margin-top:3px;
+}
+@keyframes encRise {
+  0%   { opacity:0; transform:translateX(-50%) translateY(0px) scale(0.7); }
+  12%  { opacity:1; transform:translateX(-50%) translateY(-8px) scale(1.08); }
+  60%  { opacity:1; transform:translateX(-50%) translateY(-18px) scale(1); }
+  100% { opacity:0; transform:translateX(-50%) translateY(-70px) scale(0.9); }
 }
 
 /* ── SCREEN SHAKE ── */
@@ -371,16 +395,7 @@ body::after {
 #shell.shake { animation:screenShake 0.38s cubic-bezier(0.36,0.07,0.19,0.97) forwards; }
 #shell.shake-combo { animation:screenShake 0.5s cubic-bezier(0.36,0.07,0.19,0.97) forwards; }
 
-#mute-btn {
-  position:absolute; bottom:6px; width:100%; left:0;
-  display:flex; justify-content:center; pointer-events:none;
-}
-#mute-btn button {
-  pointer-events:all;
-  background:transparent; border:none; color:var(--dim);
-  font-size:11px; cursor:pointer; font-family:'Fredoka One',sans-serif;
-  letter-spacing:1px; opacity:0.55;
-}
+/* mute button supprimé */
 </style>
 </head>
 <body>
@@ -399,6 +414,7 @@ body::after {
         <div class="wp-pts"></div>
       </div>
       <div id="combo-banner"></div>
+      <div id="enc-toast"><span class="enc-jp"></span><span class="enc-fr"></span></div>
       <div id="streak"></div>
       <div id="board-overlay">
         <div class="ov-title" id="ov-title">かなDROP</div>
@@ -407,7 +423,6 @@ body::after {
         <button class="btn"           id="ov-btn">はじめる ✨</button>
         <button class="btn secondary" id="ov-btn2" style="display:none">Recommencer</button>
       </div>
-      <div id="mute-btn"><button id="mute-toggle">🔊 Son</button></div>
     </div>
 
     <div id="side-panel">
@@ -475,10 +490,7 @@ function screenShake(isCombo=false){
   shell.classList.add(isCombo?'shake-combo':'shake');
   setTimeout(()=>shell.classList.remove('shake','shake-combo'),500);
 }
-document.getElementById('mute-toggle').onclick=()=>{
-  muted=!muted;
-  document.getElementById('mute-toggle').textContent=muted?'🔇 Son off':'🔊 Son';
-};
+// bouton mute supprimé
 
 // ════════════════════════════════════════════════════════
 //  KANA AUDIO — MP3 depuis GitHub
@@ -500,12 +512,32 @@ function playKanaSound(kana){
 //  SPEECH SYNTHESIS — prononciation des mots + encouragements
 // ════════════════════════════════════════════════════════
 const ENCOURAGEMENTS = [
-  'すごい！','いいね！','やった！','完璧！','素晴らしい！',
-  'かっこいい！','天才！','最高！','どんどん！','ナイス！'
+  {jp:'すごい！',     fr:'Incroyable !'},
+  {jp:'やった！',     fr:'On l\'a eu !'},
+  {jp:'完璧！',       fr:'Parfait !'},
+  {jp:'天才！',       fr:'Génie !'},
+  {jp:'最高！',       fr:'Excellent !'},
 ];
 const COMBO_ENCOURAGEMENTS = [
-  'コンボ！すごい！','連続！天才！','やばい！最高！','信じられない！','パーフェクト！'
+  {jp:'コンボ！すごい！', fr:'Combo incroyable !'},
+  {jp:'連続！天才！',     fr:'Enchaînement de génie !'},
+  {jp:'最高のコンボ！',  fr:'Combo parfait !'},
+  {jp:'パーフェクト！',  fr:'Parfait !'},
+  {jp:'信じられない！',  fr:'Incroyable !'},
 ];
+let encToastTimer = null;
+function showEncTouast(isCombo){
+  const pool = isCombo ? COMBO_ENCOURAGEMENTS : ENCOURAGEMENTS;
+  const enc = pool[Math.floor(Math.random() * pool.length)];
+  const t = document.getElementById('enc-toast');
+  t.querySelector('.enc-jp').textContent = enc.jp;
+  t.querySelector('.enc-fr').textContent = enc.fr;
+  t.className = '';
+  void t.offsetWidth;
+  t.className = 'show';
+  clearTimeout(encToastTimer);
+  encToastTimer = setTimeout(() => t.className = '', 2300);
+}
 if(window.speechSynthesis){
   window.speechSynthesis.getVoices();
   window.speechSynthesis.onvoiceschanged = () => {};
@@ -515,18 +547,23 @@ function speakWord(kana, isCombo){
   window.speechSynthesis.cancel();
   const voices = window.speechSynthesis.getVoices();
   const jaVoice = voices.find(v => v.lang && v.lang.startsWith('ja')) || null;
+  // Toujours prononcer le mot
   const uttWord = new SpeechSynthesisUtterance(kana);
   uttWord.lang = 'ja-JP'; uttWord.rate = 0.85;
-  uttWord.pitch = isCombo ? 1.3 : 1.1; uttWord.volume = 0.9;
+  uttWord.pitch = isCombo ? 1.25 : 1.05; uttWord.volume = 0.9;
   if(jaVoice) uttWord.voice = jaVoice;
-  const pool = isCombo ? COMBO_ENCOURAGEMENTS : ENCOURAGEMENTS;
-  const enc = pool[Math.floor(Math.random() * pool.length)];
-  const uttEnc = new SpeechSynthesisUtterance(enc);
-  uttEnc.lang = 'ja-JP'; uttEnc.rate = 1.0;
-  uttEnc.pitch = isCombo ? 1.4 : 1.2; uttEnc.volume = 0.85;
-  if(jaVoice) uttEnc.voice = jaVoice;
   window.speechSynthesis.speak(uttWord);
-  window.speechSynthesis.speak(uttEnc);
+  // Encouragement vocal + toast visuel uniquement sur combo/cascade
+  if(isCombo){
+    const pool = COMBO_ENCOURAGEMENTS;
+    const enc = pool[Math.floor(Math.random() * pool.length)];
+    const uttEnc = new SpeechSynthesisUtterance(enc.jp);
+    uttEnc.lang = 'ja-JP'; uttEnc.rate = 1.05;
+    uttEnc.pitch = 1.35; uttEnc.volume = 0.85;
+    if(jaVoice) uttEnc.voice = jaVoice;
+    window.speechSynthesis.speak(uttEnc);
+    showEncTouast(true);
+  }
 }
 
 // ════════════════════════════════════════════════════════
@@ -578,8 +615,8 @@ let activeWords=[], wordIntroIdx=0, foundRound=new Set(), kanaPool=[];
 let gameRunning=false;
 let dropTimer=null;
 let DROP_SPEED=1400;
-const DROP_MIN=400; // vitesse max (plancher)
-const DROP_STEP=50; // accélération par mot trouvé
+const DROP_MIN=600; // vitesse max (plancher) — moins stressant niveau 1
+const DROP_STEP=25; // accélération douce : 25ms par mot trouvé
 function increaseSpeed(){
   DROP_SPEED = Math.max(DROP_MIN, DROP_SPEED - DROP_STEP);
   // Redémarrer le timer avec la nouvelle vitesse si une pièce est en jeu
@@ -802,7 +839,11 @@ function processCascade(found, isCascade){
   else { isCombo ? (soundCombo(), screenShake(true)) : soundWord(); }
 
   showPopup(found[0].word, pts, isCombo || isCascade);
-  speakWord(found[0].word.kana, isCombo || isCascade);
+  // Prononciation du mot après la fin de l'animation de suppression (820ms)
+  // L'encouragement vocal n'est joué que sur combo ou cascade
+  const wordToSpeak = found[0].word.kana;
+  const speakIsCombo = isCombo || isCascade;
+  setTimeout(() => speakWord(wordToSpeak, speakIsCombo), 850);
   const barDone = new Set();
   found.forEach(f => { if(!barDone.has(f.word.kana)){ flashBar(f.word.kana, isCombo||isCascade); barDone.add(f.word.kana); }});
   updateMults();
