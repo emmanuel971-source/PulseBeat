@@ -445,16 +445,109 @@ body::after {
 
 <script>
 // ════════════════════════════════════════════════════════
-//  WORDS
+//  NIVEAUX — 8 thèmes, mots de 2-3 hiraganas avec emojis
 // ════════════════════════════════════════════════════════
-const LEVEL_WORDS = [
-  {kana:'いぬ',  romaji:'inu',    meaning:'chien',  emoji:'🐶', boss:false},
-  {kana:'ねこ',  romaji:'neko',   meaning:'chat',   emoji:'🐱', boss:false},
-  {kana:'うし',  romaji:'ushi',   meaning:'vache',  emoji:'🐮', boss:false},
-  {kana:'うま',  romaji:'uma',    meaning:'cheval', emoji:'🐴', boss:false},
-  {kana:'くま',  romaji:'kuma',   meaning:'ours',   emoji:'🐻', boss:false},
-  {kana:'ねずみ',romaji:'nezumi', meaning:'souris', emoji:'🐭', boss:true},
+const ALL_LEVELS = [
+  {
+    id:1, theme:'Les animaux 🐾', emoji:'🐾',
+    color:'var(--teal)',
+    words:[
+      {kana:'いぬ',  romaji:'inu',    meaning:'chien',   emoji:'🐶', boss:false},
+      {kana:'ねこ',  romaji:'neko',   meaning:'chat',    emoji:'🐱', boss:false},
+      {kana:'うし',  romaji:'ushi',   meaning:'vache',   emoji:'🐮', boss:false},
+      {kana:'うま',  romaji:'uma',    meaning:'cheval',  emoji:'🐴', boss:false},
+      {kana:'くま',  romaji:'kuma',   meaning:'ours',    emoji:'🐻', boss:false},
+      {kana:'ねずみ',romaji:'nezumi', meaning:'souris',  emoji:'🐭', boss:true},
+    ]
+  },
+  {
+    id:2, theme:'La nourriture 🍜', emoji:'🍜',
+    color:'var(--gold)',
+    words:[
+      {kana:'すし',  romaji:'sushi',  meaning:'sushi',   emoji:'🍣', boss:false},
+      {kana:'めし',  romaji:'meshi',  meaning:'riz',     emoji:'🍚', boss:false},
+      {kana:'たこ',  romaji:'tako',   meaning:'pieuvre', emoji:'🐙', boss:false},
+      {kana:'にく',  romaji:'niku',   meaning:'viande',  emoji:'🥩', boss:false},
+      {kana:'いも',  romaji:'imo',    meaning:'patate',  emoji:'🥔', boss:false},
+      {kana:'ラーメン',romaji:'rāmen', meaning:'ramen',  emoji:'🍜', boss:true},
+    ]
+  },
+  {
+    id:3, theme:'Les boissons 🍵', emoji:'🍵',
+    color:'var(--cyan)',
+    words:[
+      {kana:'みず',  romaji:'mizu',   meaning:'eau',     emoji:'💧', boss:false},
+      {kana:'おちゃ',romaji:'ocha',   meaning:'thé',     emoji:'🍵', boss:false},
+      {kana:'ぎゅうにゅう',romaji:'gyūnyū',meaning:'lait',emoji:'🥛',boss:false},
+      {kana:'さけ',  romaji:'sake',   meaning:'saké',    emoji:'🍶', boss:false},
+      {kana:'ビール',romaji:'bīru',   meaning:'bière',   emoji:'🍺', boss:false},
+      {kana:'コーラ',romaji:'kōra',   meaning:'cola',    emoji:'🥤', boss:true},
+    ]
+  },
+  {
+    id:4, theme:'Les couleurs 🎨', emoji:'🎨',
+    color:'var(--coral)',
+    words:[
+      {kana:'あか',  romaji:'aka',    meaning:'rouge',   emoji:'🔴', boss:false},
+      {kana:'あお',  romaji:'ao',     meaning:'bleu',    emoji:'🔵', boss:false},
+      {kana:'しろ',  romaji:'shiro',  meaning:'blanc',   emoji:'⚪', boss:false},
+      {kana:'くろ',  romaji:'kuro',   meaning:'noir',    emoji:'⚫', boss:false},
+      {kana:'きいろ',romaji:'kiiro',  meaning:'jaune',   emoji:'🟡', boss:false},
+      {kana:'みどり',romaji:'midori', meaning:'vert',    emoji:'🟢', boss:true},
+    ]
+  },
+  {
+    id:5, theme:'Le corps 🧠', emoji:'🧠',
+    color:'var(--green)',
+    words:[
+      {kana:'め',    romaji:'me',     meaning:'œil',     emoji:'👁️', boss:false},
+      {kana:'て',    romaji:'te',     meaning:'main',    emoji:'✋', boss:false},
+      {kana:'あし',  romaji:'ashi',   meaning:'pied',    emoji:'🦶', boss:false},
+      {kana:'はな',  romaji:'hana',   meaning:'nez',     emoji:'👃', boss:false},
+      {kana:'みみ',  romaji:'mimi',   meaning:'oreille', emoji:'👂', boss:false},
+      {kana:'くち',  romaji:'kuchi',  meaning:'bouche',  emoji:'👄', boss:true},
+    ]
+  },
+  {
+    id:6, theme:'La météo 🌤️', emoji:'🌤️',
+    color:'var(--blue)',
+    words:[
+      {kana:'あめ',  romaji:'ame',    meaning:'pluie',   emoji:'🌧️', boss:false},
+      {kana:'かぜ',  romaji:'kaze',   meaning:'vent',    emoji:'💨', boss:false},
+      {kana:'ゆき',  romaji:'yuki',   meaning:'neige',   emoji:'❄️', boss:false},
+      {kana:'くも',  romaji:'kumo',   meaning:'nuage',   emoji:'☁️', boss:false},
+      {kana:'たいよう',romaji:'taiyō',meaning:'soleil',  emoji:'☀️', boss:false},
+      {kana:'かみなり',romaji:'kaminari',meaning:'foudre',emoji:'⚡',boss:true},
+    ]
+  },
+  {
+    id:7, theme:'Le sport ⚽', emoji:'⚽',
+    color:'var(--teal)',
+    words:[
+      {kana:'およぐ', romaji:'oyogu',  meaning:'nager',   emoji:'🏊', boss:false},
+      {kana:'はしる', romaji:'hashiru',meaning:'courir',  emoji:'🏃', boss:false},
+      {kana:'なげる', romaji:'nageru', meaning:'lancer',  emoji:'🤾', boss:false},
+      {kana:'ける',   romaji:'keru',   meaning:'botter',  emoji:'⚽', boss:false},
+      {kana:'とぶ',   romaji:'tobu',   meaning:'sauter',  emoji:'🦘', boss:false},
+      {kana:'サッカー',romaji:'sakkā', meaning:'foot',    emoji:'🥅', boss:true},
+    ]
+  },
+  {
+    id:8, theme:'La ville 🏙️', emoji:'🏙️',
+    color:'var(--gold)',
+    words:[
+      {kana:'みせ',  romaji:'mise',   meaning:'magasin', emoji:'🏪', boss:false},
+      {kana:'えき',  romaji:'eki',    meaning:'gare',    emoji:'🚉', boss:false},
+      {kana:'みち',  romaji:'michi',  meaning:'route',   emoji:'🛣️', boss:false},
+      {kana:'はし',  romaji:'hashi',  meaning:'pont',    emoji:'🌉', boss:false},
+      {kana:'こうえん',romaji:'kōen', meaning:'parc',    emoji:'🌳', boss:false},
+      {kana:'びょういん',romaji:'byōin',meaning:'hôpital',emoji:'🏥',boss:true},
+    ]
+  },
 ];
+
+let currentLevelIdx = 0;
+let LEVEL_WORDS = ALL_LEVELS[0].words;
 
 // ════════════════════════════════════════════════════════
 //  SOUND
@@ -829,10 +922,6 @@ function processCascade(found, isCascade){
   if(streak > 1) pts = Math.round(pts * (1 + streak * 0.08));
   score += pts;
   increaseSpeed();
-  // Mettre à jour le badge de niveau avec la vitesse actuelle
-  const lvl = Math.floor((1400 - DROP_SPEED) / DROP_STEP) + 1;
-  const badge = document.getElementById('level-badge');
-  if(badge) badge.innerHTML = `Lv.${lvl}<br>🐾`;
 
   // Cascade bonus label
   if(isCascade){ soundCombo(); screenShake(true); }
@@ -1012,6 +1101,19 @@ function showPopup(word,pts,isCombo){
 // ════════════════════════════════════════════════════════
 function showOverlay({title,sub,words=[],btn1,act1,btn2=null,act2=null}){
   clearInterval(dropTimer); gameRunning=false;
+  const ov = document.getElementById('board-overlay');
+  // Reconstruire le DOM de l'overlay si showLevelSelect l'a remplacé
+  if(!document.getElementById('ov-title')){
+    ov.innerHTML = `
+      <div class="ov-title" id="ov-title"></div>
+      <div class="ov-sub"   id="ov-sub"></div>
+      <div class="ov-words" id="ov-words"></div>
+      <button class="btn"           id="ov-btn"></button>
+      <button class="btn secondary" id="ov-btn2" style="display:none"></button>
+      <button class="btn secondary" id="ov-lvlsel" style="margin-top:4px">📋 Choisir un niveau</button>
+    `;
+    document.getElementById('ov-lvlsel').onclick = showLevelSelect;
+  }
   document.getElementById('ov-title').innerHTML=title;
   document.getElementById('ov-sub').innerHTML=sub;
   const ow=document.getElementById('ov-words');
@@ -1025,14 +1127,17 @@ function showOverlay({title,sub,words=[],btn1,act1,btn2=null,act2=null}){
   const b2=document.getElementById('ov-btn2');
   if(btn2){b2.textContent=btn2;b2.onclick=act2;b2.style.display='';}
   else b2.style.display='none';
-  document.getElementById('board-overlay').classList.remove('hidden');
+  ov.classList.remove('hidden');
 }
 function hideOverlay(){ document.getElementById('board-overlay').classList.add('hidden'); }
 
 // ════════════════════════════════════════════════════════
 //  GAME FLOW
 // ════════════════════════════════════════════════════════
-function startGame(){
+function startGame(levelIdx){
+  currentLevelIdx = (levelIdx !== undefined) ? levelIdx : 0;
+  LEVEL_WORDS = ALL_LEVELS[currentLevelIdx].words.map(w=>({...w}));
+  const lvlData = ALL_LEVELS[currentLevelIdx];
   score=0; streak=0; DROP_SPEED=1400;
   document.getElementById('streak').style.display='none';
   updateScore();
@@ -1043,30 +1148,43 @@ function startGame(){
   calcRows(); buildDOM(); initBoard();
   hideOverlay();
   gameRunning=true;
-
+  // Badge : thème du niveau
+  const badge = document.getElementById('level-badge');
+  if(badge) badge.innerHTML = `Lv.${lvlData.id}<br>${lvlData.emoji}`;
   const w=LEVEL_WORDS[wordIntroIdx++];
   w.mult=1; activeWords.push(w);
-  rebuildPool(); renderPanel(); // renderPanel → safeSpawn
+  rebuildPool(); renderPanel();
   nextChar=rndKana();
   document.getElementById('next-kana').textContent=nextChar;
 }
 function endGame(){
   clearInterval(dropTimer); gameRunning=false; resolvingWords=false;
   soundGameOver();
+  const lvlData = ALL_LEVELS[currentLevelIdx];
   showOverlay({
     title:'ゲームオーバー 💔',
-    sub:`Score : <strong style="color:var(--gold)">${score.toLocaleString()}</strong>`,
-    btn1:'Réessayer 🔄', act1:startGame
+    sub:`Niveau ${lvlData.id} · ${lvlData.theme}<br>Score : <strong style="color:var(--gold)">${score.toLocaleString()}</strong>`,
+    btn1:'Réessayer 🔄', act1:()=>startGame(currentLevelIdx),
+    btn2: currentLevelIdx > 0 ? '← Niveau précédent' : null,
+    act2: currentLevelIdx > 0 ? ()=>startGame(currentLevelIdx-1) : null,
   });
 }
 function levelDone(){
   clearInterval(dropTimer); gameRunning=false; resolvingWords=false;
   soundLevelUp();
+  const lvlData = ALL_LEVELS[currentLevelIdx];
+  const isLast = currentLevelIdx >= ALL_LEVELS.length - 1;
+  const nextLvl = ALL_LEVELS[currentLevelIdx + 1];
   showOverlay({
-    title:'🎉 クリア！',
-    sub:`Score : <strong style="color:var(--gold)">${score.toLocaleString()}</strong><br>Tu connais les animaux en japonais ! 🐾`,
+    title:`🎉 クリア！ Niveau ${lvlData.id}`,
+    sub:`<span style="font-size:28px">${lvlData.emoji}</span><br>
+         <strong style="color:var(--gold)">${lvlData.theme}</strong> maîtrisé !<br>
+         Score : <strong style="color:var(--gold)">${score.toLocaleString()}</strong>`,
     words:LEVEL_WORDS,
-    btn1:'Rejouer 🌊', act1:startGame
+    btn1: isLast ? '🏆 Rejouer depuis le début' : `Niveau ${lvlData.id+1} → ${nextLvl.theme}`,
+    act1: isLast ? ()=>startGame(0) : ()=>startGame(currentLevelIdx+1),
+    btn2:'Rejouer ce niveau 🔄',
+    act2:()=>startGame(currentLevelIdx),
   });
 }
 
@@ -1133,19 +1251,61 @@ document.addEventListener('keydown',e=>{
 window.addEventListener('resize',()=>{ if(!gameRunning) return; rebuildDOMKeepContent(); if(active) render(); });
 
 // ════════════════════════════════════════════════════════
-//  INIT
+//  INIT — écran de sélection de niveau
 // ════════════════════════════════════════════════════════
 calcRows(); buildDOM();
-showOverlay({
-  title:'かなDROP 🌊',
-  sub:`Forme des mots en hiragana<br>
-       <strong style="color:var(--cyan)">horizontalement ou verticalement</strong> !<br><br>
-       ← Glisse gauche/droite →<br>
-       Appui long · Swipe ↓ = chute rapide<br><br>
-       <span style="color:var(--gold)">Niveau 1 · Les animaux 🐾</span>`,
-  words:LEVEL_WORDS.slice(0,4),
-  btn1:'はじめる 🌊', act1:startGame
-});
+showLevelSelect();
+
+function showLevelSelect(){
+  clearInterval(dropTimer); gameRunning=false;
+  const ov = document.getElementById('board-overlay');
+  ov.innerHTML = `
+    <div class="ov-title" style="font-size:26px;margin-bottom:2px">かなDROP 🌊</div>
+    <div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin-bottom:10px">
+      ← swipe · appui long = chute →
+    </div>
+    <div id="lvl-select" style="
+      display:flex; flex-direction:column; gap:7px;
+      width:100%; max-width:290px;
+      overflow-y:auto; max-height:58dvh;
+      padding-right:4px;
+    "></div>
+  `;
+  ov.classList.remove('hidden');
+  const container = document.getElementById('lvl-select');
+  ALL_LEVELS.forEach((lvl, i) => {
+    const btn = document.createElement('button');
+    btn.style.cssText = `
+      display:flex; align-items:center; gap:10px;
+      background:rgba(0,229,255,0.05);
+      border:1.5px solid rgba(0,229,255,0.18);
+      border-radius:14px; padding:9px 14px;
+      cursor:pointer; color:var(--text);
+      font-family:'Noto Sans JP',sans-serif;
+      text-align:left; width:100%;
+      transition:background 0.15s, border-color 0.15s;
+    `;
+    btn.innerHTML = `
+      <span style="font-size:26px;flex-shrink:0">${lvl.emoji}</span>
+      <span style="flex:1">
+        <span style="font-family:'Fredoka One',sans-serif;font-size:14px;color:var(--cyan)">
+          Niveau ${lvl.id}
+        </span><br>
+        <span style="font-size:13px">${lvl.theme}</span>
+      </span>
+      <span style="font-family:'Fredoka One',sans-serif;font-size:11px;color:var(--dim)">
+        ${lvl.words.length} mots
+      </span>
+    `;
+    btn.addEventListener('touchstart', ()=>{
+      btn.style.background='rgba(0,229,255,0.14)';
+      btn.style.borderColor='rgba(0,229,255,0.55)';
+    },{passive:true});
+    btn.addEventListener('click', ()=> startGame(i));
+    container.appendChild(btn);
+  });
+}
+
 </script>
 </body>
 </html>
