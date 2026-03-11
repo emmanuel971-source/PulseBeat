@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>かなDROP ✨</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&family=Noto+Sans+JP:wght@400;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg-top:   #d4f4ff;
@@ -63,6 +63,12 @@
   --lv12-top:#d4ffd8; --lv12-mid:#f0ffd4; --lv12-bot:#fff7d4;
   /* Lv13 🏙️ ville : bleu nuit doux / gris perle / doré */
   --lv13-top:#d4e8ff; --lv13-mid:#e8d4ff; --lv13-bot:#fff5d4;
+  /* Lv14 🌸 Ciel & Saisons — rose sakura / lavande / blanc lunaire */
+  --lv14-top:#ffd4ee; --lv14-mid:#eed4ff; --lv14-bot:#fff0fa;
+  /* Lv15 🌿 Terre & Végétation — vert forêt / mousse / citron doux */
+  --lv15-top:#d4f0d4; --lv15-mid:#e0ffd4; --lv15-bot:#f4ffd4;
+  /* Lv16 🌊 Eau & Vent — bleu profond / cyan / blanc écume */
+  --lv16-top:#c8e8ff; --lv16-mid:#d4f4ff; --lv16-bot:#e8fffc;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{
@@ -233,10 +239,31 @@ body::before{
 /* ═══ MENU ═══ */
 #menu-overlay{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;background:linear-gradient(160deg,var(--bg-top) 0%,var(--bg-mid) 50%,var(--bg-bot) 100%);overflow:hidden;max-width:480px;margin:0 auto;}
 #menu-overlay.hidden{display:none;}
-.menu-header{flex-shrink:0;width:100%;text-align:center;padding:clamp(14px,5dvh,34px) 16px clamp(6px,2dvh,14px);}
-.menu-title{font-family:'Fredoka One',cursive;font-size:clamp(50px,14vw,72px);line-height:1;background:linear-gradient(135deg,var(--sky) 0%,var(--mint) 40%,var(--lemon) 70%,var(--peach) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 3px 0 rgba(0,170,238,.3));animation:titleBounce 2.5s ease-in-out infinite;}
-@keyframes titleBounce{0%,100%{transform:translateY(0) rotate(-.5deg)}50%{transform:translateY(-5px) rotate(.5deg)}}
-.menu-sub{font-family:'Nunito',sans-serif;font-size:clamp(15px,4.2vw,20px);color:var(--text-mid);margin-top:5px;letter-spacing:1px;font-weight:700;}
+.menu-header{flex-shrink:0;width:100%;text-align:center;padding:clamp(10px,3dvh,22px) 16px clamp(4px,1.5dvh,10px);}
+
+/* ── LOGO かなDROP ── */
+.logo-wrap{display:flex;flex-direction:column;align-items:center;animation:floatPulse 3s ease-in-out infinite;cursor:default;position:relative;}
+@keyframes floatPulse{0%,100%{transform:translateY(0) scale(1) rotate(-4deg)}50%{transform:translateY(-6px) scale(1.02) rotate(-4deg)}}
+.logo-card{position:relative;padding:0 20px;display:flex;flex-direction:column;align-items:center;gap:4px;overflow:visible;}
+.kana-group{position:relative;display:inline-block;line-height:1;}
+.kana-main{font-family:"Noto Sans JP",sans-serif;font-weight:900;font-size:clamp(64px,18vw,96px);letter-spacing:-2px;line-height:1;display:block;background:linear-gradient(135deg,#ff6b35,#ffbe0b,#6bcb77,#4d96ff,#c77dff,#ff6b6b,#ffbe0b,#ff6b35);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:kanaRainbow 3s linear infinite;position:relative;z-index:2;filter:drop-shadow(2px 4px 0 #1a0050);}
+@keyframes kanaRainbow{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.kana-outline-w{position:absolute;inset:0;font-family:"Noto Sans JP",sans-serif;font-weight:900;font-size:clamp(64px,18vw,96px);letter-spacing:-2px;line-height:1;-webkit-text-fill-color:transparent;-webkit-text-stroke:14px #ffffff;z-index:1;pointer-events:none;}
+.kana-outline-d{position:absolute;inset:0;font-family:"Noto Sans JP",sans-serif;font-weight:900;font-size:clamp(64px,18vw,96px);letter-spacing:-2px;line-height:1;-webkit-text-fill-color:transparent;-webkit-text-stroke:20px #1a0050;z-index:0;pointer-events:none;}
+.drop-group{position:relative;display:inline-block;line-height:1;margin-top:-2px;}
+.drop-main{font-family:"Black Han Sans",sans-serif;font-weight:900;font-size:clamp(42px,12vw,64px);letter-spacing:4px;display:block;background:linear-gradient(180deg,#fff700 0%,#ffb300 30%,#ff6b6b 65%,#cc0000 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;position:relative;z-index:2;filter:drop-shadow(2px 3px 0 #1a0050);animation:shimmerDrop 2.2s ease-in-out infinite;}
+@keyframes shimmerDrop{0%,100%{filter:drop-shadow(2px 3px 0 #1a0050) brightness(1)}50%{filter:drop-shadow(2px 3px 0 #1a0050) brightness(1.3) drop-shadow(0 0 12px rgba(255,120,120,.6))}}
+.drop-outline-w{position:absolute;inset:0;font-family:"Black Han Sans",sans-serif;font-weight:900;font-size:clamp(42px,12vw,64px);letter-spacing:4px;-webkit-text-fill-color:transparent;-webkit-text-stroke:12px #ffffff;z-index:1;pointer-events:none;}
+.drop-outline-d{position:absolute;inset:0;font-family:"Black Han Sans",sans-serif;font-weight:900;font-size:clamp(42px,12vw,64px);letter-spacing:4px;-webkit-text-fill-color:transparent;-webkit-text-stroke:18px #1a0050;z-index:0;pointer-events:none;}
+.logo-droplet{position:absolute;animation:dropBounce 2.4s ease-in-out infinite;}
+.ld1{top:-18px;left:14px;animation-delay:0s}.ld2{top:-12px;right:24px;animation-delay:.5s}.ld3{bottom:-16px;left:32px;animation-delay:1s}.ld4{bottom:-10px;right:18px;animation-delay:1.5s}.ld5{top:24px;left:-14px;animation-delay:.8s}
+@keyframes dropBounce{0%,100%{transform:translateY(0) scale(1);opacity:1}50%{transform:translateY(5px) scale(.88);opacity:.8}}
+.logo-bubble{position:absolute;border-radius:50%;border:3px solid #fff;animation:bubblePop 2s ease-in-out infinite;}
+.lb1{width:18px;height:18px;background:radial-gradient(circle at 30% 30%,#ffb3e6,#ff3fab);top:-10px;right:-10px;animation-delay:0s;box-shadow:0 2px 8px #ff3fab88;}
+.lb2{width:13px;height:13px;background:radial-gradient(circle at 30% 30%,#b3eeff,#00cfff);bottom:-8px;left:-8px;animation-delay:.7s;box-shadow:0 2px 6px #00cfffaa;}
+.lb3{width:10px;height:10px;background:radial-gradient(circle at 30% 30%,#fffeb3,#ffbe0b);top:8px;left:-11px;animation-delay:1.4s;box-shadow:0 2px 6px #ffbe0baa;}
+@keyframes bubblePop{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+.menu-sub{font-family:'Nunito',sans-serif;font-size:clamp(14px,3.8vw,18px);color:var(--text-mid);margin-top:8px;letter-spacing:1px;font-weight:700;}
 .menu-wave{display:inline-block;animation:waveIt .9s ease-in-out infinite alternate;}
 @keyframes waveIt{from{transform:rotate(-18deg)}to{transform:rotate(18deg)}}
 .menu-section-lbl{font-family:'Fredoka One',cursive;font-size:clamp(18px,5vw,23px);color:var(--sky);text-align:center;flex-shrink:0;padding:0 16px 8px;}
@@ -303,10 +330,31 @@ body::before{
 <!-- ═══ MENU ═══ -->
 <div id="menu-overlay">
   <div class="menu-header">
-    <div class="menu-title">かなDROP!</div>
+    <div class="logo-wrap">
+      <div class="logo-card">
+        <div class="logo-droplet ld1"><svg width="16" height="21" viewBox="0 0 16 22"><path d="M8 0C8 0 16 10 16 14A8 8 0 0 1 0 14C0 10 8 0 8 0Z" fill="#ff6b6b" stroke="#fff" stroke-width="3"/></svg></div>
+        <div class="logo-droplet ld2"><svg width="14" height="19" viewBox="0 0 16 22"><path d="M8 0C8 0 16 10 16 14A8 8 0 0 1 0 14C0 10 8 0 8 0Z" fill="#4d96ff" stroke="#fff" stroke-width="3"/></svg></div>
+        <div class="logo-droplet ld3"><svg width="14" height="19" viewBox="0 0 16 22"><path d="M8 0C8 0 16 10 16 14A8 8 0 0 1 0 14C0 10 8 0 8 0Z" fill="#6bcb77" stroke="#fff" stroke-width="3"/></svg></div>
+        <div class="logo-droplet ld4"><svg width="12" height="17" viewBox="0 0 16 22"><path d="M8 0C8 0 16 10 16 14A8 8 0 0 1 0 14C0 10 8 0 8 0Z" fill="#ffbe0b" stroke="#fff" stroke-width="3"/></svg></div>
+        <div class="logo-droplet ld5"><svg width="11" height="16" viewBox="0 0 16 22"><path d="M8 0C8 0 16 10 16 14A8 8 0 0 1 0 14C0 10 8 0 8 0Z" fill="#c77dff" stroke="#fff" stroke-width="3"/></svg></div>
+        <div class="logo-bubble lb1"></div>
+        <div class="logo-bubble lb2"></div>
+        <div class="logo-bubble lb3"></div>
+        <div class="kana-group">
+          <span class="kana-outline-d">かな</span>
+          <span class="kana-outline-w">かな</span>
+          <span class="kana-main">かな</span>
+        </div>
+        <div class="drop-group">
+          <span class="drop-outline-d">DROP!</span>
+          <span class="drop-outline-w">DROP!</span>
+          <span class="drop-main">DROP!</span>
+        </div>
+      </div>
+    </div>
     <div class="menu-sub"><span class="menu-wave">🎮</span> Apprends les kana en jouant !</div>
   </div>
-  <div class="menu-section-lbl">✨ Choisis ton level :</div>
+  <div class="menu-section-lbl">✨ Choisis ton level : </div>
   <div id="lvl-scroll"></div>
   <div class="menu-scroll-hint">↕ Fais défiler pour voir tous les niveaux</div>
 </div>
@@ -380,7 +428,7 @@ const ALL_LEVELS=[
     id:1,
     theme:'La Mer',
     clan:'',
-    emoji:'🐋',
+    emoji:'🌊',
     color:'#00c8e8',
     words:[
       {kana:'かい',   romaji:'kai',    meaning:'coquillage',emoji:'🐚', boss:false},
@@ -397,15 +445,14 @@ const ALL_LEVELS=[
     id:2,
     theme:'Les Domestiques',
     clan:'',
-    emoji:'🐶',
+    emoji:'🐾',
     color:'#ffaa7a',
     words:[
       {kana:'ねこ',   romaji:'neko',   meaning:'chat',     emoji:'🐱', boss:false},
       {kana:'いぬ',   romaji:'inu',    meaning:'chien',    emoji:'🐶', boss:false},
       {kana:'うし',   romaji:'ushi',   meaning:'vache',    emoji:'🐄', boss:false},
       {kana:'うま',   romaji:'uma',    meaning:'cheval',   emoji:'🐴', boss:false},
-      {kana:'うさぎ', romaji:'usagi',  meaning:'lapin',    emoji:'🐰', boss:true},
-    
+      {kana:'きつね', romaji:'kitsune',meaning:'renard',   emoji:'🦊', boss:true},
     ]
   },
   // ══════════════════════════
@@ -415,14 +462,14 @@ const ALL_LEVELS=[
     id:3,
     theme:'La Forêt',
     clan:'',
-    emoji:'🐻',
+    emoji:'🌿',
     color:'#5cb85c',
     words:[
       {kana:'くま',   romaji:'kuma',   meaning:'ours',     emoji:'🐻', boss:false},
       {kana:'しか',   romaji:'shika',  meaning:'cerf',     emoji:'🦌', boss:false},
       {kana:'さる',   romaji:'saru',   meaning:'singe',    emoji:'🐒', boss:false},
       {kana:'りす',   romaji:'risu',   meaning:'écureuil', emoji:'🐿️', boss:false},
-      {kana:'きつね', romaji:'kitsune',meaning:'renard',   emoji:'🦊', boss:true},
+      {kana:'うさぎ', romaji:'usagi',  meaning:'lapin',    emoji:'🐰', boss:true},
     ]
   },
   // ══════════════════════════
@@ -432,7 +479,7 @@ const ALL_LEVELS=[
     id:4,
     theme:'La Savane',
     clan:'',
-    emoji:'🐯',
+    emoji:'🌍',
     color:'#e8833a',
     words:[
       {kana:'とら',   romaji:'tora',   meaning:'tigre',    emoji:'🐯', boss:false},
@@ -449,7 +496,7 @@ const ALL_LEVELS=[
     id:5,
     theme:'Ciel & Jardin',
     clan:'',
-    emoji:'🐦',
+    emoji:'🌸',
     color:'#ff85b3',
     words:[
       {kana:'とり',   romaji:'tori',   meaning:'oiseau',   emoji:'🐦', boss:false},
@@ -527,41 +574,58 @@ const ALL_LEVELS=[
       {kana:'すいか', romaji:'suika',  meaning:'pastèque', emoji:'🍉', boss:true},
     ]
   },
+
   // ══════════════════════════
-  //  Lv.10 🧠 Le corps
+  //  Lv.14 🌸 Ciel & Saisons
   // ══════════════════════════
-  {id:10,theme:'Le corps',emoji:'🧠',color:'#72e8b8',clan:'',words:[
-    {kana:'め',romaji:'me',meaning:'œil',emoji:'👁️',boss:false},
-    {kana:'て',romaji:'te',meaning:'main',emoji:'✋',boss:false},
-    {kana:'あし',romaji:'ashi',meaning:'pied',emoji:'🦶',boss:false},
-    {kana:'はな',romaji:'hana',meaning:'nez',emoji:'👃',boss:false},
-    {kana:'みみ',romaji:'mimi',meaning:'oreille',emoji:'👂',boss:false},
-    {kana:'くち',romaji:'kuchi',meaning:'bouche',emoji:'👄',boss:true},
-  ]},
-  {id:11,theme:'La météo',emoji:'🌤️',color:'#7bcfff',clan:'',words:[
-    {kana:'あめ',romaji:'ame',meaning:'pluie',emoji:'🌧️',boss:false},
-    {kana:'かぜ',romaji:'kaze',meaning:'vent',emoji:'💨',boss:false},
-    {kana:'ゆき',romaji:'yuki',meaning:'neige',emoji:'❄️',boss:false},
-    {kana:'くも',romaji:'kumo',meaning:'nuage',emoji:'☁️',boss:false},
-    {kana:'たいよう',romaji:'taiyō',meaning:'soleil',emoji:'☀️',boss:false},
-    {kana:'かみなり',romaji:'kaminari',meaning:'foudre',emoji:'⚡',boss:true},
-  ]},
-  {id:12,theme:'Le sport',emoji:'⚽',color:'#ff85b3',clan:'',words:[
-    {kana:'およぐ',romaji:'oyogu',meaning:'nager',emoji:'🏊',boss:false},
-    {kana:'はしる',romaji:'hashiru',meaning:'courir',emoji:'🏃',boss:false},
-    {kana:'なげる',romaji:'nageru',meaning:'lancer',emoji:'🤾',boss:false},
-    {kana:'ける',romaji:'keru',meaning:'botter',emoji:'⚽',boss:false},
-    {kana:'とぶ',romaji:'tobu',meaning:'sauter',emoji:'🦘',boss:false},
-    {kana:'サッカー',romaji:'sakkā',meaning:'foot',emoji:'🥅',boss:true},
-  ]},
-  {id:13,theme:'La ville',emoji:'🏙️',color:'#ffe066',clan:'',words:[
-    {kana:'みせ',romaji:'mise',meaning:'magasin',emoji:'🏪',boss:false},
-    {kana:'えき',romaji:'eki',meaning:'gare',emoji:'🚉',boss:false},
-    {kana:'みち',romaji:'michi',meaning:'route',emoji:'🛣️',boss:false},
-    {kana:'はし',romaji:'hashi',meaning:'pont',emoji:'🌉',boss:false},
-    {kana:'こうえん',romaji:'kōen',meaning:'parc',emoji:'🌳',boss:false},
-    {kana:'びょういん',romaji:'byōin',meaning:'hôpital',emoji:'🏥',boss:true},
-  ]},
+  {
+    id:10,
+    theme:'Ciel & Saisons',
+    clan:'',
+    emoji:'🌸',
+    color:'#ffb3d9',
+    words:[
+      {kana:'そら',   romaji:'sora',   meaning:'ciel',     emoji:'☁️',  boss:false},
+      {kana:'つき',   romaji:'tsuki',  meaning:'lune',     emoji:'🌙',  boss:false},
+      {kana:'ほし',   romaji:'hoshi',  meaning:'étoile',   emoji:'🌟',  boss:false},
+      {kana:'ゆき',   romaji:'yuki',   meaning:'neige',    emoji:'❄️',  boss:false},
+      {kana:'さくら', romaji:'sakura', meaning:'cerisier', emoji:'🌸',  boss:true},
+    ]
+  },
+  // ══════════════════════════
+  //  Lv.15 🌿 Terre & Végétation
+  // ══════════════════════════
+  {
+    id:11,
+    theme:'Terre & Végétation',
+    clan:'',
+    emoji:'🌿',
+    color:'#72c472',
+    words:[
+      {kana:'やま',   romaji:'yama',   meaning:'montagne', emoji:'⛰️',  boss:false},
+      {kana:'もり',   romaji:'mori',   meaning:'forêt',    emoji:'🌲',  boss:false},
+      {kana:'くさ',   romaji:'kusa',   meaning:'herbe',    emoji:'🌿',  boss:false},
+      {kana:'はな',   romaji:'hana',   meaning:'fleur',    emoji:'🌸',  boss:false},
+      {kana:'ひかり', romaji:'hikari', meaning:'lumière',  emoji:'✨',  boss:true},
+    ]
+  },
+  // ══════════════════════════
+  //  Lv.16 🌊 Eau & Vent
+  // ══════════════════════════
+  {
+    id:12,
+    theme:'Eau & Vent',
+    clan:'',
+    emoji:'🌊',
+    color:'#4db8d4',
+    words:[
+      {kana:'うみ',   romaji:'umi',    meaning:'mer',      emoji:'🌊',  boss:false},
+      {kana:'かわ',   romaji:'kawa',   meaning:'rivière',  emoji:'🏞️',  boss:false},
+      {kana:'あめ',   romaji:'ame',    meaning:'pluie',    emoji:'🌧️',  boss:false},
+      {kana:'かぜ',   romaji:'kaze',   meaning:'vent',     emoji:'💨',  boss:false},
+      {kana:'あらし', romaji:'arashi', meaning:'tempête',  emoji:'⛈️',  boss:true},
+    ]
+  },
 ];
 
 let currentLevelIdx=0,LEVEL_WORDS=ALL_LEVELS[0].words,pendingLevelIdx=0;
@@ -695,6 +759,14 @@ function processCascade(found,isCascade){
   const cellSet=new Set();found.forEach(f=>f.cells.forEach(cell=>cellSet.add(`${cell.r},${cell.c}`)));
   const flashEls=[];cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);const el=gc(r,c);if(el){el.classList.add(isCombo?'combo-flash':'flash');flashEls.push(el);}});
   if(flashEls.length)spawnParticles(flashEls[Math.floor(flashEls.length/2)],isCombo?20:12);
+  // ── BURST global ──
+  if(flashEls.length){
+    const el=flashEls[Math.floor(flashEls.length/2)];
+    const rect=el.getBoundingClientRect();
+    const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+    const isBoss=found.some(f=>f.word.boss);
+    burst(cx, cy, isBoss?32:isCombo?24:16, isBoss?'boss':isCombo?'combo':'normal');
+  }
   let pts=0;found.forEach(f=>{pts+=f.word.kana.length*100*(f.word.mult||1);f.word.mult=(f.word.mult||1)+1;foundRound.add(f.word.kana);});
   const now=Date.now();if(now-lastWordTime<4000)streak++;else streak=1;lastWordTime=now;
   if(streak>1)pts=Math.round(pts*(1+streak*.08));
@@ -764,7 +836,107 @@ document.addEventListener('keydown',e=>{if(!gameRunning||resolvingWords||!active
 window.addEventListener('resize',()=>{if(!gameRunning)return;rebuildDOMKeepContent();if(active)render();});
 
 calcRows();buildDOM();
+
+/* ═══════════════════════════════════════════════
+   BURST — système de particules global réutilisable
+   burst(x, y, count, mode)
+   mode : 'normal' | 'combo' | 'boss' | 'logo'
+   ═══════════════════════════════════════════════ */
+const BURST_CANVAS = document.createElement('canvas');
+BURST_CANVAS.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:999;';
+document.body.appendChild(BURST_CANVAS);
+const BURST_CTX = BURST_CANVAS.getContext('2d');
+function resizeBurst(){BURST_CANVAS.width=window.innerWidth;BURST_CANVAS.height=window.innerHeight;}
+resizeBurst();
+window.addEventListener('resize', resizeBurst);
+
+const BURST_COLORS = {
+  normal : ['#ff6b6b','#ffbe0b','#6bcb77','#4d96ff','#c77dff','#ff3fab','#00cfff','#ffffff'],
+  combo  : ['#ff0066','#ff6b35','#ffbe0b','#ffffff','#ff3fab','#fff700'],
+  boss   : ['#ff0066','#c77dff','#4d96ff','#ffffff','#ffbe0b','#ff6b6b'],
+  logo   : ['#ff6b6b','#ffbe0b','#6bcb77','#4d96ff','#c77dff','#ff3fab','#00cfff','#ffffff'],
+};
+
+let burstParticles = [];
+
+function burst(x, y, count=18, mode='normal') {
+  const cols = BURST_COLORS[mode] || BURST_COLORS.normal;
+  const isCombo = mode === 'combo' || mode === 'boss';
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.5;
+    const speed = (isCombo ? 5 : 3.5) + Math.random() * (isCombo ? 5 : 3);
+    const size  = (isCombo ? 4 : 2.5) + Math.random() * (isCombo ? 5 : 4);
+    const isStar = Math.random() > (isCombo ? 0.4 : 0.65);
+    burstParticles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - (isCombo ? 2 : 1),
+      size,
+      color: cols[Math.floor(Math.random() * cols.length)],
+      alpha: 1,
+      life: 0,
+      maxLife: 45 + Math.random() * (isCombo ? 40 : 25),
+      isStar,
+      rot: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.2,
+    });
+  }
+  if (!burstAnimRunning) burstLoop();
+}
+
+let burstAnimRunning = false;
+function burstLoop() {
+  burstAnimRunning = true;
+  BURST_CTX.clearRect(0, 0, BURST_CANVAS.width, BURST_CANVAS.height);
+  burstParticles = burstParticles.filter(p => p.alpha > 0.01);
+  for (const p of burstParticles) {
+    p.life++;
+    p.x  += p.vx;
+    p.y  += p.vy;
+    p.vy += 0.18; // gravité douce
+    p.alpha = Math.max(0, 1 - p.life / p.maxLife);
+    p.rot += p.rotSpeed;
+    BURST_CTX.save();
+    BURST_CTX.globalAlpha = p.alpha;
+    BURST_CTX.translate(p.x, p.y);
+    BURST_CTX.rotate(p.rot);
+    BURST_CTX.fillStyle = p.color;
+    BURST_CTX.shadowColor = p.color;
+    BURST_CTX.shadowBlur = 6;
+    if (p.isStar) {
+      // étoile à 8 branches
+      const r1 = p.size, r2 = p.size * 0.4;
+      BURST_CTX.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        const r = i % 2 === 0 ? r1 : r2;
+        i === 0 ? BURST_CTX.moveTo(Math.cos(a)*r, Math.sin(a)*r)
+                : BURST_CTX.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+      }
+      BURST_CTX.closePath();
+      BURST_CTX.fill();
+    } else {
+      // cercle simple
+      BURST_CTX.beginPath();
+      BURST_CTX.arc(0, 0, p.size, 0, Math.PI * 2);
+      BURST_CTX.fill();
+    }
+    BURST_CTX.restore();
+  }
+  if (burstParticles.length > 0) {
+    requestAnimationFrame(burstLoop);
+  } else {
+    burstAnimRunning = false;
+    BURST_CTX.clearRect(0, 0, BURST_CANVAS.width, BURST_CANVAS.height);
+  }
+}
+
+/* ── clic sur le logo du menu ── */
+document.addEventListener('click', e => {
+  const logo = e.target.closest('.logo-wrap');
+  if (logo) burst(e.clientX, e.clientY, 28, 'logo');
+});
+
 </script>
 </body>
 </html>
-
