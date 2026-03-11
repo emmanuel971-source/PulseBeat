@@ -1198,39 +1198,45 @@ class SimState {
 }
 
 // ── Évaluateur récursif (avec instinct de survie) ──────────────
-function simEval(state, kana, col, maxDepth){
+function simEval(state, kana, col, maxDepth) {
   const sim = state.clone();
   const landRow = sim.drop(kana, col);
-  
-  if(landRow === false || landRow <= 1) return {score: -999999, cascades: 0, endState: sim};
+
+  // Mort imminente ou colonne pleine : score catastrophique
+  if (landRow === false || landRow <= 1) return { score: -999999, cascades: 0, endState: sim };
 
   let score = 0, cascades = 0;
   let found = sim.scanAll(), depth = 0;
 
-  // 📈 COMPROMIS DYNAMIQUE
+  // Calcul du taux de remplissage basé sur la structure réelle
+  let filledCount = 0;
+  for (let r = 0; r < sim.rows; r++) {
+    for (let c = 0; c < sim.cols; c++) {
+      if (sim.board[r][c].char) filledCount++;
+    }
+  }
+  const fillRatio = filledCount / (sim.rows * sim.cols);
+
+  // 📈 COMPROMIS DYNAMIQUE : Plus la cuve est pleine, plus la pénalité est forte
   const height = sim.rows - landRow;
-  const fillRatio = (sim.countFilled() / (sim.rows * sim.cols));
-  
-  // Si le remplissage est faible (< 40%), on réduit la pénalité de hauteur pour laisser monter
-  // Si le remplissage est haut (> 50%), on augmente la pénalité pour forcer la survie
   const penaltyMultiplier = (fillRatio > 0.5) ? 12 : 2;
   const heightPenalty = Math.pow(height, 2) * penaltyMultiplier;
-  
+
   score -= heightPenalty;
 
-  while(found.length > 0 && depth <= maxDepth){
-    let pts = found.reduce((s,f) => {
+  while (found.length > 0 && depth <= maxDepth) {
+    let pts = found.reduce((s, f) => {
       let basePts = f.word.kana.length * 100;
-      // Bonus agressif si on cherche à finir le niveau
+      // Bonus agressif si on cherche à finir le niveau (priorité aux mots manquants)
       if (typeof foundRound !== 'undefined' && !foundRound.has(f.word.kana)) {
-        basePts *= (fillRatio > 0.6) ? 8 : 4; // Plus la cuve est pleine, plus finir les mots devient PRIORITAIRE
+        basePts *= (fillRatio > 0.6) ? 8 : 4;
       }
       return s + basePts;
     }, 0);
 
-    if(depth > 0){ pts *= Math.pow(2.2, depth); cascades++; } // Augmentation du multiplicateur de combo
-    if(found.length >= 2) pts *= 3; // Bonus combo plus fort
-    
+    if (depth > 0) { pts *= Math.pow(2.2, depth); cascades++; }
+    if (found.length >= 2) pts *= 3; // Bonus combo
+
     score += pts;
     sim.explode(found);
     sim.applyGravity();
@@ -1238,88 +1244,76 @@ function simEval(state, kana, col, maxDepth){
   }
 
   score += _proximityBonus(sim) * 0.3;
-  return {score, cascades, endState: sim};
+  return { score, cascades, endState: sim };
 }
+  
 
 // (La fonction _proximityBonus reste inchangée, garde celle que tu as déjà)
-function _proximityBonus(sim){
-  let bonus=0;
-  sim.words.forEach(w=>{
-    const kanas=[...w.kana];
-    for(let i=0;i<kanas.length-1;i++){
-      const a=kanas[i], b=kanas[i+1];
-      const posA=[], posB=[];
-      for(let r=0;r<sim.rows;r++) for(let c=0;c<sim.cols;c++){
-        if(sim.board[r][c].char===a) posA.push({r,c});
-        if(sim.board[r][c].char===b) posB.push({r,c});
+function _proximityBonus(sim) {
+  let bonus = 0;
+  sim.words.forEach(w => {
+    const kanas = [...w.kana];
+    for (let i = 0; i < kanas.length - 1; i++) {
+      const a = kanas[i], b = kanas[i + 1];
+      const posA = [], posB = [];
+      for (let r = 0; r < sim.rows; r++) for (let c = 0; c < sim.cols; c++) {
+        if (sim.board[r][c].char === a) posA.push({ r, c });
+        if (sim.board[r][c].char === b) posB.push({ r, c });
       }
-      posA.forEach(pa=>posB.forEach(pb=>{
-        const dr=Math.abs(pa.r-pb.r), dc=Math.abs(pa.c-pb.c);
-        if(dr===0&&dc===1) bonus+=120;
-        if(dc===0&&dr===1) bonus+=120;
-        if(dr===0&&dc<=3)  bonus+=40;
-        if(dc===0&&dr<=3)  bonus+=40;
+      posA.forEach(pa => posB.forEach(pb => {
+        const dr = Math.abs(pa.r - pb.r), dc = Math.abs(pa.c - pb.c);
+        if (dr === 0 && dc === 1) bonus += 120;
+        if (dc === 0 && dr === 1) bonus += 120;
+        if (dr === 0 && dc <= 3) bonus += 40;
+        if (dc === 0 && dr <= 3) bonus += 40;
       }));
     }
   });
   return bonus;
 }
-
+  
 // ── Choisir le meilleur coup (avec Anticipation de la prochaine pièce) ──
-function botChooseBestCol(kana){
-  const simWords = activeWords.map(w=>({...w}));
+function botChooseBestCol(kana) {
+  const simWords = activeWords.map(w => ({ ...w }));
   const baseState = new SimState(board, ROWS, COLS, simWords);
   const freeCols = baseState.freeCols();
-  if(!freeCols.length) return Math.floor(COLS/2);
+  if (!freeCols.length) return Math.floor(COLS / 2);
 
-  let best = {score: -Infinity, col: freeCols[0], cascades: 0};
+  let best = { score: -Infinity, col: freeCols[0], cascades: 0 };
 
   freeCols.forEach(col => {
-    // 1. On évalue la chute du kana ACTUEL
     const r1 = simEval(baseState, kana, col, BOT.maxDepth);
-    if(r1.score === -999999) return; // Si ça nous tue, on skip cette colonne
+    if (r1.score === -999999) return;
 
-    // 2. On évalue la PIÈCE SUIVANTE (nextChar) par-dessus cet état futur
     let bestNextScore = 0;
     let bestNextCascades = 0;
-    
-    // On s'assure qu'on a bien accès à nextChar
     const nextK = (typeof nextChar !== 'undefined' && nextChar) ? nextChar : null;
-    
+
     if (nextK && r1.endState) {
       const nextFreeCols = r1.endState.freeCols();
       if (nextFreeCols.length > 0) {
         let maxN = -Infinity;
-        let maxNCascades = 0;
-        
         nextFreeCols.forEach(ncol => {
           const r2 = simEval(r1.endState, nextK, ncol, BOT.maxDepth);
           if (r2.score > maxN) {
             maxN = r2.score;
-            maxNCascades = r2.cascades;
+            bestNextCascades = r2.cascades;
           }
         });
-        
-        if (maxN !== -Infinity) {
-          bestNextScore = maxN;
-          bestNextCascades = maxNCascades;
-        }
+        if (maxN !== -Infinity) bestNextScore = maxN;
       }
     }
 
-    // Le score total est celui de la pièce actuelle + un % du potentiel de la suivante
-    const totalScore = r1.score + (bestNextScore * 0.85); 
+    const totalScore = r1.score + (bestNextScore * 0.85);
     const totalCascades = r1.cascades + bestNextCascades;
 
-    if(totalScore > best.score || (totalScore === best.score && totalCascades > best.cascades)){
-      best = {score: totalScore, col: col, cascades: totalCascades};
+    if (totalScore > best.score || (totalScore === best.score && totalCascades > best.cascades)) {
+      best = { score: totalScore, col: col, cascades: totalCascades };
     }
   });
-  
   return best.col !== undefined ? best.col : freeCols[0];
 }
-
-
+  
 // ── Journal de parties (log CSV) ──────────────────────────────
 const BOT_LOG = {
   entries: [], // une entrée par niveau joué
@@ -1519,4 +1513,5 @@ const BOT = {
 </script>
 </body>
 </html>
+
 
