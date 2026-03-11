@@ -1202,34 +1202,34 @@ function simEval(state, kana, col, maxDepth){
   const sim = state.clone();
   const landRow = sim.drop(kana, col);
   
-  // Mort imminente ou colonne pleine : score catastrophique
   if(landRow === false || landRow <= 1) return {score: -999999, cascades: 0, endState: sim};
 
   let score = 0, cascades = 0;
   let found = sim.scanAll(), depth = 0;
 
-  // 🛡️ INSTINCT DE SURVIE : Pénalité de hauteur
-  // Plus la pièce atterrit haut (landRow petit), plus la pénalité est violente (quadratique)
-  const height = sim.rows - landRow; 
-  const heightPenalty = Math.pow(height, 2.2) * 8; 
-  score -= heightPenalty;
+  // 📈 COMPROMIS DYNAMIQUE
+  const height = sim.rows - landRow;
+  const fillRatio = (sim.countFilled() / (sim.rows * sim.cols));
   
-  // Alerte rouge si on s'approche dangereusement du top
-  if (height >= sim.rows - 3) score -= 2000;
+  // Si le remplissage est faible (< 40%), on réduit la pénalité de hauteur pour laisser monter
+  // Si le remplissage est haut (> 50%), on augmente la pénalité pour forcer la survie
+  const penaltyMultiplier = (fillRatio > 0.5) ? 12 : 2;
+  const heightPenalty = Math.pow(height, 2) * penaltyMultiplier;
+  
+  score -= heightPenalty;
 
   while(found.length > 0 && depth <= maxDepth){
-    const isCombo = found.length >= 2;
     let pts = found.reduce((s,f) => {
       let basePts = f.word.kana.length * 100;
-      // 🎯 FOCUS OBJECTIF : Gros bonus si c'est un mot qu'on n'a pas encore trouvé !
+      // Bonus agressif si on cherche à finir le niveau
       if (typeof foundRound !== 'undefined' && !foundRound.has(f.word.kana)) {
-        basePts *= 3; 
+        basePts *= (fillRatio > 0.6) ? 8 : 4; // Plus la cuve est pleine, plus finir les mots devient PRIORITAIRE
       }
       return s + basePts;
     }, 0);
 
-    if(depth > 0){ pts *= Math.pow(1.8, depth); cascades++; } 
-    if(isCombo) pts *= 2;
+    if(depth > 0){ pts *= Math.pow(2.2, depth); cascades++; } // Augmentation du multiplicateur de combo
+    if(found.length >= 2) pts *= 3; // Bonus combo plus fort
     
     score += pts;
     sim.explode(found);
@@ -1237,9 +1237,7 @@ function simEval(state, kana, col, maxDepth){
     depth++; found = sim.scanAll();
   }
 
-  // Bonus de proximité (réduit pour ne pas écraser l'instinct de survie)
-  score += _proximityBonus(sim) * 0.4;
-  
+  score += _proximityBonus(sim) * 0.3;
   return {score, cascades, endState: sim};
 }
 
@@ -1521,3 +1519,4 @@ const BOT = {
 </script>
 </body>
 </html>
+
