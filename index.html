@@ -370,9 +370,9 @@ body::before{
         </div>
       </div>
     </div>
-    <div class="menu-sub"><span class="menu-wave">🎌</span> Apprends les kana en jouant !</div>
+    <div class="menu-sub"><span class="menu-wave">🌊</span> Apprends les kana en jouant !</div>
   </div>
-  <div class="menu-section-lbl">✨ Choisis ton level :</div>
+  <div class="menu-section-lbl">✨ Choisis ton clan</div>
   <div id="lvl-scroll"></div>
   <div class="menu-scroll-hint">↕ Fais défiler pour voir tous les niveaux</div>
 </div>
@@ -461,16 +461,16 @@ const ALL_LEVELS=[
   // ══════════════════════════
   {
     id:2,
-    theme:'Les Domestiques',
+    theme:'Nos Compagnons',
     clan:'',
-    emoji:'🐱',
+    emoji:'🐶',
     color:'#ffaa7a',
     words:[
       {kana:'ねこ',   romaji:'neko',   meaning:'chat',     emoji:'🐱', boss:false},
       {kana:'いぬ',   romaji:'inu',    meaning:'chien',    emoji:'🐶', boss:false},
       {kana:'うし',   romaji:'ushi',   meaning:'vache',    emoji:'🐄', boss:false},
       {kana:'うま',   romaji:'uma',    meaning:'cheval',   emoji:'🐴', boss:false},
-      {kana:'きつね', romaji:'kitsune',meaning:'renard',   emoji:'🦊', boss:true},
+      {kana:'うさぎ', romaji:'usagi',  meaning:'lapin',    emoji:'🐰', boss:true},
     ]
   },
   // ══════════════════════════
@@ -487,7 +487,8 @@ const ALL_LEVELS=[
       {kana:'しか',   romaji:'shika',  meaning:'cerf',     emoji:'🦌', boss:false},
       {kana:'さる',   romaji:'saru',   meaning:'singe',    emoji:'🐒', boss:false},
       {kana:'りす',   romaji:'risu',   meaning:'écureuil', emoji:'🐿️', boss:false},
-      {kana:'うさぎ', romaji:'usagi',  meaning:'lapin',    emoji:'🐰', boss:true},
+      {kana:'きつね', romaji:'kitsune',meaning:'renard',   emoji:'🦊', boss:true},
+    
     ]
   },
   // ══════════════════════════
@@ -1086,7 +1087,376 @@ document.addEventListener('click', e => {
   if (logo) burst(e.clientX, e.clientY, 28, 'logo');
 });
 
+/* ═══════════════════════════════════════════════════════════════
+   🤖 BOT かなDROP — Moteur de simulation + IA arbre de décision
+   ═══════════════════════════════════════════════════════════════ */
+
+// ── UI ────────────────────────────────────────────────────────
+(()=>{
+  const ui = document.createElement('div');
+  ui.id = 'bot-ui';
+  ui.style.cssText = 'position:fixed;bottom:80px;right:12px;z-index:500;display:flex;flex-direction:column;align-items:flex-end;gap:6px;';
+  ui.innerHTML = `
+    <div id="bot-panel" style="background:rgba(20,10,50,.93);border:2px solid #a855f7;border-radius:18px;padding:12px 14px;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;min-width:170px;display:none;flex-direction:column;gap:5px;box-shadow:0 4px 24px rgba(168,85,247,.4);">
+      <div style="font-weight:900;color:#c77dff;font-size:15px;">🤖 Bot IA</div>
+      <div id="bot-status" style="color:#a0d8ff;">En attente…</div>
+      <div id="bot-stats" style="color:#72e8b8;font-size:11px;min-height:14px;"></div>
+      <div id="bot-summary" style="color:#ffbe0b;font-size:10px;min-height:12px;line-height:1.4;"></div>
+      <div style="display:flex;gap:6px;margin-top:2px;">
+        <button id="bot-start-btn" style="background:linear-gradient(135deg,#a855f7,#6366f1);border:none;border-radius:10px;color:#fff;padding:6px 10px;font-size:12px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;flex:1;">▶ Start</button>
+        <button id="bot-stop-btn" style="background:rgba(255,255,255,.1);border:1px solid #a855f7;border-radius:10px;color:#c77dff;padding:6px 10px;font-size:12px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;flex:1;">■ Stop</button>
+      </div>
+      <button id="bot-csv-btn" style="background:rgba(255,190,11,.15);border:1px solid #ffbe0b;border-radius:10px;color:#ffbe0b;padding:5px 10px;font-size:11px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:2px;">📥 Exporter CSV</button>
+      <div style="margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;"><label style="color:#a0d8ff;font-size:11px;">Vitesse</label><span id="bot-speed-lbl" style="color:#c77dff;font-size:11px;">350ms</span></div>
+        <input id="bot-speed" type="range" min="80" max="1200" value="350" style="width:100%;accent-color:#a855f7;">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;"><label style="color:#a0d8ff;font-size:11px;">Profondeur</label><span id="bot-depth-lbl" style="color:#c77dff;font-size:11px;">2 niveaux</span></div>
+        <input id="bot-depth" type="range" min="1" max="3" value="2" style="width:100%;accent-color:#a855f7;">
+      </div>
+    </div>
+    <button id="bot-toggle" style="background:linear-gradient(135deg,#a855f7,#4d96ff);border:none;border-radius:50%;width:46px;height:46px;font-size:22px;cursor:pointer;box-shadow:0 3px 14px rgba(168,85,247,.5);display:flex;align-items:center;justify-content:center;" title="Bot IA">🤖</button>
+  `;
+  document.body.appendChild(ui);
+
+  document.getElementById('bot-toggle').addEventListener('click', ()=>{
+    const p=document.getElementById('bot-panel');
+    p.style.display = p.style.display==='none' ? 'flex' : 'none';
+  });
+  document.getElementById('bot-speed').addEventListener('input', e=>{
+    document.getElementById('bot-speed-lbl').textContent=e.target.value+'ms';
+    BOT.speed=+e.target.value;
+  });
+  document.getElementById('bot-depth').addEventListener('input', e=>{
+    const v=+e.target.value;
+    document.getElementById('bot-depth-lbl').textContent=v+' niveau'+(v>1?'x':'');
+    BOT.maxDepth=v;
+  });
+  document.getElementById('bot-start-btn').addEventListener('click', ()=>BOT.start());
+  document.getElementById('bot-stop-btn').addEventListener('click', ()=>BOT.stop());
+  document.getElementById('bot-csv-btn').addEventListener('click', ()=>{
+    if(!BOT_LOG.entries.length){ alert('Aucune donnée à exporter — laisse le bot jouer d\'abord !'); return; }
+    BOT_LOG.exportCSV();
+  });
+})();
+
+// ── SimState : moteur de jeu pur sans DOM ─────────────────────
+class SimState {
+  constructor(boardSnap, rows, cols, words) {
+    this.board = boardSnap.map(row=>row.map(c=>({...c})));
+    this.rows=rows; this.cols=cols; this.words=words;
+  }
+  clone(){ return new SimState(this.board,this.rows,this.cols,this.words); }
+
+  drop(kana,col){
+    let landRow=-1;
+    for(let r=this.rows-1;r>=0;r--){ if(!this.board[r][col].filled){landRow=r;break;} }
+    if(landRow===-1)return false;
+    this.board[landRow][col]={filled:true,char:kana};
+    return landRow;
+  }
+
+  applyGravity(){
+    for(let c=0;c<this.cols;c++){
+      const chars=[];
+      for(let r=this.rows-1;r>=0;r--) if(this.board[r][c].filled) chars.push(this.board[r][c].char);
+      for(let r=this.rows-1;r>=0;r--) this.board[r][c]=chars.length?{filled:true,char:chars.shift()}:{filled:false,char:''};
+    }
+  }
+
+  _scanLine(cells,found){
+    const line=cells.map(({r,c})=>this.board[r][c].filled?this.board[r][c].char:'\x00').join('');
+    this.words.forEach(w=>{
+      let i=line.indexOf(w.kana);
+      while(i!==-1){
+        const key=cells.slice(i,i+w.kana.length).map(cc=>`${cc.r},${cc.c}`).join('|');
+        if(!found.some(f=>f.key===key)) found.push({word:w,cells:cells.slice(i,i+w.kana.length),key});
+        i=line.indexOf(w.kana,i+1);
+      }
+    });
+  }
+
+  scanAll(){
+    const found=[];
+    for(let r=0;r<this.rows;r++) this._scanLine(Array.from({length:this.cols},(_,c)=>({r,c})),found);
+    for(let c=0;c<this.cols;c++) this._scanLine(Array.from({length:this.rows},(_,r)=>({r,c})),found);
+    return found;
+  }
+
+  explode(found){
+    const cellSet=new Set();
+    found.forEach(f=>f.cells.forEach(cell=>cellSet.add(`${cell.r},${cell.c}`)));
+    cellSet.forEach(key=>{ const[r,c]=key.split(',').map(Number); this.board[r][c]={filled:false,char:''}; });
+    return cellSet.size;
+  }
+
+  freeCols(){
+    const free=[];
+    for(let c=0;c<this.cols;c++) if(!this.board[0][c].filled) free.push(c);
+    return free;
+  }
+}
+
+// ── Évaluateur récursif ────────────────────────────────────────
+function simEval(state, kana, col, maxDepth){
+  const sim=state.clone();
+  if(sim.drop(kana,col)===false) return {score:-999,cascades:0};
+
+  let score=0, cascades=0;
+  let found=sim.scanAll(), depth=0;
+
+  while(found.length>0 && depth<=maxDepth){
+    const isCombo=found.length>=2;
+    let pts=found.reduce((s,f)=>s+f.word.kana.length*100,0);
+    if(depth>0){ pts*=Math.pow(1.8,depth); cascades++; } // cascade bonus
+    if(isCombo) pts*=2;
+    score+=pts;
+    sim.explode(found);
+    sim.applyGravity();
+    depth++; found=sim.scanAll();
+  }
+
+  // Bonus de proximité : kanas voisins du même mot
+  score += _proximityBonus(sim);
+  return {score, cascades};
+}
+
+function _proximityBonus(sim){
+  let bonus=0;
+  sim.words.forEach(w=>{
+    const kanas=[...w.kana];
+    for(let i=0;i<kanas.length-1;i++){
+      const a=kanas[i], b=kanas[i+1];
+      const posA=[], posB=[];
+      for(let r=0;r<sim.rows;r++) for(let c=0;c<sim.cols;c++){
+        if(sim.board[r][c].char===a) posA.push({r,c});
+        if(sim.board[r][c].char===b) posB.push({r,c});
+      }
+      posA.forEach(pa=>posB.forEach(pb=>{
+        const dr=Math.abs(pa.r-pb.r), dc=Math.abs(pa.c-pb.c);
+        if(dr===0&&dc===1) bonus+=120;
+        if(dc===0&&dr===1) bonus+=120;
+        if(dr===0&&dc<=3)  bonus+=40;
+        if(dc===0&&dr<=3)  bonus+=40;
+      }));
+    }
+  });
+  return bonus;
+}
+
+// ── Choisir le meilleur coup ───────────────────────────────────
+function botChooseBestCol(kana){
+  const simWords=activeWords.map(w=>({...w}));
+  const baseState=new SimState(board,ROWS,COLS,simWords);
+  const freeCols=baseState.freeCols();
+  if(!freeCols.length) return Math.floor(COLS/2);
+
+  let best={score:-Infinity, col:freeCols[0], cascades:0};
+  freeCols.forEach(col=>{
+    const r=simEval(baseState,kana,col,BOT.maxDepth);
+    if(r.score>best.score||(r.score===best.score&&r.cascades>best.cascades))
+      best={score:r.score,col,cascades:r.cascades};
+  });
+  return best.col;
+}
+
+// ── Journal de parties (log CSV) ──────────────────────────────
+const BOT_LOG = {
+  entries: [], // une entrée par niveau joué
+
+  _current: null,
+
+  startLevel(levelIdx) {
+    this._current = {
+      ts:          new Date().toISOString(),
+      level:       ALL_LEVELS[levelIdx].id,
+      theme:       ALL_LEVELS[levelIdx].theme,
+      depth:       0, // sera mis à jour
+      speed:       0,
+      moves:       0,
+      words:       0,
+      combos:      0,
+      cascades:    0,
+      maxCascade:  0, // profondeur max atteinte en une chaîne
+      score:       0,
+      duration_s:  0,
+      _t0:         Date.now(),
+      _cascadeRun: 0, // compteur cascade en cours
+    };
+  },
+
+  onWord(isCombo, isCascade) {
+    if (!this._current) return;
+    this._current.words++;
+    if (isCombo)   this._current.combos++;
+    if (isCascade) {
+      this._current._cascadeRun++;
+      this._current.cascades++;
+      this._current.maxCascade = Math.max(this._current.maxCascade, this._current._cascadeRun);
+    } else {
+      this._current._cascadeRun = 0;
+    }
+  },
+
+  endLevel(finalScore) {
+    if (!this._current) return;
+    this._current.score      = finalScore;
+    this._current.duration_s = ((Date.now() - this._current._t0) / 1000).toFixed(1);
+    this._current.depth      = BOT.maxDepth;
+    this._current.speed      = BOT.speed;
+    this._current.moves      = BOT.totalMoves;
+    // Nettoyer les champs internes
+    const {_t0, _cascadeRun, ...entry} = this._current;
+    this.entries.push(entry);
+    this._current = null;
+  },
+
+  exportCSV() {
+    if (!this.entries.length) return;
+    const cols = ['ts','level','theme','depth','speed','moves','words','combos','cascades','maxCascade','score','duration_s'];
+    const header = cols.join(',');
+    const rows   = this.entries.map(e => cols.map(k => JSON.stringify(e[k]??'')).join(','));
+    const csv    = [header, ...rows].join('\n');
+    const blob   = new Blob([csv], {type:'text/csv'});
+    const a      = document.createElement('a');
+    a.href       = URL.createObjectURL(blob);
+    a.download   = `kanadrop_bot_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  },
+
+  summary() {
+    if (!this.entries.length) return '—';
+    const n    = this.entries.length;
+    const avgS = (this.entries.reduce((s,e)=>s+(+e.score),0)/n).toFixed(0);
+    const totC = this.entries.reduce((s,e)=>s+e.cascades,0);
+    const totX = this.entries.reduce((s,e)=>s+e.combos,0);
+    const best = Math.max(...this.entries.map(e=>+e.score));
+    return `${n} niveaux · moy. ${(+avgS).toLocaleString()} pts · ${totX} combos · ${totC} cascades · best ${best.toLocaleString()}`;
+  },
+};
+
+// ── Hooks sur processCascade & levelDone ──────────────────────
+const _origProcessCascade = processCascade;
+window.processCascade = function(found, isCascade) {
+  // Logger pour le bot
+  if (BOT.running) {
+    const isCombo = found.length >= 2;
+    BOT_LOG.onWord(isCombo, isCascade);
+    if (isCascade) BOT.sessionCascades++;
+    if (isCombo)   BOT.sessionCombos++;
+    BOT._updateStats();
+  }
+  return _origProcessCascade(found, isCascade);
+};
+
+// Hook levelDone pour auto-avancement + log
+const _origLevelDone = levelDone;
+window.levelDone = function() {
+  if (BOT.running) {
+    BOT_LOG.endLevel(score);
+    BOT._updateStats();
+    BOT._updateSummary();
+    // Passer automatiquement au niveau suivant après un court délai
+    const isLast = currentLevelIdx >= ALL_LEVELS.length - 1;
+    setTimeout(()=>{
+      if (!BOT.running) return;
+      if (isLast) {
+        BOT._status('🏆 Tous les niveaux finis !','#ffbe0b');
+        BOT.running = false;
+      } else {
+        BOT._status(`▶ Niveau ${ALL_LEVELS[currentLevelIdx+1].id}…`,'#72e8b8');
+        startGame(currentLevelIdx + 1);
+        BOT_LOG.startLevel(currentLevelIdx);
+        setTimeout(()=>BOT._loop(), 600);
+      }
+    }, 1200);
+    return; // ne pas afficher l'overlay
+  }
+  return _origLevelDone();
+};
+
+// ── Contrôleur BOT ────────────────────────────────────────────
+const BOT = {
+  running:         false,
+  speed:           350,
+  maxDepth:        2,
+  timer:           null,
+  totalMoves:      0,
+  sessionCascades: 0,
+  sessionCombos:   0,
+
+  start() {
+    if (this.running) return;
+    if (!gameRunning) { this._status('⚠️ Lance une partie !','#ffaa7a'); return; }
+    this.running         = true;
+    this.totalMoves      = 0;
+    this.sessionCascades = 0;
+    this.sessionCombos   = 0;
+    BOT_LOG.startLevel(currentLevelIdx);
+    this._status('🤖 En jeu…','#72e8b8');
+    this._loop();
+  },
+
+  stop() {
+    this.running = false;
+    clearTimeout(this.timer);
+    this._status('⏹ Arrêté','#c77dff');
+    this._updateSummary();
+  },
+
+  _loop() {
+    if (!this.running || !gameRunning) { this.stop(); return; }
+    if (resolvingWords || !active) {
+      this.timer = setTimeout(()=>this._loop(), 120); return;
+    }
+    const kana    = active.char;
+    const bestCol = botChooseBestCol(kana);
+    this._highlightCol(bestCol);
+
+    this.timer = setTimeout(()=>{
+      if (!this.running || !gameRunning || !active) return;
+      active.x = bestCol; render();
+      setTimeout(()=>{
+        if (!this.running || !gameRunning || !active) return;
+        this.totalMoves++;
+        hardDrop();
+        this._updateStats();
+        this.timer = setTimeout(()=>this._loop(), Math.max(80, this.speed * 0.6));
+      }, 80);
+    }, Math.max(60, this.speed * 0.4));
+  },
+
+  _highlightCol(col) {
+    for (let r = 0; r < ROWS; r++) {
+      const el = gc(r, col);
+      if (el && !board[r][col].filled) {
+        el.style.background = 'rgba(168,85,247,.22)';
+        setTimeout(()=>{ if(el) el.style.background=''; }, 250);
+      }
+    }
+  },
+
+  _status(msg, color='#a0d8ff') {
+    const el = document.getElementById('bot-status');
+    if (el) { el.textContent=msg; el.style.color=color; }
+  },
+
+  _updateStats() {
+    const el = document.getElementById('bot-stats');
+    if (!el) return;
+    el.innerHTML =
+      `🎮 <b>${this.totalMoves}</b> coups &nbsp;` +
+      `🌸 <b>${this.sessionCombos}</b> combos &nbsp;` +
+      `⚡ <b>${this.sessionCascades}</b> cascades`;
+  },
+
+  _updateSummary() {
+    const el = document.getElementById('bot-summary');
+    if (el) el.textContent = BOT_LOG.summary();
+  },
+};
+
 </script>
 </body>
 </html>
-
