@@ -69,6 +69,24 @@
   --lv15-top:#d4f0d4; --lv15-mid:#e0ffd4; --lv15-bot:#f4ffd4;
   /* Lv16 🌊 Eau & Vent — bleu profond / cyan / blanc écume */
   --lv16-top:#c8e8ff; --lv16-mid:#d4f4ff; --lv16-bot:#e8fffc;
+  /* Lv13 🏠 La Maison — pêche / crème / sable doux */
+  --lv13-top:#ffe8d4; --lv13-mid:#fff0e0; --lv13-bot:#fffbd4;
+  /* Lv14 👘 Les Vêtements — lavande / rose pâle / crème */
+  --lv14-top:#ead4ff; --lv14-mid:#ffd4f0; --lv14-bot:#fff4ff;
+  /* Lv15 📝 Le Bureau — bleu ciel / cyan / blanc */
+  --lv15-top:#d4eeff; --lv15-mid:#d4f8ff; --lv15-bot:#f0f8ff;
+  /* Lv16 🌈 Couleurs A — rouge vif / corail / pêche */
+  --lv16-top:#ffd4d4; --lv16-mid:#ffe0d4; --lv16-bot:#fff4d4;
+  /* Lv17 🎨 Couleurs B — violet / lavande / crème */
+  --lv17-top:#ead4ff; --lv17-mid:#ffd4f8; --lv17-bot:#fff9ff;
+  /* Lv18 👨‍👩‍👧 Famille A — pêche / crème / jaune doux */
+  --lv18-top:#ffe8d4; --lv18-mid:#fff0e0; --lv18-bot:#fffbd4;
+  /* Lv19 👶 Famille B — vert menthe / turquoise / blanc */
+  --lv19-top:#d4ffe8; --lv19-mid:#d4fff7; --lv19-bot:#f0fff8;
+  /* Lv20 🏯 Japon A — orange automne / ocre / sable */
+  --lv20-top:#ffe8d0; --lv20-mid:#ffd4b0; --lv20-bot:#fff8e8;
+  /* Lv21 ⚔️ Japon B — bleu acier / cyan / blanc */
+  --lv21-top:#d4eeff; --lv21-mid:#c8f4ff; --lv21-bot:#e8f8ff;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{
@@ -352,9 +370,9 @@ body::before{
         </div>
       </div>
     </div>
-    <div class="menu-sub"><span class="menu-wave">🎮</span> Apprends les kana en jouant !</div>
+    <div class="menu-sub"><span class="menu-wave">🌊</span> Apprends les kana en jouant !</div>
   </div>
-  <div class="menu-section-lbl">✨ Choisis ton level : </div>
+  <div class="menu-section-lbl">✨ Choisis ton level :</div>
   <div id="lvl-scroll"></div>
   <div class="menu-scroll-hint">↕ Fais défiler pour voir tous les niveaux</div>
 </div>
@@ -445,7 +463,7 @@ const ALL_LEVELS=[
     id:2,
     theme:'Les Domestiques',
     clan:'',
-    emoji:'🐶',
+    emoji:'🐱',
     color:'#ffaa7a',
     words:[
       {kana:'ねこ',   romaji:'neko',   meaning:'chat',     emoji:'🐱', boss:false},
@@ -479,7 +497,7 @@ const ALL_LEVELS=[
     id:4,
     theme:'La Savane',
     clan:'',
-    emoji:'🌍',
+    emoji:'🐯',
     color:'#e8833a',
     words:[
       {kana:'とら',   romaji:'tora',   meaning:'tigre',    emoji:'🐯', boss:false},
@@ -624,6 +642,137 @@ const ALL_LEVELS=[
       {kana:'あめ',   romaji:'ame',    meaning:'pluie',    emoji:'🌧️',  boss:false},
       {kana:'かぜ',   romaji:'kaze',   meaning:'vent',     emoji:'💨',  boss:false},
       {kana:'あらし', romaji:'arashi', meaning:'tempête',  emoji:'⛈️',  boss:true},
+    ]
+  },
+  // ══════════════════════════
+  //  Lv.13 🏠 La Maison
+  // ══════════════════════════
+  {
+    id:13,
+    theme:'La Maison',
+    clan:'',
+    emoji:'🏠',
+    color:'#ffaa7a',
+    words:[
+      {kana:'はこ',   romaji:'hako',   meaning:'boîte',    emoji:'📦', boss:false},
+      {kana:'かぎ',   romaji:'kagi',   meaning:'clé',      emoji:'🔑', boss:false},
+      {kana:'かさ',   romaji:'kasa',   meaning:'parapluie',emoji:'☂️', boss:false},
+      {kana:'ほん',   romaji:'hon',    meaning:'livre',    emoji:'📖', boss:false},
+      {kana:'まくら', romaji:'makura', meaning:'oreiller', emoji:'🛌', boss:true},
+    ]
+  },
+  // ══════════════════════════
+  //  Lv.14 👘 Les Vêtements
+  // ══════════════════════════
+  {
+    id:14,
+    theme:'Les Vêtements',
+    clan:'',
+    emoji:'👘',
+    color:'#c4a8ff',
+    words:[
+      {kana:'くつ',   romaji:'kutsu',  meaning:'chaussures',emoji:'👟', boss:false},
+      {kana:'ふく',   romaji:'fuku',   meaning:'vêtement', emoji:'👕', boss:false},
+      {kana:'たび',   romaji:'tabi',   meaning:'chaussettes',emoji:'🧦',boss:false},
+      {kana:'えり',   romaji:'eri',    meaning:'col',      emoji:'👔', boss:false},
+      {kana:'きもの', romaji:'kimono', meaning:'kimono',   emoji:'👘', boss:true},
+    ]
+  },
+  // ══════════════════════════
+  //  Lv.15 📝 Le Bureau
+  // ══════════════════════════
+  {
+    id:15,
+    theme:'Le Bureau',
+    clan:'',
+    emoji:'📝',
+    color:'#7bcfff',
+    words:[
+      {kana:'ぺん',   romaji:'pen',    meaning:'stylo',    emoji:'🖊️', boss:false},
+      {kana:'かみ',   romaji:'kami',   meaning:'papier',   emoji:'📄', boss:false},
+      {kana:'えん',   romaji:'en',     meaning:'yen',      emoji:'💴', boss:false},
+      {kana:'はり',   romaji:'hari',   meaning:'épingle',  emoji:'📌', boss:false},
+      {kana:'かばん', romaji:'kaban',  meaning:'sac',      emoji:'👜', boss:true},
+    ]
+  },
+  // ══════════════════════════
+  //  Lv.16 🌈 Couleurs A
+  // ══════════════════════════
+  {
+    id:16, theme:'Couleurs A', clan:'', emoji:'🌈', color:'#ff6b6b',
+    words:[
+      {kana:'あか', romaji:'aka',    meaning:'rouge',  emoji:'🔴', boss:false},
+      {kana:'あお', romaji:'ao',     meaning:'bleu',   emoji:'🔵', boss:false},
+      {kana:'しろ', romaji:'shiro',  meaning:'blanc',  emoji:'⚪', boss:false},
+      {kana:'くろ', romaji:'kuro',   meaning:'noir',   emoji:'⚫', boss:false},
+      {kana:'みどり',romaji:'midori', meaning:'vert',   emoji:'💚', boss:true},
+    ]
+  },
+  // ══════════════════════════
+  //  Lv.17 🌈 Couleurs B
+  // ══════════════════════════
+  {
+    id:17, theme:'Couleurs B', clan:'', emoji:'🎨', color:'#c77dff',
+    words:[
+      {kana:'むら', romaji:'mura',   meaning:'violet', emoji:'💜', boss:false},
+      {kana:'ねず', romaji:'nezu',   meaning:'gris souris', emoji:'🐭', boss:false},
+      {kana:'ちゃ', romaji:'cha',    meaning:'brun',   emoji:'🟤', boss:false},
+      {kana:'もも', romaji:'momo',   meaning:'rose',   emoji:'🌸', boss:false},
+      {kana:'きいろ',romaji:'kiiro',  meaning:'jaune',  emoji:'💛', boss:true},
+    ]
+  },
+  // ══════════════════════════
+  //  Lv.18 👨‍👩‍👧 Famille A
+  // ══════════════════════════
+  {
+    id:18, theme:'Famille A', clan:'', emoji:'👨‍👩‍👧', color:'#ffaa7a',
+    words:[
+      {kana:'はは', romaji:'haha',   meaning:'maman',        emoji:'👩', boss:false},
+      {kana:'ちち', romaji:'chichi', meaning:'papa',         emoji:'👨', boss:false},
+      {kana:'あに', romaji:'ani',    meaning:'grand frère',  emoji:'👦', boss:false},
+      {kana:'あね', romaji:'ane',    meaning:'grande sœur',  emoji:'👧', boss:false},
+      {kana:'かぞく',romaji:'kazoku', meaning:'famille',      emoji:'👨‍👩‍👧', boss:true},
+    ]
+  },
+  // ══════════════════════════
+  //  Lv.19 👨‍👩‍👧 Famille B
+  // ══════════════════════════
+  {
+    id:19, theme:'Famille B', clan:'', emoji:'👶', color:'#72e8b8',
+    words:[
+      {kana:'おや', romaji:'oya',    meaning:'parent',       emoji:'👨‍👩', boss:false},
+      {kana:'まご', romaji:'mago',   meaning:'petit-enfant', emoji:'👶', boss:false},
+      {kana:'よめ', romaji:'yome',   meaning:'belle-fille',  emoji:'👰', boss:false},
+      {kana:'おじ', romaji:'oji',    meaning:'oncle',        emoji:'👨', boss:false},
+      {kana:'むすめ',romaji:'musume', meaning:'fille',        emoji:'👧', boss:true},
+    ]
+  },
+  // ══════════════════════════
+  //  Lv.20 🏯 Japon traditionnel A
+  //  (niveau à 2 boss !)
+  // ══════════════════════════
+  {
+    id:20, theme:'Japon traditionnel A', clan:'', emoji:'🏯', color:'#e8833a',
+    words:[
+      {kana:'おに', romaji:'oni',    meaning:'démon',        emoji:'👹', boss:false},
+      {kana:'みや', romaji:'miya',   meaning:'sanctuaire',   emoji:'⛩️', boss:false},
+      {kana:'まい', romaji:'mai',    meaning:'danse',        emoji:'💃', boss:false},
+      {kana:'さと', romaji:'sato',   meaning:'village',      emoji:'🏘️', boss:false},
+      {kana:'とりい',romaji:'torii',  meaning:'portail shinto',emoji:'⛩️', boss:true},
+      {kana:'ゆかた',romaji:'yukata', meaning:'yukata',       emoji:'👘', boss:true},
+    ]
+  },
+  // ══════════════════════════
+  //  Lv.21 🏯 Japon traditionnel B
+  // ══════════════════════════
+  {
+    id:21, theme:'Japon traditionnel B', clan:'', emoji:'⚔️', color:'#4db8d4',
+    words:[
+      {kana:'ふえ', romaji:'fue',    meaning:'flûte',        emoji:'🎵', boss:false},
+      {kana:'たい', romaji:'tai',    meaning:'daurade',      emoji:'🐟', boss:false},
+      {kana:'こま', romaji:'koma',   meaning:'toupie',       emoji:'🪀', boss:false},
+      {kana:'はお', romaji:'hao',    meaning:'robe trad.',   emoji:'👗', boss:false},
+      {kana:'かたな',romaji:'katana', meaning:'sabre',        emoji:'⚔️', boss:true},
     ]
   },
 ];
@@ -940,4 +1089,3 @@ document.addEventListener('click', e => {
 </script>
 </body>
 </html>
-
