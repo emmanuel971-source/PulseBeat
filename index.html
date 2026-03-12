@@ -1202,13 +1202,12 @@ function simEval(state, kana, col, maxDepth) {
   const sim = state.clone();
   const landRow = sim.drop(kana, col);
 
-  // Mort imminente ou colonne pleine : score catastrophique
   if (landRow === false || landRow <= 1) return { score: -999999, cascades: 0, endState: sim };
 
   let score = 0, cascades = 0;
   let found = sim.scanAll(), depth = 0;
 
-  // Calcul du taux de remplissage basé sur la structure réelle
+  // Calcul du remplissage
   let filledCount = 0;
   for (let r = 0; r < sim.rows; r++) {
     for (let c = 0; c < sim.cols; c++) {
@@ -1217,37 +1216,44 @@ function simEval(state, kana, col, maxDepth) {
   }
   const fillRatio = filledCount / (sim.rows * sim.cols);
 
-  // 📈 COMPROMIS DYNAMIQUE : Plus la cuve est pleine, plus la pénalité est forte
+  // 🚀 NOUVELLE LOGIQUE : Pénalité de hauteur réduite pour favoriser les cascades
   const height = sim.rows - landRow;
-  const penaltyMultiplier = (fillRatio > 0.5) ? 12 : 2;
-  const heightPenalty = Math.pow(height, 2) * penaltyMultiplier;
-
+  // On divise la pénalité par 4 pour le laisser monter plus haut
+  let heightPenalty = Math.pow(height, 2) * 0.5; 
+  
+  // Le bot ne s'inquiète que si le plateau est vraiment saturé (> 70%)
+  if (fillRatio > 0.7) heightPenalty *= 10; 
   score -= heightPenalty;
 
+  // ⛓️ BOOSTER DE CASCADES
   while (found.length > 0 && depth <= maxDepth) {
     let pts = found.reduce((s, f) => {
       let basePts = f.word.kana.length * 100;
-      // Bonus agressif si on cherche à finir le niveau (priorité aux mots manquants)
+      // Bonus agressif pour finir les mots
       if (typeof foundRound !== 'undefined' && !foundRound.has(f.word.kana)) {
-        basePts *= (fillRatio > 0.6) ? 8 : 4;
+        basePts *= 5; 
       }
       return s + basePts;
     }, 0);
 
-    if (depth > 0) { pts *= Math.pow(2.2, depth); cascades++; }
-    if (found.length >= 2) pts *= 3; // Bonus combo
-
+    // Si on fait une cascade (depth > 0), on donne un multiplicateur massif
+    if (depth > 0) { 
+      pts *= Math.pow(3.0, depth); // 3.0 est beaucoup plus agressif que 2.2
+      cascades++; 
+      // Si on fait une cascade, on ignore la hauteur (c'est le moment de briller)
+      score += 1000; 
+    }
+    
     score += pts;
     sim.explode(found);
     sim.applyGravity();
     depth++; found = sim.scanAll();
   }
 
-  score += _proximityBonus(sim) * 0.3;
+  score += _proximityBonus(sim) * 0.5;
   return { score, cascades, endState: sim };
 }
   
-
 // (La fonction _proximityBonus reste inchangée, garde celle que tu as déjà)
 function _proximityBonus(sim) {
   let bonus = 0;
@@ -1513,5 +1519,6 @@ const BOT = {
 </script>
 </body>
 </html>
+
 
 
