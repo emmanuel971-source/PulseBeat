@@ -304,7 +304,7 @@ body::before{
 #lvl-scroll{flex:1;overflow-y:auto;overflow-x:hidden;width:100%;padding:0 16px 16px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch;}
 #lvl-scroll::-webkit-scrollbar{display:none;}
 .lvl-card{flex-shrink:0;width:100%;border-radius:24px;padding:18px 20px;cursor:pointer;border:2.5px solid transparent;background:white;box-shadow:0 6px 20px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);display:flex;align-items:center;gap:16px;transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden;}
-.lvl-card::before{content:'';position:absolute;inset:0;background:var(--lc);opacity:.08;border-radius:22px;pointer-events: none;}
+.lvl-card::before{content:'';position:absolute;inset:0;background:var(--lc);opacity:.08;border-radius:22px;pointer-events:none;}
 .lvl-card:active{transform:scale(.97);box-shadow:0 2px 8px rgba(0,0,0,.06);}
 .lvl-card-left{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
 .lvl-card-emoji{font-size:clamp(42px,12vw,56px);line-height:1;}
@@ -339,7 +339,15 @@ body::before{
 .tuto-btn{font-family:'Fredoka One',sans-serif;font-size:clamp(20px,5.5vw,25px);background:linear-gradient(135deg,var(--sky),var(--mint));color:#fff;border:none;border-radius:50px;padding:14px 44px;cursor:pointer;box-shadow:0 4px 18px rgba(0,170,238,.4);margin-top:20px;transition:transform .15s;letter-spacing:.5px;animation:tutoStepIn .5s .55s cubic-bezier(.34,1.56,.64,1) both;}
 .tuto-btn:active{transform:scale(.95);}
 
-/* ═══ PUZZLE OVERLAY ═══ */
+/* ═══ PUZZLE TRIGGER PULSE ═══ */
+.cell.puzzle-trigger{
+  animation: triggerPulse 1.1s ease-in-out infinite !important;
+  z-index:5;
+}
+@keyframes triggerPulse{
+  0%,100%{box-shadow:0 0 0 2px #f9d000, 0 0 8px 3px rgba(249,208,0,.5);filter:brightness(1.1);}
+  50%{box-shadow:0 0 0 4px #ff8c00, 0 0 16px 6px rgba(255,140,0,.6);filter:brightness(1.3);}
+}
 #puzzle-overlay{position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,#d4f4ff 0%,#d8f7ef 50%,#fdf6d8 100%);display:flex;flex-direction:column;align-items:center;padding:20px 16px;overflow-y:auto;gap:14px;}
 #puzzle-overlay.hidden{display:none !important;}
 
@@ -826,6 +834,7 @@ function processCascade(found,isCascade){
   setTimeout(()=>{
     cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);board[r][c]={filled:false,char:''};const el=gc(r,c);if(el){el.className='cell empty';el.textContent='';}});
     gravity();render();
+    if(puzzleMode) puzzleMarkTriggers();
     const cf=scanFullBoard();if(cf.length){setTimeout(()=>processCascade(cf,true),300);return;}
     const allDone=activeWords.every(w=>foundRound.has(w.kana));
     if(allDone){
@@ -854,7 +863,7 @@ function introNext(){
 }
 
 function ghostY(){if(!active)return -1;let g=active.y;while(g+1<ROWS&&!board[g+1][active.x].filled)g++;return g;}
-function render(){const gy=ghostY();for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const el=gc(r,c);if(!el||el.classList.contains('flash')||el.classList.contains('combo-flash')||el.classList.contains('land'))continue;if(active&&r===active.y&&c===active.x){el.className='cell active';el.textContent=active.char;el.style.background=kanaBg(active.char);}else if(active&&r===gy&&c===active.x&&gy!==active.y){el.className='cell ghost';el.textContent=active.char;el.style.background='';}else if(board[r][c].filled){el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);}else{el.className='cell empty';el.textContent='';el.style.background='';}}}
+function render(){const gy=ghostY();for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const el=gc(r,c);if(!el||el.classList.contains('flash')||el.classList.contains('combo-flash')||el.classList.contains('land'))continue;const isTrig=puzzleMode&&el.classList.contains('puzzle-trigger');if(active&&r===active.y&&c===active.x){el.className='cell active';el.textContent=active.char;el.style.background=kanaBg(active.char);}else if(active&&r===gy&&c===active.x&&gy!==active.y){el.className='cell ghost';el.textContent=active.char;el.style.background='';}else if(board[r][c].filled){el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);}else{el.className='cell empty';el.textContent='';el.style.background='';if(isTrig)el.classList.add('puzzle-trigger');}}}
 function updateScore(){const el=document.getElementById('score-val');el.textContent=score.toLocaleString();el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');}
 function updateStreak(){const el=document.getElementById('streak');if(streak>=2){el.style.display='block';el.textContent='🔥'.repeat(Math.min(streak,5))+' ×'+streak;}else el.style.display='none';}
 
@@ -974,21 +983,26 @@ function puzzlePlaceOneNeutral(board,ROWS,COLS,allWords,levelKanas,preferCols){
 }
 
 // ── Remplissage neutres quota ──
-function puzzleFillNeutrals(board,ROWS,COLS,allWords,fillRatio){
+function puzzleFillNeutrals(board,bRows,bCols,allWords,fillRatio){
   const levelKanas=puzzleLevelKanas(allWords);
-  const zoneRows=Math.floor(ROWS/2);
-  const target=Math.floor(zoneRows*COLS*fillRatio);
+  // Compter les cases déjà occupées
+  let occupied=0;
+  for(let r=0;r<bRows;r++)for(let c=0;c<bCols;c++)if(board[r][c].filled)occupied++;
+  const totalCells=bRows*bCols;
+  const target=Math.floor(totalCells*fillRatio);
+  // target = nb total de cases remplies visé (chaînes + neutres)
+  const toAdd=Math.max(0,target-occupied);
   let placed=0,attempts=0;
-  while(placed<target&&attempts<target*10){
+  while(placed<toAdd&&attempts<toAdd*20){
     attempts++;
-    const col=Math.floor(Math.random()*COLS);
+    const col=Math.floor(Math.random()*bCols);
     const kana=levelKanas[Math.floor(Math.random()*levelKanas.length)];
-    const tmp=new SimState(board,ROWS,COLS,[]);
+    const tmp=new SimState(board,bRows,bCols,[]);
     const row=tmp.drop(kana,col);
-    if(row===false||row>=zoneRows) continue;
+    if(row===false) continue;
     const testBoard=board.map(r=>r.map(c=>({...c})));
     testBoard[row][col]={filled:true,char:kana};
-    if(new SimState(testBoard,ROWS,COLS,allWords).scanAll().length===0){
+    if(new SimState(testBoard,bRows,bCols,allWords).scanAll().length===0){
       board[row][col]={filled:true,char:kana};placed++;
     }
   }
@@ -998,25 +1012,28 @@ function puzzleFillNeutrals(board,ROWS,COLS,allWords,fillRatio){
 function puzzleGenerate(levelIdx,snDef){
   const allWords=ALL_LEVELS[levelIdx].words;
   const eligible=allWords.filter(w=>[...w.kana].length===2);
-  const boardRows=ROWS; // utilise les ROWS calculées du jeu
+  const boardRows=ROWS;
   const boardCols=COLS;
+
+  // Limiter le nb de chaînes à ce qui est faisable :
+  // - assez de mots (au moins 2 pour une chaîne de longueur 2)
+  // - assez de colonnes (chainLen+1 cols par chaîne)
+  const chainDefs=snDef.chains.filter(({chainLen})=>eligible.length>=chainLen);
 
   const board=Array.from({length:boardRows},()=>Array.from({length:boardCols},()=>({filled:false,char:''})));
   const reservedCols=new Set();
-  const usedWords=new Set();
   const chains=[];
 
-  for(let ci=0;ci<snDef.chains.length;ci++){
-    const{chainLen}=snDef.chains[ci];
+  for(let ci=0;ci<chainDefs.length;ci++){
+    const{chainLen}=chainDefs[ci];
     const depth=ci===0?0:Math.floor(Math.random()*(snDef.maxDepth+1));
-    const avail=shuffle(eligible.filter(w=>!usedWords.has(w.kana)));
+    const avail=shuffle(eligible);
     let res=null;
     for(let attempt=0;attempt<30;attempt++){
       const bTry=board.map(r=>r.map(c=>({...c})));
       const resTry=puzzlePlaceChain(bTry,boardRows,boardCols,allWords,avail,chainLen,new Set(reservedCols),depth);
       if(resTry.ok){
         for(let r=0;r<boardRows;r++)for(let c=0;c<boardCols;c++)board[r][c]=bTry[r][c];
-        resTry.chain.forEach(w=>usedWords.add(w.kana));
         for(let i=0;i<=chainLen;i++)reservedCols.add(resTry.triggerCol+i);
         res=resTry;break;
       }
@@ -1059,15 +1076,10 @@ function showPuzzleSelect(levelIdx){
 function startPuzzle(levelIdx,snIdx){
   document.getElementById('puzzle-overlay').classList.add('hidden');
   puzzleSNDef=PUZZLE_SN_DEFS[snIdx];
-
-  // Générer le plateau
-  calcRows();
-  const{board,chains}=puzzleGenerate(levelIdx,puzzleSNDef);
-  puzzleBoard=board;
-  puzzleChains=chains;
+  puzzleBoard=null; // sera généré dans startGame après calcRows correct
+  puzzleChains=[];
   puzzleChainsResolved=new Set();
   puzzleMode=true;
-
   startGame(levelIdx,true);
 }
 
@@ -1111,6 +1123,24 @@ function puzzleVictory(){
   });
 }
 
+// ── Marquer visuellement les triggers de chaque chaîne ──
+function puzzleMarkTriggers(){
+  document.querySelectorAll('.cell.puzzle-trigger').forEach(el=>el.classList.remove('puzzle-trigger'));
+  puzzleChains.forEach(ch=>{
+    if(puzzleChainsResolved.has(puzzleChains.indexOf(ch))) return;
+    const col=ch.triggerCol;
+    // La case trigger = première case vide depuis le BAS dans la colonne trigger
+    // = là où le prochain kana du joueur va atterrir
+    for(let r=ROWS-1;r>=0;r--){
+      if(!board[r][col].filled){
+        const el=gc(r,col);
+        if(el) el.classList.add('puzzle-trigger');
+        break;
+      }
+    }
+  });
+}
+
 function startGame(levelIdx,isPuzzle=false){
   currentLevelIdx=(levelIdx!==undefined)?levelIdx:0;
   LEVEL_WORDS=ALL_LEVELS[currentLevelIdx].words.map(w=>({...w}));
@@ -1132,28 +1162,8 @@ function startGame(levelIdx,isPuzzle=false){
   }
 
   document.getElementById('word-panel').innerHTML='';resolvingWords=false;
-  calcRows();buildDOM();
-
-  // Charger le plateau précalculé en mode puzzle
-  if(puzzleMode&&puzzleBoard){
-    // Adapter les dimensions si ROWS a changé
-    const pbRows=puzzleBoard.length;
-    board=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));
-    // Copier depuis le bas (le contenu est dans le bas du plateau)
-    const offset=ROWS-pbRows;
-    for(let r=0;r<pbRows;r++)
-      for(let c=0;c<COLS;c++)
-        if(r+offset>=0) board[r+offset][c]={...puzzleBoard[r][c]};
-    // Afficher le plateau initial dans le DOM
-    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
-      if(board[r][c].filled){
-        const el=gc(r,c);
-        if(el){el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);}
-      }
-    }
-  } else {
-    initBoard();
-  }
+  // En mode puzzle : calcRows/buildDOM/plateau gérés plus bas après renderPanel
+  if(!puzzleMode){ calcRows();buildDOM();initBoard(); }
   document.getElementById('menu-overlay').classList.add('hidden');
   document.getElementById('tuto-overlay').classList.add('hidden');
   document.getElementById('puzzle-overlay').classList.add('hidden');
@@ -1171,8 +1181,44 @@ function startGame(levelIdx,isPuzzle=false){
   }
 
   if(puzzleMode){
-    // Tous les mots déjà actifs → afficher le panel, puis spawner
-    rebuildPool();renderPanel();nextChar=rndKana();document.getElementById('next-kana').textContent=nextChar;
+    // Afficher d'abord le panel (tous les mots) pour que calcRows tienne compte de sa hauteur
+    rebuildPool();
+    // Injecter le panel dans le DOM sans spawner
+    const p=document.getElementById('word-panel');
+    p.innerHTML='';
+    activeWords.forEach(w=>{
+      const row=document.createElement('div');
+      row.className='word-row'+(w.boss?' boss':'');
+      row.id='wr-'+w.kana;
+      row.innerHTML=`<div class="wr-emoji">${w.emoji}</div><div class="wr-info"><span class="wr-kana">${w.kana}</span><span class="wr-romaji">${w.romaji}</span><span class="wr-meaning">${w.meaning}</span></div><div class="wr-mult" id="wm-${w.kana}">×${w.mult||1}</div>`;
+      p.appendChild(row);
+    });
+    updateWordRowColors();
+    // Maintenant recalculer ROWS avec le vrai panel affiché
+    calcRows();buildDOM();
+    // Générer le plateau ICI avec les bonnes ROWS
+    const gen=puzzleGenerate(currentLevelIdx,puzzleSNDef);
+    puzzleBoard=gen.board;
+    puzzleChains=gen.chains;
+    // Charger le plateau généré
+    if(puzzleBoard){
+      const pbRows=puzzleBoard.length;
+      board=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));
+      const offset=ROWS-pbRows;
+      for(let r=0;r<pbRows;r++)
+        for(let c=0;c<COLS;c++)
+          if(r+offset>=0) board[r+offset][c]={...puzzleBoard[r][c]};
+      for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+        if(board[r][c].filled){
+          const el=gc(r,c);
+          if(el){el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);}
+        }
+      }
+      // Fix 3 : marquer les triggers et leur appliquer la classe pulse
+      puzzleMarkTriggers();
+    }
+    nextChar=rndKana();document.getElementById('next-kana').textContent=nextChar;
+    setTimeout(()=>safeSpawn(),350);
   } else {
     const w=LEVEL_WORDS[wordIntroIdx++];w.mult=1;activeWords.push(w);
     rebuildPool();renderPanel();nextChar=rndKana();document.getElementById('next-kana').textContent=nextChar;
