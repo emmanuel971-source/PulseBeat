@@ -304,7 +304,7 @@ body::before{
 #lvl-scroll{flex:1;overflow-y:auto;overflow-x:hidden;width:100%;padding:0 16px 16px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch;}
 #lvl-scroll::-webkit-scrollbar{display:none;}
 .lvl-card{flex-shrink:0;width:100%;border-radius:24px;padding:18px 20px;cursor:pointer;border:2.5px solid transparent;background:white;box-shadow:0 6px 20px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);display:flex;align-items:center;gap:16px;transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden;}
-.lvl-card::before{content:'';position:absolute;inset:0;background:var(--lc);opacity:.08;border-radius:22px;}
+.lvl-card::before{content:'';position:absolute;inset:0;background:var(--lc);opacity:.08;border-radius:22px;pointer-events: none;}
 .lvl-card:active{transform:scale(.97);box-shadow:0 2px 8px rgba(0,0,0,.06);}
 .lvl-card-left{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
 .lvl-card-emoji{font-size:clamp(42px,12vw,56px);line-height:1;}
@@ -338,6 +338,10 @@ body::before{
 .tuto-step-desc{font-family:'Nunito',sans-serif;font-size:clamp(13px,3.5vw,15px);color:var(--text-mid);margin-top:2px;line-height:1.4;font-weight:700;}
 .tuto-btn{font-family:'Fredoka One',sans-serif;font-size:clamp(20px,5.5vw,25px);background:linear-gradient(135deg,var(--sky),var(--mint));color:#fff;border:none;border-radius:50px;padding:14px 44px;cursor:pointer;box-shadow:0 4px 18px rgba(0,170,238,.4);margin-top:20px;transition:transform .15s;letter-spacing:.5px;animation:tutoStepIn .5s .55s cubic-bezier(.34,1.56,.64,1) both;}
 .tuto-btn:active{transform:scale(.95);}
+
+/* ═══ PUZZLE OVERLAY ═══ */
+#puzzle-overlay{position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,#d4f4ff 0%,#d8f7ef 50%,#fdf6d8 100%);display:flex;flex-direction:column;align-items:center;padding:20px 16px;overflow-y:auto;gap:14px;}
+#puzzle-overlay.hidden{display:none !important;}
 
 /* ═══ GAME OVERLAY ═══ */
 #board-overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(240,250,255,.95);backdrop-filter:blur(12px);z-index:100;gap:11px;padding:22px 16px;max-width:480px;margin:0 auto;overflow-y:auto;}
@@ -419,6 +423,17 @@ body::before{
     </div>
   </div>
   <button class="tuto-btn" id="tuto-start-btn">C'est parti ! 🚀</button>
+</div>
+
+<!-- ═══ PUZZLE SN SELECT ═══ -->
+<div id="puzzle-overlay" class="hidden">
+  <div style="font-family:'Fredoka One',cursive;font-size:22px;color:#00aaee;text-align:center;">⚡ Mode Puzzle</div>
+  <div id="puzzle-level-name" style="font-size:14px;color:#5090a8;text-align:center;margin-top:-8px;"></div>
+  <div style="font-size:12px;color:#5090a8;text-align:center;background:#fff;border:2px solid #b8e0f8;border-radius:12px;padding:8px 14px;max-width:340px;">
+    Le plateau démarre pré-rempli avec des chaînes en cascade.<br>Pose le bon kana pour déclencher la réaction !
+  </div>
+  <div id="sn-cards" style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;"></div>
+  <button id="puzzle-back-btn" style="font-family:'Fredoka One',cursive;font-size:15px;padding:9px 22px;border:2px solid #b8e0f8;border-radius:12px;background:#fff;color:#5090a8;cursor:pointer;margin-top:4px;">← Retour</button>
 </div>
 
 <!-- ═══ JEU ═══ -->
@@ -633,10 +648,14 @@ let currentLevelIdx=0,LEVEL_WORDS=ALL_LEVELS[0].words,pendingLevelIdx=0;
       <div class="lvl-card-right">
         <div class="lvl-card-name">${lvl.theme}</div>
         <div class="lvl-card-words">${chips}</div>
-        <div class="lvl-card-count">${lvl.words.length} mots à découvrir ✨</div>
+        <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
+          <div class="lvl-card-count" style="flex:1">${lvl.words.length} mots ✨</div>
+          <div class="puzzle-btn" style="font-family:'Fredoka One',cursive;font-size:13px;padding:5px 13px;background:linear-gradient(135deg,#f9d000,#ff8c42);color:#fff;border-radius:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(249,208,0,.4);">⚡ Puzzle</div>
+        </div>
       </div>`;
     card.addEventListener('click',()=>showTuto(i));
     scroll.appendChild(card);
+    card.querySelector('.puzzle-btn').addEventListener('click',e=>{e.stopPropagation();showPuzzleSelect(i);});
   });
 })();
 
@@ -648,6 +667,11 @@ function showTuto(idx){
 document.getElementById('tuto-start-btn').addEventListener('click',()=>{
   document.getElementById('tuto-overlay').classList.add('hidden');
   startGame(pendingLevelIdx);
+});
+
+document.getElementById('puzzle-back-btn').addEventListener('click',()=>{
+  document.getElementById('puzzle-overlay').classList.add('hidden');
+  document.getElementById('menu-overlay').classList.remove('hidden');
 });
 
 /* ── sound ── */
@@ -796,13 +820,18 @@ function processCascade(found,isCascade){
 
   // ── Mise à jour des couleurs de statut ──
   updateWordRowColors();
+  // ── Mode puzzle : vérifier si une chaîne est complète ──
+  if(puzzleMode) puzzleCheckChains();
 
   setTimeout(()=>{
     cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);board[r][c]={filled:false,char:''};const el=gc(r,c);if(el){el.className='cell empty';el.textContent='';}});
     gravity();render();
     const cf=scanFullBoard();if(cf.length){setTimeout(()=>processCascade(cf,true),300);return;}
     const allDone=activeWords.every(w=>foundRound.has(w.kana));
-    if(allDone){if(wordIntroIdx>=LEVEL_WORDS.length)setTimeout(levelDone,400);else introNext();}else safeSpawn();
+    if(allDone){
+      if(puzzleMode) return; // victoire gérée par puzzleCheckChains
+      if(wordIntroIdx>=LEVEL_WORDS.length)setTimeout(levelDone,400);else introNext();
+    }else safeSpawn();
   },820);
 }
 
@@ -841,6 +870,12 @@ function renderPanel(){
   });
   // Appliquer les couleurs de statut après injection dans le DOM
   updateWordRowColors();
+  if(puzzleMode){
+    // En mode puzzle, ne pas reconstruire le DOM (ça écraserait le plateau)
+    // Juste spawner si le jeu tourne
+    if(gameRunning) setTimeout(()=>safeSpawn(),350);
+    return;
+  }
   requestAnimationFrame(()=>{rebuildDOMKeepContent();render();setTimeout(()=>safeSpawn(),350);});
 }
 
@@ -854,30 +889,294 @@ function showOverlay({title,sub,words=[],btn1,act1,btn2=null,act2=null}){clearIn
 function hideOverlay(){document.getElementById('board-overlay').classList.add('hidden');}
 function showMenu(){clearInterval(dropTimer);gameRunning=false;resolvingWords=false;hideOverlay();document.getElementById('tuto-overlay').classList.add('hidden');document.getElementById('menu-overlay').classList.remove('hidden');}
 
-function startGame(levelIdx){
+// ═══════════════════════════════════════════════════════
+//  ⚡ MOTEUR PUZZLE
+// ═══════════════════════════════════════════════════════
+
+const PUZZLE_SN_DEFS=[
+  {num:1,stars:'⭐',   label:'Initiation',   desc:'1 chaîne de 2 mots · Plateau vide',            chains:[{chainLen:2}], maxDepth:0, fillRatio:0.05},
+  {num:2,stars:'⭐⭐',  label:'Apprentissage',desc:'1 chaîne de 3 mots · Quelques neutres',         chains:[{chainLen:3}], maxDepth:1, fillRatio:0.15},
+  {num:3,stars:'⭐⭐⭐', label:'Intermédiaire',desc:'2 chaînes de 2 mots · Profondeur variable',     chains:[{chainLen:2},{chainLen:2}], maxDepth:2, fillRatio:0.25},
+  {num:4,stars:'⭐⭐⭐⭐',label:'Avancé',       desc:'Chaîne 3 + chaîne 2 · Plateau rempli',          chains:[{chainLen:3},{chainLen:2}], maxDepth:3, fillRatio:0.35},
+  {num:5,stars:'⭐⭐⭐⭐⭐',label:'Maîtrise',   desc:'3 chaînes (2+2+3) · Seule 1 en surface !',     chains:[{chainLen:2},{chainLen:2},{chainLen:3}], maxDepth:4, fillRatio:0.45},
+];
+
+let puzzleMode=false;
+let puzzleBoard=null; // plateau initial précalculé
+let puzzleChains=[]; // [{chain, triggerCol}] pour le suivi
+let puzzleChainsResolved=new Set(); // index des chaînes résolues
+let puzzleSNDef=null;
+
+function shuffle(a){return [...a].sort(()=>Math.random()-.5);}
+
+function puzzleLevelKanas(levelWords){
+  return [...new Set(levelWords.flatMap(w=>[...w.kana]))];
+}
+
+// ── Placement d'une chaîne sur le board ──
+function puzzlePlaceChain(board,ROWS,COLS,allWords,availWords,chainLen,reservedCols,depth){
+  const needed=chainLen+1;
+  const possibleStarts=[];
+  for(let t=0;t<=COLS-needed;t++){
+    const cols=Array.from({length:needed},(_,i)=>t+i);
+    if(cols.every(c=>!reservedCols.has(c))) possibleStarts.push(t);
+  }
+  if(!possibleStarts.length) return{ok:false,reason:'Pas de position libre'};
+  const triggerCol=possibleStarts[Math.floor(Math.random()*possibleStarts.length)];
+  const words=shuffle(availWords).slice(0,chainLen);
+  if(words.length<chainLen) return{ok:false,reason:'Pas assez de mots'};
+
+  for(let i=0;i<chainLen;i++){
+    const w=words[i];const kanas=[...w.kana];const anchorCol=triggerCol+1+i;
+    const tmpA=new SimState(board,ROWS,COLS,[]);
+    const aRow=tmpA.drop(kanas[1],anchorCol);
+    if(aRow===false) return{ok:false,reason:`Col ${anchorCol} pleine`};
+    board[aRow][anchorCol]={filled:true,char:kanas[1]};
+    if(i>0){
+      const tmpM=new SimState(board,ROWS,COLS,[]);
+      const mRow=tmpM.drop(kanas[0],triggerCol+i);
+      if(mRow===false) return{ok:false,reason:`Col ${triggerCol+i} pleine`};
+      board[mRow][triggerCol+i]={filled:true,char:kanas[0]};
+    }
+  }
+  // Validation : aucun mot prématuré
+  const sim=new SimState(board,ROWS,COLS,allWords);
+  if(sim.scanAll().length>0) return{ok:false,reason:'Mot prématuré'};
+
+  // Profondeur : empiler des neutres au-dessus du trigger
+  if(depth>0){
+    const levelKanas=puzzleLevelKanas(allWords);
+    for(let d=0;d<depth;d++) puzzlePlaceOneNeutral(board,ROWS,COLS,allWords,levelKanas,[triggerCol]);
+  }
+
+  for(let i=0;i<=chainLen;i++) reservedCols.add(triggerCol+i);
+  return{ok:true,chain:words,triggerCol,depth};
+}
+
+// ── Placement d'un neutre (sans former de mot) ──
+function puzzlePlaceOneNeutral(board,ROWS,COLS,allWords,levelKanas,preferCols){
+  const cols=preferCols&&preferCols.length?preferCols:shuffle(Array.from({length:COLS},(_,i)=>i));
+  for(const col of cols){
+    for(const kana of shuffle(levelKanas)){
+      const testBoard=board.map(r=>r.map(c=>({...c})));
+      const tmp=new SimState(testBoard,ROWS,COLS,[]);
+      const row=tmp.drop(kana,col);
+      if(row===false) continue;
+      testBoard[row][col]={filled:true,char:kana};
+      if(new SimState(testBoard,ROWS,COLS,allWords).scanAll().length===0){
+        const real=new SimState(board,ROWS,COLS,[]);
+        const realRow=real.drop(kana,col);
+        if(realRow!==false){board[realRow][col]={filled:true,char:kana};return true;}
+      }
+    }
+  }
+  return false;
+}
+
+// ── Remplissage neutres quota ──
+function puzzleFillNeutrals(board,ROWS,COLS,allWords,fillRatio){
+  const levelKanas=puzzleLevelKanas(allWords);
+  const zoneRows=Math.floor(ROWS/2);
+  const target=Math.floor(zoneRows*COLS*fillRatio);
+  let placed=0,attempts=0;
+  while(placed<target&&attempts<target*10){
+    attempts++;
+    const col=Math.floor(Math.random()*COLS);
+    const kana=levelKanas[Math.floor(Math.random()*levelKanas.length)];
+    const tmp=new SimState(board,ROWS,COLS,[]);
+    const row=tmp.drop(kana,col);
+    if(row===false||row>=zoneRows) continue;
+    const testBoard=board.map(r=>r.map(c=>({...c})));
+    testBoard[row][col]={filled:true,char:kana};
+    if(new SimState(testBoard,ROWS,COLS,allWords).scanAll().length===0){
+      board[row][col]={filled:true,char:kana};placed++;
+    }
+  }
+}
+
+// ── Générer un sous-niveau complet ──
+function puzzleGenerate(levelIdx,snDef){
+  const allWords=ALL_LEVELS[levelIdx].words;
+  const eligible=allWords.filter(w=>[...w.kana].length===2);
+  const boardRows=ROWS; // utilise les ROWS calculées du jeu
+  const boardCols=COLS;
+
+  const board=Array.from({length:boardRows},()=>Array.from({length:boardCols},()=>({filled:false,char:''})));
+  const reservedCols=new Set();
+  const usedWords=new Set();
+  const chains=[];
+
+  for(let ci=0;ci<snDef.chains.length;ci++){
+    const{chainLen}=snDef.chains[ci];
+    const depth=ci===0?0:Math.floor(Math.random()*(snDef.maxDepth+1));
+    const avail=shuffle(eligible.filter(w=>!usedWords.has(w.kana)));
+    let res=null;
+    for(let attempt=0;attempt<30;attempt++){
+      const bTry=board.map(r=>r.map(c=>({...c})));
+      const resTry=puzzlePlaceChain(bTry,boardRows,boardCols,allWords,avail,chainLen,new Set(reservedCols),depth);
+      if(resTry.ok){
+        for(let r=0;r<boardRows;r++)for(let c=0;c<boardCols;c++)board[r][c]=bTry[r][c];
+        resTry.chain.forEach(w=>usedWords.add(w.kana));
+        for(let i=0;i<=chainLen;i++)reservedCols.add(resTry.triggerCol+i);
+        res=resTry;break;
+      }
+    }
+    if(res) chains.push({chain:res.chain,triggerCol:res.triggerCol,depth:res.depth});
+  }
+
+  puzzleFillNeutrals(board,boardRows,boardCols,allWords,snDef.fillRatio);
+  return{board,chains};
+}
+
+// ── Afficher l'écran de sélection de sous-niveau ──
+function showPuzzleSelect(levelIdx){
+  document.getElementById('menu-overlay').classList.add('hidden');
+  const lvl=ALL_LEVELS[levelIdx];
+  document.getElementById('puzzle-level-name').textContent=`Lv.${lvl.id} ${lvl.emoji} ${lvl.theme}`;
+
+  const cards=document.getElementById('sn-cards');
+  cards.innerHTML='';
+  PUZZLE_SN_DEFS.forEach((sn,si)=>{
+    const card=document.createElement('div');
+    card.style.cssText='background:#fff;border:2px solid #b8e0f8;border-radius:14px;padding:12px 16px;cursor:pointer;transition:all .2s;';
+    card.innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <span style="font-family:\'Fredoka One\',cursive;font-size:17px;color:#00aaee">SN-${sn.num}</span>
+        <span style="font-size:16px">${sn.stars}</span>
+        <span style="font-family:\'Fredoka One\',cursive;font-size:15px;color:#1a3050">${sn.label}</span>
+      </div>
+      <div style="font-size:12px;color:#5090a8">${sn.desc}</div>`;
+    card.addEventListener('mouseenter',()=>card.style.borderColor='#00aaee');
+    card.addEventListener('mouseleave',()=>card.style.borderColor='#b8e0f8');
+    card.addEventListener('click',()=>startPuzzle(levelIdx,si));
+    cards.appendChild(card);
+  });
+
+  document.getElementById('puzzle-overlay').classList.remove('hidden');
+}
+
+// ── Démarrer une partie puzzle ──
+function startPuzzle(levelIdx,snIdx){
+  document.getElementById('puzzle-overlay').classList.add('hidden');
+  puzzleSNDef=PUZZLE_SN_DEFS[snIdx];
+
+  // Générer le plateau
+  calcRows();
+  const{board,chains}=puzzleGenerate(levelIdx,puzzleSNDef);
+  puzzleBoard=board;
+  puzzleChains=chains;
+  puzzleChainsResolved=new Set();
+  puzzleMode=true;
+
+  startGame(levelIdx,true);
+}
+
+// ── Vérifier si une chaîne est résolue (tous ses mots trouvés) ──
+function puzzleCheckChains(){
+  puzzleChains.forEach((ch,ci)=>{
+    if(puzzleChainsResolved.has(ci)) return;
+    const allFound=ch.chain.every(w=>foundRound.has(w.kana));
+    if(allFound){
+      puzzleChainsResolved.add(ci);
+      // Toast cascade
+      showPuzzleChainToast(ci,ch.chain.length);
+    }
+  });
+  if(puzzleChainsResolved.size>=puzzleChains.length){
+    setTimeout(()=>puzzleVictory(),600);
+  }
+}
+
+function showPuzzleChainToast(ci,len){
+  const t=document.getElementById('enc-toast');
+  t.querySelector('.enc-jp').textContent=`⚡ チェーン${ci+1}！`;
+  t.querySelector('.enc-fr').textContent=`Chaîne ${ci+1} résolue ! (${len} mots)`;
+  t.className='';void t.offsetWidth;t.className='show';
+  setTimeout(()=>t.className='',2300);
+}
+
+function puzzleVictory(){
+  clearInterval(dropTimer);gameRunning=false;resolvingWords=false;
+  soundLevelUp();
+  const lvlData=ALL_LEVELS[currentLevelIdx];
+  const snDef=puzzleSNDef;
+  showOverlay({
+    title:`⚡ Puzzle réussi !`,
+    sub:`<span style="font-size:26px">${lvlData.emoji}</span><br><strong style="color:var(--neon-violet)">${lvlData.theme} · SN-${snDef.num} ${snDef.stars}</strong><br>${snDef.label} maîtrisé !<br>Score : <strong style="color:var(--neon-violet)">${score.toLocaleString()}</strong>`,
+    words:[],
+    btn1:'⚡ Rejouer ce puzzle',
+    act1:()=>startPuzzle(currentLevelIdx,PUZZLE_SN_DEFS.indexOf(snDef)),
+    btn2:`SN-${Math.min(snDef.num+1,5)} suivant →`,
+    act2:()=>startPuzzle(currentLevelIdx,Math.min(snDef.num,4)),
+  });
+}
+
+function startGame(levelIdx,isPuzzle=false){
   currentLevelIdx=(levelIdx!==undefined)?levelIdx:0;
   LEVEL_WORDS=ALL_LEVELS[currentLevelIdx].words.map(w=>({...w}));
   const lvlData=ALL_LEVELS[currentLevelIdx];
   score=0;streak=0;DROP_SPEED=1400;
   document.getElementById('streak').style.display='none';updateScore();
-  activeWords=[];wordIntroIdx=0;foundRound=new Set();LEVEL_WORDS.forEach(w=>w.mult=1);
 
-  // ── Reset du dernier cycle ──
-  isLastCycle = false;
+  if(!isPuzzle) puzzleMode=false;
+
+  // En mode puzzle : tous les mots du niveau sont actifs dès le début
+  if(puzzleMode){
+    activeWords=LEVEL_WORDS.map(w=>({...w,mult:1}));
+    wordIntroIdx=LEVEL_WORDS.length;
+    foundRound=new Set();
+    isLastCycle=true;
+  } else {
+    activeWords=[];wordIntroIdx=0;foundRound=new Set();LEVEL_WORDS.forEach(w=>w.mult=1);
+    isLastCycle=false;
+  }
 
   document.getElementById('word-panel').innerHTML='';resolvingWords=false;
-  calcRows();buildDOM();initBoard();
+  calcRows();buildDOM();
+
+  // Charger le plateau précalculé en mode puzzle
+  if(puzzleMode&&puzzleBoard){
+    // Adapter les dimensions si ROWS a changé
+    const pbRows=puzzleBoard.length;
+    board=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));
+    // Copier depuis le bas (le contenu est dans le bas du plateau)
+    const offset=ROWS-pbRows;
+    for(let r=0;r<pbRows;r++)
+      for(let c=0;c<COLS;c++)
+        if(r+offset>=0) board[r+offset][c]={...puzzleBoard[r][c]};
+    // Afficher le plateau initial dans le DOM
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      if(board[r][c].filled){
+        const el=gc(r,c);
+        if(el){el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);}
+      }
+    }
+  } else {
+    initBoard();
+  }
   document.getElementById('menu-overlay').classList.add('hidden');
   document.getElementById('tuto-overlay').classList.add('hidden');
+  document.getElementById('puzzle-overlay').classList.add('hidden');
   hideOverlay();gameRunning=true;
   const lv=currentLevelIdx+1;
   const root=document.documentElement.style;
   root.setProperty('--bg-top',`var(--lv${lv}-top,var(--lv1-top))`);
   root.setProperty('--bg-mid',`var(--lv${lv}-mid,var(--lv1-mid))`);
   root.setProperty('--bg-bot',`var(--lv${lv}-bot,var(--lv1-bot))`);
-  const badge=document.getElementById('level-badge');if(badge){badge.innerHTML=`<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span>`;}
-  const w=LEVEL_WORDS[wordIntroIdx++];w.mult=1;activeWords.push(w);
-  rebuildPool();renderPanel();nextChar=rndKana();document.getElementById('next-kana').textContent=nextChar;
+  const badge=document.getElementById('level-badge');
+  if(badge){
+    badge.innerHTML=puzzleMode
+      ? `<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span><span style="font-size:10px;color:var(--neon-gold);display:block">⚡ SN-${puzzleSNDef.num} ${puzzleSNDef.stars}</span>`
+      : `<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span>`;
+  }
+
+  if(puzzleMode){
+    // Tous les mots déjà actifs → afficher le panel, puis spawner
+    rebuildPool();renderPanel();nextChar=rndKana();document.getElementById('next-kana').textContent=nextChar;
+  } else {
+    const w=LEVEL_WORDS[wordIntroIdx++];w.mult=1;activeWords.push(w);
+    rebuildPool();renderPanel();nextChar=rndKana();document.getElementById('next-kana').textContent=nextChar;
+  }
 }
 
 function endGame(){clearInterval(dropTimer);gameRunning=false;resolvingWords=false;soundGameOver();const lvlData=ALL_LEVELS[currentLevelIdx];showOverlay({title:'💔 Partie terminée !',sub:`${lvlData.emoji} ${lvlData.theme}<br>Score : <strong style="color:var(--neon-violet)">${score.toLocaleString()}</strong>`,btn1:'Réessayer 🔄',act1:()=>startGame(currentLevelIdx),btn2:currentLevelIdx>0?'← Niveau précédent':null,act2:currentLevelIdx>0?()=>startGame(currentLevelIdx-1):null});}
