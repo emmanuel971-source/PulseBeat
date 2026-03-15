@@ -863,7 +863,7 @@ function introNext(){
 }
 
 function ghostY(){if(!active)return -1;let g=active.y;while(g+1<ROWS&&!board[g+1][active.x].filled)g++;return g;}
-function render(){const gy=ghostY();for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const el=gc(r,c);if(!el||el.classList.contains('flash')||el.classList.contains('combo-flash')||el.classList.contains('land'))continue;const isTrig=puzzleMode&&el.classList.contains('puzzle-trigger');if(active&&r===active.y&&c===active.x){el.className='cell active';el.textContent=active.char;el.style.background=kanaBg(active.char);}else if(active&&r===gy&&c===active.x&&gy!==active.y){el.className='cell ghost';el.textContent=active.char;el.style.background='';}else if(board[r][c].filled){el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);}else{el.className='cell empty';el.textContent='';el.style.background='';if(isTrig)el.classList.add('puzzle-trigger');}}}
+function render(){const gy=ghostY();for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const el=gc(r,c);if(!el||el.classList.contains('flash')||el.classList.contains('combo-flash')||el.classList.contains('land'))continue;const isTrig=puzzleMode&&puzzleTriggerCells&&puzzleTriggerCells.has(`${r}-${c}`);if(active&&r===active.y&&c===active.x){el.className='cell active';el.textContent=active.char;el.style.background=kanaBg(active.char);}else if(active&&r===gy&&c===active.x&&gy!==active.y){el.className='cell ghost';el.textContent=active.char;el.style.background='';if(isTrig)el.classList.add('puzzle-trigger');}else if(board[r][c].filled){el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);if(isTrig)el.classList.add('puzzle-trigger');}else{el.className='cell empty';el.textContent='';el.style.background='';if(isTrig)el.classList.add('puzzle-trigger');}}}
 function updateScore(){const el=document.getElementById('score-val');el.textContent=score.toLocaleString();el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');}
 function updateStreak(){const el=document.getElementById('streak');if(streak>=2){el.style.display='block';el.textContent='🔥'.repeat(Math.min(streak,5))+' ×'+streak;}else el.style.display='none';}
 
@@ -903,11 +903,20 @@ function showMenu(){clearInterval(dropTimer);gameRunning=false;resolvingWords=fa
 // ═══════════════════════════════════════════════════════
 
 const PUZZLE_SN_DEFS=[
-  {num:1,stars:'⭐',   label:'Initiation',   desc:'1 chaîne de 2 mots · Plateau vide',            chains:[{chainLen:2}], maxDepth:0, fillRatio:0.05},
-  {num:2,stars:'⭐⭐',  label:'Apprentissage',desc:'1 chaîne de 3 mots · Quelques neutres',         chains:[{chainLen:3}], maxDepth:1, fillRatio:0.15},
-  {num:3,stars:'⭐⭐⭐', label:'Intermédiaire',desc:'2 chaînes de 2 mots · Profondeur variable',     chains:[{chainLen:2},{chainLen:2}], maxDepth:2, fillRatio:0.25},
-  {num:4,stars:'⭐⭐⭐⭐',label:'Avancé',       desc:'Chaîne 3 + chaîne 2 · Plateau rempli',          chains:[{chainLen:3},{chainLen:2}], maxDepth:3, fillRatio:0.35},
-  {num:5,stars:'⭐⭐⭐⭐⭐',label:'Maîtrise',   desc:'3 chaînes (2+2+3) · Seule 1 en surface !',     chains:[{chainLen:2},{chainLen:2},{chainLen:3}], maxDepth:4, fillRatio:0.45},
+  {num:1,stars:'⭐',    label:'Initiation',   desc:'1 chaîne de 2 mots · Plateau vide',
+   chains:[{chainLen:2,triggerRow:1}], fillRatio:0.0},
+
+  {num:2,stars:'⭐⭐',   label:'Apprentissage',desc:'1 chaîne de 3 mots · Quelques neutres',
+   chains:[{chainLen:3,triggerRow:1}], fillRatio:0.10},
+
+  {num:3,stars:'⭐⭐⭐',  label:'Intermédiaire',desc:'2 chaînes de 2 mots · Profondeur variable',
+   chains:[{chainLen:2,triggerRow:1},{chainLen:2,triggerRow:2}], fillRatio:0.20},
+
+  {num:4,stars:'⭐⭐⭐⭐', label:'Avancé',       desc:'2 chaînes de 2 mots · Plateau plus rempli',
+   chains:[{chainLen:2,triggerRow:2},{chainLen:2,triggerRow:3}], fillRatio:0.30},
+
+  {num:5,stars:'⭐⭐⭐⭐⭐',label:'Maîtrise',    desc:'3 chaînes (2+2+3) · Seule 1 en surface !',
+   chains:[{chainLen:2,triggerRow:1},{chainLen:2,triggerRow:3},{chainLen:3,triggerRow:4}], fillRatio:0.40},
 ];
 
 let puzzleMode=false;
@@ -915,6 +924,7 @@ let puzzleBoard=null; // plateau initial précalculé
 let puzzleChains=[]; // [{chain, triggerCol}] pour le suivi
 let puzzleChainsResolved=new Set(); // index des chaînes résolues
 let puzzleSNDef=null;
+let puzzleTriggerCells=new Set(); // cases trigger à signaler visuellement
 
 function shuffle(a){return [...a].sort(()=>Math.random()-.5);}
 
@@ -922,46 +932,95 @@ function puzzleLevelKanas(levelWords){
   return [...new Set(levelWords.flatMap(w=>[...w.kana]))];
 }
 
+// ── Remplir les cases vides sous un kana avec des neutres valides ──
+function puzzleFillColumnBelow(board,bRows,bCols,allWords,col,fromRowIdx,reservedCells){
+  const allKanas=puzzleLevelKanas(allWords);
+  const maxRowIdx=Math.floor(bRows/2); // limite : moitié basse seulement (lignes jeu 1..ROWS/2)
+  for(let rowIdx=fromRowIdx+1;rowIdx<bRows;rowIdx++){
+    if(rowIdx<maxRowIdx) continue; // ne pas dépasser la moitié haute
+    if(board[rowIdx][col].filled) continue;
+    if(reservedCells&&reservedCells.has(`${rowIdx}-${col}`)) continue;
+    const kana=shuffle(allKanas).find(k=>{
+      const tb=board.map(r=>r.map(c=>({...c})));
+      tb[rowIdx][col]={filled:true,char:k};
+      return new SimState(tb,bRows,bCols,allWords).scanAll().length===0;
+    });
+    if(kana) board[rowIdx][col]={filled:true,char:kana};
+  }
+}
+
 // ── Placement d'une chaîne sur le board ──
-function puzzlePlaceChain(board,ROWS,COLS,allWords,availWords,chainLen,reservedCols,depth){
+// triggerRow : ligne jeu (1=fond) où le joueur doit poser kana(0)
+// reservedCells : Set de "rowIdx-col" déjà occupées par d'autres chaînes
+function puzzlePlaceChain(board,bRows,bCols,allWords,availWords,chainLen,triggerRow,reservedCells){
   const needed=chainLen+1;
+  const triggerRowIdx=bRows-triggerRow;
+
+  if(triggerRowIdx<1||triggerRowIdx>=bRows) return{ok:false,reason:'triggerRow hors grille'};
+  if(chainLen>1&&triggerRowIdx-1<0) return{ok:false,reason:'Pas de place pour les mobiles'};
+
+  // Trouver les positions de départ possibles
+  // Une position est valide si aucune des cases requises n'est dans reservedCells
   const possibleStarts=[];
-  for(let t=0;t<=COLS-needed;t++){
-    const cols=Array.from({length:needed},(_,i)=>t+i);
-    if(cols.every(c=>!reservedCols.has(c))) possibleStarts.push(t);
+  for(let t=0;t<=bCols-needed;t++){
+    let conflict=false;
+    // Cases k1 (triggerRowIdx, t+1..t+chainLen)
+    for(let i=0;i<chainLen;i++){
+      if(reservedCells.has(`${triggerRowIdx}-${t+1+i}`)){conflict=true;break;}
+    }
+    // Cases k0 mobiles (triggerRowIdx-1, t+1..t+chainLen-1)
+    if(!conflict&&chainLen>1){
+      for(let i=1;i<chainLen;i++){
+        if(reservedCells.has(`${triggerRowIdx-1}-${t+i}`)){conflict=true;break;}
+      }
+    }
+    // Case trigger (triggerRowIdx, t) - doit aussi être libre
+    if(!conflict&&reservedCells.has(`${triggerRowIdx}-${t}`)) conflict=true;
+    if(!conflict) possibleStarts.push(t);
   }
   if(!possibleStarts.length) return{ok:false,reason:'Pas de position libre'};
   const triggerCol=possibleStarts[Math.floor(Math.random()*possibleStarts.length)];
+
   const words=shuffle(availWords).slice(0,chainLen);
   if(words.length<chainLen) return{ok:false,reason:'Pas assez de mots'};
 
+  // Placer k1 de chaque mot sur triggerRowIdx
   for(let i=0;i<chainLen;i++){
-    const w=words[i];const kanas=[...w.kana];const anchorCol=triggerCol+1+i;
-    const tmpA=new SimState(board,ROWS,COLS,[]);
-    const aRow=tmpA.drop(kanas[1],anchorCol);
-    if(aRow===false) return{ok:false,reason:`Col ${anchorCol} pleine`};
-    board[aRow][anchorCol]={filled:true,char:kanas[1]};
+    const w=words[i];
+    const kanas=[...w.kana];
+    const anchorCol=triggerCol+1+i;
+    if(board[triggerRowIdx][anchorCol].filled) return{ok:false,reason:`Ancre occupée col ${anchorCol}`};
+    board[triggerRowIdx][anchorCol]={filled:true,char:kanas[1]};
+    // k0 des mots 2+ (mobiles) une ligne au-dessus
     if(i>0){
-      const tmpM=new SimState(board,ROWS,COLS,[]);
-      const mRow=tmpM.drop(kanas[0],triggerCol+i);
-      if(mRow===false) return{ok:false,reason:`Col ${triggerCol+i} pleine`};
-      board[mRow][triggerCol+i]={filled:true,char:kanas[0]};
+      const mobileRowIdx=triggerRowIdx-1;
+      if(mobileRowIdx<0||board[mobileRowIdx][triggerCol+i].filled) return{ok:false,reason:'Mobile impossible'};
+      board[mobileRowIdx][triggerCol+i]={filled:true,char:kanas[0]};
     }
   }
-  // Validation : aucun mot prématuré
-  const sim=new SimState(board,ROWS,COLS,allWords);
-  if(sim.scanAll().length>0) return{ok:false,reason:'Mot prématuré'};
 
-  // Profondeur : empiler des neutres au-dessus du trigger
-  if(depth>0){
-    const levelKanas=puzzleLevelKanas(allWords);
-    for(let d=0;d<depth;d++) puzzlePlaceOneNeutral(board,ROWS,COLS,allWords,levelKanas,[triggerCol]);
+  // Validation : aucun mot prématuré
+  if(new SimState(board,bRows,bCols,allWords).scanAll().length>0) return{ok:false,reason:'Mot prématuré'};
+
+  // Collecter les cases occupées par cette chaîne pour les transmettre
+  const myCells=new Set();
+  myCells.add(`${triggerRowIdx}-${triggerCol}`); // case trigger
+  for(let i=0;i<chainLen;i++){
+    myCells.add(`${triggerRowIdx}-${triggerCol+1+i}`); // k1
+    if(i>0) myCells.add(`${triggerRowIdx-1}-${triggerCol+i}`); // k0 mobiles
   }
 
-  for(let i=0;i<=chainLen;i++) reservedCols.add(triggerCol+i);
-  return{ok:true,chain:words,triggerCol,depth};
-}
+  // Remplir les cases vides sous chaque kana (sans écraser les cases réservées)
+  puzzleFillColumnBelow(board,bRows,bCols,allWords,triggerCol,triggerRowIdx,reservedCells);
+  for(let i=0;i<chainLen;i++){
+    puzzleFillColumnBelow(board,bRows,bCols,allWords,triggerCol+1+i,triggerRowIdx,reservedCells);
+  }
+  for(let i=1;i<chainLen;i++){
+    puzzleFillColumnBelow(board,bRows,bCols,allWords,triggerCol+i,triggerRowIdx-1,reservedCells);
+  }
 
+  return{ok:true,chain:words,triggerCol,triggerRow,triggerRowIdx,myCells};
+}
 // ── Placement d'un neutre (sans former de mot) ──
 function puzzlePlaceOneNeutral(board,ROWS,COLS,allWords,levelKanas,preferCols){
   const cols=preferCols&&preferCols.length?preferCols:shuffle(Array.from({length:COLS},(_,i)=>i));
@@ -983,23 +1042,24 @@ function puzzlePlaceOneNeutral(board,ROWS,COLS,allWords,levelKanas,preferCols){
 }
 
 // ── Remplissage neutres quota ──
-function puzzleFillNeutrals(board,bRows,bCols,allWords,fillRatio){
+function puzzleFillNeutrals(board,bRows,bCols,allWords,fillRatio,excludeCols=new Set()){
   const levelKanas=puzzleLevelKanas(allWords);
-  // Compter les cases déjà occupées
+  const maxRow=Math.floor(bRows/2); // neutres limités à la moitié haute
   let occupied=0;
   for(let r=0;r<bRows;r++)for(let c=0;c<bCols;c++)if(board[r][c].filled)occupied++;
   const totalCells=bRows*bCols;
   const target=Math.floor(totalCells*fillRatio);
-  // target = nb total de cases remplies visé (chaînes + neutres)
   const toAdd=Math.max(0,target-occupied);
   let placed=0,attempts=0;
   while(placed<toAdd&&attempts<toAdd*20){
     attempts++;
     const col=Math.floor(Math.random()*bCols);
+    if(excludeCols.has(col)) continue;
     const kana=levelKanas[Math.floor(Math.random()*levelKanas.length)];
     const tmp=new SimState(board,bRows,bCols,[]);
     const row=tmp.drop(kana,col);
-    if(row===false) continue;
+    // Refuser si le neutre atterrit dans la moitié basse (là où sont les chaînes)
+    if(row===false||row<=maxRow) continue;
     const testBoard=board.map(r=>r.map(c=>({...c})));
     testBoard[row][col]={filled:true,char:kana};
     if(new SimState(testBoard,bRows,bCols,allWords).scanAll().length===0){
@@ -1015,34 +1075,54 @@ function puzzleGenerate(levelIdx,snDef){
   const boardRows=ROWS;
   const boardCols=COLS;
 
-  // Limiter le nb de chaînes à ce qui est faisable :
-  // - assez de mots (au moins 2 pour une chaîne de longueur 2)
-  // - assez de colonnes (chainLen+1 cols par chaîne)
   const chainDefs=snDef.chains.filter(({chainLen})=>eligible.length>=chainLen);
 
   const board=Array.from({length:boardRows},()=>Array.from({length:boardCols},()=>({filled:false,char:''})));
-  const reservedCols=new Set();
+  const reservedCells=new Set();
   const chains=[];
 
   for(let ci=0;ci<chainDefs.length;ci++){
-    const{chainLen}=chainDefs[ci];
-    const depth=ci===0?0:Math.floor(Math.random()*(snDef.maxDepth+1));
+    const{chainLen,triggerRow}=chainDefs[ci];
     const avail=shuffle(eligible);
     let res=null;
     for(let attempt=0;attempt<30;attempt++){
       const bTry=board.map(r=>r.map(c=>({...c})));
-      const resTry=puzzlePlaceChain(bTry,boardRows,boardCols,allWords,avail,chainLen,new Set(reservedCols),depth);
+      const resTry=puzzlePlaceChain(bTry,boardRows,boardCols,allWords,avail,chainLen,triggerRow,new Set(reservedCells));
       if(resTry.ok){
         for(let r=0;r<boardRows;r++)for(let c=0;c<boardCols;c++)board[r][c]=bTry[r][c];
-        for(let i=0;i<=chainLen;i++)reservedCols.add(resTry.triggerCol+i);
+        // Ajouter les cases de cette chaîne aux réservations
+        resTry.myCells.forEach(cell=>reservedCells.add(cell));
         res=resTry;break;
       }
     }
-    if(res) chains.push({chain:res.chain,triggerCol:res.triggerCol,depth:res.depth});
+    if(res) chains.push({chain:res.chain,triggerCol:res.triggerCol,triggerRow:res.triggerRow,triggerRowIdx:res.triggerRowIdx});
   }
 
-  puzzleFillNeutrals(board,boardRows,boardCols,allWords,snDef.fillRatio);
-  return{board,chains};
+  // Neutres de remplissage (hors colonnes trigger, moitié haute seulement)
+  const triggerCols=new Set(chains.map(ch=>ch.triggerCol));
+  puzzleFillNeutrals(board,boardRows,boardCols,allWords,snDef.fillRatio,triggerCols);
+
+  // ── Pass final : combler les cases trigger enfouies (kana au-dessus = gravité violée) ──
+  // On fait ce check APRÈS puzzleFillNeutrals pour voir le plateau complet
+  const triggerKanaPool=[...new Set(allWords.map(w=>[...w.kana][1]).filter(Boolean))];
+  chains.forEach(ch=>{
+    const{triggerRowIdx,triggerCol}=ch;
+    if(board[triggerRowIdx][triggerCol].filled) return; // déjà remplie, rien à faire
+    // Y a-t-il un kana quelque part au-dessus dans cette colonne ?
+    const buried=Array.from({length:triggerRowIdx},(_,r)=>r).some(r=>board[r][triggerCol].filled);
+    if(!buried) return; // en surface, on laisse vide
+    // Trouver un k1 neutre valide (sans former de mot)
+    const neutral=shuffle(triggerKanaPool).find(k=>{
+      const tb=board.map(r=>r.map(c=>({...c})));
+      tb[triggerRowIdx][triggerCol]={filled:true,char:k};
+      return new SimState(tb,boardRows,boardCols,allWords).scanAll().length===0;
+    });
+    if(neutral) board[triggerRowIdx][triggerCol]={filled:true,char:neutral};
+  });
+
+  // ── Collecter les cases trigger pour le rendu ──
+  const triggerCells=new Set(chains.map(ch=>`${ch.triggerRowIdx}-${ch.triggerCol}`));
+  return{board,chains,triggerCells};
 }
 
 // ── Afficher l'écran de sélection de sous-niveau ──
@@ -1079,22 +1159,22 @@ function startPuzzle(levelIdx,snIdx){
   puzzleBoard=null; // sera généré dans startGame après calcRows correct
   puzzleChains=[];
   puzzleChainsResolved=new Set();
+  puzzleWordsFound=new Set();
+  puzzleTriggerCells=new Set();
   puzzleMode=true;
   startGame(levelIdx,true);
 }
 
-// ── Vérifier si une chaîne est résolue (tous ses mots trouvés) ──
+// ── Vérifier la victoire puzzle : tous les mots trouvés au moins une fois ──
+let puzzleWordsFound=new Set();
+
 function puzzleCheckChains(){
-  puzzleChains.forEach((ch,ci)=>{
-    if(puzzleChainsResolved.has(ci)) return;
-    const allFound=ch.chain.every(w=>foundRound.has(w.kana));
-    if(allFound){
-      puzzleChainsResolved.add(ci);
-      // Toast cascade
-      showPuzzleChainToast(ci,ch.chain.length);
-    }
-  });
-  if(puzzleChainsResolved.size>=puzzleChains.length){
+  // Accumuler tous les mots trouvés
+  activeWords.forEach(w=>{if(foundRound.has(w.kana))puzzleWordsFound.add(w.kana);});
+
+  // Victoire = tous les mots du niveau trouvés au moins une fois
+  const allDone=LEVEL_WORDS.every(w=>puzzleWordsFound.has(w.kana));
+  if(allDone){
     setTimeout(()=>puzzleVictory(),600);
   }
 }
@@ -1123,21 +1203,13 @@ function puzzleVictory(){
   });
 }
 
-// ── Marquer visuellement les triggers de chaque chaîne ──
+// ── Marquer visuellement les triggers ──
 function puzzleMarkTriggers(){
   document.querySelectorAll('.cell.puzzle-trigger').forEach(el=>el.classList.remove('puzzle-trigger'));
-  puzzleChains.forEach(ch=>{
-    if(puzzleChainsResolved.has(puzzleChains.indexOf(ch))) return;
-    const col=ch.triggerCol;
-    // La case trigger = première case vide depuis le BAS dans la colonne trigger
-    // = là où le prochain kana du joueur va atterrir
-    for(let r=ROWS-1;r>=0;r--){
-      if(!board[r][col].filled){
-        const el=gc(r,col);
-        if(el) el.classList.add('puzzle-trigger');
-        break;
-      }
-    }
+  puzzleTriggerCells.forEach(key=>{
+    const[r,c]=key.split('-').map(Number);
+    const el=gc(r,c);
+    if(el) el.classList.add('puzzle-trigger');
   });
 }
 
@@ -1200,6 +1272,7 @@ function startGame(levelIdx,isPuzzle=false){
     const gen=puzzleGenerate(currentLevelIdx,puzzleSNDef);
     puzzleBoard=gen.board;
     puzzleChains=gen.chains;
+    puzzleTriggerCells=gen.triggerCells;
     // Charger le plateau généré
     if(puzzleBoard){
       const pbRows=puzzleBoard.length;
