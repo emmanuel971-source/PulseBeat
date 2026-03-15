@@ -796,7 +796,8 @@ function spawn(){active={char:nextChar||rndKana(),x:Math.floor(COLS/2),y:0};play
 function ok(x,y){return x>=0&&x<COLS&&y>=0&&y<ROWS&&!board[y][x].filled;}
 function startTimer(){clearInterval(dropTimer);dropTimer=setInterval(tick,DROP_SPEED);}
 function tick(){if(!gameRunning||resolvingWords||!active)return;ok(active.x,active.y+1)?(active.y++,render()):lock();}
-function lock(){if(!active||resolvingWords)return;clearInterval(dropTimer);resolvingWords=true;board[active.y][active.x]={filled:true,char:active.char};const pr=active.y,pc=active.x;const el=gc(pr,pc);if(el){el.className='cell filled land';el.textContent=active.char;el.style.background=kanaBg(active.char);setTimeout(()=>el.classList.remove('land'),380);}active=null;soundDrop();render();checkWords(pr,pc);}
+function lock(){if(!active||resolvingWords)return;clearInterval(dropTimer);resolvingWords=true;board[active.y][active.x]={filled:true,char:active.char};if(puzzleMode&&puzzleTriggerCells)puzzleTriggerCells.delete(`${active.y}-${active.x}`);const pr=active.y,pc=active.x;
+const el=gc(pr,pc);if(el){el.className='cell filled land';el.textContent=active.char;el.style.background=kanaBg(active.char);setTimeout(()=>el.classList.remove('land'),380);}active=null;soundDrop();render();checkWords(pr,pc);}
 function hardDrop(){if(!active||!gameRunning||resolvingWords)return;while(ok(active.x,active.y+1))active.y++;screenShake(false);render();lock();}
 
 function checkWords(pr,pc){const found=scanRowCol(pr,pc);if(!found.length){safeSpawn();return;}processCascade(found,false);}
