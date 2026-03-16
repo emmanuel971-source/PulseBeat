@@ -1114,10 +1114,11 @@ function puzzleFillNeutrals(board,bRows,bCols,allWords,fillRatio,excludeCols=new
     if(new SimState(testBoard,bRows,bCols,allWords).scanAll().length===0){board[row][col]={filled:true,char:kana};placed++;}
   }
 }
-function puzzleGenerate(levelIdx,snDef){
+function puzzleGenerate(levelIdx, snDef, customRows){
   const allWords=ALL_LEVELS[levelIdx].words;
   const eligible=allWords.filter(w=>[...w.kana].length===2);
-  const boardRows=ROWS;const boardCols=COLS;
+  const boardRows = customRows || ROWS;
+  const boardCols = COLS;
   const chainDefs=snDef.chains.filter(({chainLen})=>eligible.length>=chainLen);
   const board=Array.from({length:boardRows},()=>Array.from({length:boardCols},()=>({filled:false,char:''})));
   const reservedCells=new Set();const chains=[];
@@ -1730,7 +1731,7 @@ function renderPanel(){
       });
       updateWordRowColors();
       calcRows();buildDOM();
-      const gen=puzzleGenerate(currentLevelIdx,puzzleSNDef);
+      const gen=puzzleGenerate(currentLevelIdx, puzzleSNDef, ROWS);
       puzzleBoard=gen.board;puzzleChains=gen.chains;puzzleTriggerCells=gen.triggerCells;
       if(puzzleBoard){
         const pbRows=puzzleBoard.length;
