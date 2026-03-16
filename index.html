@@ -115,6 +115,9 @@ body::before{
 @keyframes activePulse{from{transform:scale(1);filter:brightness(1)}to{transform:scale(1.06);filter:brightness(1.08)}}
 .cell.ghost{background:rgba(0,0,0,.04);border:1.5px dashed rgba(0,0,0,.15)!important;color:rgba(0,0,0,.2);border-radius:6px;}
 .cell.land{animation:landBounce .32s cubic-bezier(.36,.07,.19,.97) forwards;}
+.cell.malus{background:linear-gradient(135deg,#fdf3ea,#f7e8d5)!important;color:#1a1040!important;border:1px solid rgba(100,200,220,.12)!important;border-radius:8px;box-shadow:0 3px 0 rgba(139,69,19,.12),inset 0 1px 0 rgba(255,255,255,.7)!important;font-size:clamp(18px,6vw,28px)!important;line-height:1!important;padding-top:2px!important;}
+.cell.malus-incoming{animation:malusWobble .5s ease infinite alternate;}
+@keyframes malusWobble{from{transform:scale(1) rotate(-3deg)}to{transform:scale(1.08) rotate(3deg)}}
 @keyframes landBounce{0%{transform:scaleY(1.35) scaleX(.78)}35%{transform:scaleY(.82) scaleX(1.12)}65%{transform:scaleY(1.06) scaleX(.96)}100%{transform:scaleY(1) scaleX(1)}}
 .cell.flash{animation:cellFlash .65s ease forwards !important;}
 .cell.combo-flash{animation:comboFlash .65s ease forwards !important;}
@@ -1411,7 +1414,10 @@ function _fitBattleBoard(){
         el.className='cell ghost';el.textContent=active.char;el.style.background='';
         if(isTrig)el.classList.add('puzzle-trigger');
       }else if(board[r][c].filled){
-        el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);
+        const isMalus=board[r][c].char==='💩';
+        el.className=isMalus?'cell filled malus':'cell filled';
+        el.textContent=board[r][c].char;
+        el.style.background=isMalus?'':kanaBg(board[r][c].char);
         if(isTrig)el.classList.add('puzzle-trigger');
       }else{
         el.className='cell empty';el.textContent='';el.style.background='';
@@ -1574,7 +1580,13 @@ function renderPanel(){
     if(puzzleMode&&puzzleTriggerCells)puzzleTriggerCells.delete(`${active.y}-${active.x}`);
     const pr=active.y,pc=active.x;
     const el=gc(pr,pc);
-    if(el){el.className='cell filled land';el.textContent=active.char;el.style.background=kanaBg(active.char);setTimeout(()=>el.classList.remove('land'),380);}
+    const isMalus = active.char === '💩';
+    if(el){
+      el.className = isMalus ? 'cell filled malus land' : 'cell filled land';
+      el.textContent=active.char;
+      el.style.background = isMalus ? '' : kanaBg(active.char);
+      setTimeout(()=>el.classList.remove('land'),380);
+    }
     active=null;soundDrop();render();checkWords(pr,pc);
   }
 
@@ -1586,7 +1598,8 @@ function renderPanel(){
 
   // ── Scan / cascade ──
   function scanLine(cells,found){
-    const line=cells.map(({r,c})=>board[r][c].filled?board[r][c].char:'\x00').join('');
+    // Le 💩 est traité comme une case vide pour la détection de mots (jamais matchable)
+    const line=cells.map(({r,c})=>(board[r][c].filled&&board[r][c].char!=='💩')?board[r][c].char:'\x00').join('');
     activeWords.forEach(w=>{
       let i=line.indexOf(w.kana);
       while(i!==-1){
@@ -1627,6 +1640,15 @@ function renderPanel(){
     updateMults();updateScore();updateStreak();
     updateWordRowColors();
     if(puzzleMode)puzzleCheckChains();
+
+    // ── Malus 💩 : combo même mot (2+ occurrences du même kana dans found) ──
+    if(!isCascade && !puzzleMode){
+      const kanaCount={};
+      found.forEach(f=>{kanaCount[f.word.kana]=(kanaCount[f.word.kana]||0)+1;});
+      const hasDuplicate=Object.values(kanaCount).some(n=>n>=2);
+      if(hasDuplicate) _sendPoopToOpponent();
+    }
+
     setTimeout(()=>{
       cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);board[r][c]={filled:false,char:''};const el=gc(r,c);if(el){el.className='cell empty';el.textContent='';}});
       gravity();render();
@@ -1639,6 +1661,11 @@ function renderPanel(){
         if(wordIntroIdx>=LEVEL_WORDS_LOCAL.length)setTimeout(levelDone,400);else introNext();
       }else safeSpawn();
     },820);
+  }
+
+  // ── Envoyer un 💩 à l'adversaire (résolu au niveau battle) ──
+  function _sendPoopToOpponent(){
+    if(typeof _battleInjectMalus === 'function') _battleInjectMalus(id);
   }
 
   function introNext(){
@@ -1779,6 +1806,17 @@ function renderPanel(){
     setPos(x){if(active&&ok(x,active.y)){active.x=x;render();}},
     // Pour le bot
     getBoardSnapshot(){return board.map(row=>row.map(c=>({...c})));},
+    // Malus battle : injecte un 💩 comme prochain kana
+    injectMalus(){
+      if(!gameRunning) return;
+      nextChar = '💩';
+      dom.nextKanaEl.textContent = '💩';
+      // Style alerte sur le next-kana
+      const baseNKClass = dom.nextKanaEl.className.replace(/\s*pop\s*/g,'').trim() || 'next-kana';
+      dom.nextKanaEl.className = baseNKClass + ' malus-incoming';
+      dom.nextKanaEl.style.background = 'linear-gradient(135deg,#f5e6d3,#eddcc8)';
+      dom.nextKanaEl.style.color = '#1a1040';
+    },
   };
 }
 
@@ -1972,6 +2010,17 @@ function buildDomRefs(pid){
 }
 
 /**
+ * Appelé par _sendPoopToOpponent() depuis une instance createPlayer.
+ * `senderId` : 'p1' ou 'p2' — on injecte dans l'autre joueur.
+ */
+function _battleInjectMalus(senderId){
+  if(gameMode === 'solo') return; // pas de malus en solo
+  const target = senderId === 'p1' ? window._p2 : window._p1;
+  if(!target || !target.gameRunning) return;
+  target.injectMalus();
+}
+
+/**
  * Passe en mode battle : reconstruit le shell, crée player2, câble les contrôles
  */
 function enterBattleMode(levelIdx){
@@ -2049,21 +2098,21 @@ function _teardownBattleKeyboard(){
   document.removeEventListener('keydown', _battleKeyHandler);
 }
 function _battleKeyHandler(e){
-  // P1
+  // P1 : Q=gauche · D=droite · X=soft drop · Espace=hard drop
   const p1 = window._p1;
   if(p1 && p1.gameRunning && !p1.resolvingWords && p1.active){
-    if(e.key==='ArrowLeft'){e.preventDefault();p1.moveLeft();}
-    if(e.key==='ArrowRight'){e.preventDefault();p1.moveRight();}
-    if(e.key==='ArrowDown'){e.preventDefault();p1.softDrop();}
+    if(e.key==='q'||e.key==='Q'){e.preventDefault();p1.moveLeft();}
+    if(e.key==='d'||e.key==='D'){e.preventDefault();p1.moveRight();}
+    if(e.key==='x'||e.key==='X'){e.preventDefault();p1.softDrop();}
     if(e.key===' '){e.preventDefault();p1.hardDrop();}
   }
-  // P2 (humain seulement — bot géré par son timer)
+  // P2 humain : fleches + Entree (pavé num inclus) — bot géré par Worker
   if(gameMode === 'vs2p'){
     const p2 = window._p2;
     if(p2 && p2.gameRunning && !p2.resolvingWords && p2.active){
-      if(e.key==='q'||e.key==='Q'){e.preventDefault();p2.moveLeft();}
-      if(e.key==='d'||e.key==='D'){e.preventDefault();p2.moveRight();}
-      if(e.key==='s'||e.key==='S'){e.preventDefault();p2.softDrop();}
+      if(e.key==='ArrowLeft'){e.preventDefault();p2.moveLeft();}
+      if(e.key==='ArrowRight'){e.preventDefault();p2.moveRight();}
+      if(e.key==='ArrowDown'){e.preventDefault();p2.softDrop();}
       if(e.key==='Enter'){e.preventDefault();p2.hardDrop();}
     }
   }
