@@ -2069,8 +2069,85 @@ function _battleKeyHandler(e){
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════
+//  BOT WORKER — code extrait dans un Blob, pas de fichier externe
+// ═══════════════════════════════════════════════════════════════════
+const _BOT_WORKER_CODE = `
+class SimState{
+  constructor(boardSnap,rows,cols,words){this.board=boardSnap.map(row=>row.map(c=>({...c})));this.rows=rows;this.cols=cols;this.words=words;}
+  clone(){return new SimState(this.board,this.rows,this.cols,this.words);}
+  drop(kana,col){let landRow=-1;for(let r=this.rows-1;r>=0;r--){if(!this.board[r][col].filled){landRow=r;break;}}if(landRow===-1)return false;this.board[landRow][col]={filled:true,char:kana};return landRow;}
+  applyGravity(){for(let c=0;c<this.cols;c++){const chars=[];for(let r=this.rows-1;r>=0;r--)if(this.board[r][c].filled)chars.push(this.board[r][c].char);for(let r=this.rows-1;r>=0;r--)this.board[r][c]=chars.length?{filled:true,char:chars.shift()}:{filled:false,char:''};}}
+  _scanLine(cells,found){const line=cells.map(({r,c})=>this.board[r][c].filled?this.board[r][c].char:'\\x00').join('');this.words.forEach(w=>{let i=line.indexOf(w.kana);while(i!==-1){const key=cells.slice(i,i+w.kana.length).map(cc=>cc.r+','+cc.c).join('|');if(!found.some(f=>f.key===key))found.push({word:w,cells:cells.slice(i,i+w.kana.length),key});i=line.indexOf(w.kana,i+1);}});}
+  scanAll(){const found=[];for(let r=0;r<this.rows;r++)this._scanLine(Array.from({length:this.cols},(_,c)=>({r,c})),found);for(let c=0;c<this.cols;c++)this._scanLine(Array.from({length:this.rows},(_,r)=>({r,c})),found);return found;}
+  explode(found){const cellSet=new Set();found.forEach(f=>f.cells.forEach(cell=>cellSet.add(cell.r+','+cell.c)));cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);this.board[r][c]={filled:false,char:''};});return cellSet.size;}
+  freeCols(){const free=[];for(let c=0;c<this.cols;c++)if(!this.board[0][c].filled)free.push(c);return free;}
+}
+
+function _proximityBonus(sim){let bonus=0;sim.words.forEach(w=>{const kanas=[...w.kana];for(let i=0;i<kanas.length-1;i++){const a=kanas[i],b=kanas[i+1];const posA=[],posB=[];for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++){if(sim.board[r][c].char===a)posA.push({r,c});if(sim.board[r][c].char===b)posB.push({r,c});}posA.forEach(pa=>posB.forEach(pb=>{const dr=Math.abs(pa.r-pb.r),dc=Math.abs(pa.c-pb.c);if(dr===0&&dc===1)bonus+=120;if(dc===0&&dr===1)bonus+=120;if(dr===0&&dc<=3)bonus+=40;if(dc===0&&dr<=3)bonus+=40;}));}});return bonus;}
+
+function simEval(state,kana,col,maxDepth){
+  const sim=state.clone();const landRow=sim.drop(kana,col);
+  if(landRow===false||landRow<=1)return{score:-999999,cascades:0,endState:sim};
+  let score=0,cascades=0;let found=sim.scanAll(),depth=0;
+  let filledCount=0;for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++)if(sim.board[r][c].char)filledCount++;
+  const fillRatio=filledCount/(sim.rows*sim.cols);
+  const height=sim.rows-landRow;let heightPenalty=Math.pow(height,2)*.5;
+  if(fillRatio>.7)heightPenalty*=10;score-=heightPenalty;
+  while(found.length>0&&depth<=maxDepth){let pts=found.reduce((s,f)=>{let basePts=f.word.kana.length*100;return s+basePts;},0);if(depth>0){pts*=Math.pow(3.0,depth);cascades++;score+=1000;}score+=pts;sim.explode(found);sim.applyGravity();depth++;found=sim.scanAll();}
+  score+=_proximityBonus(sim)*.5;return{score,cascades,endState:sim};
+}
+
+function botChooseBestCol(kana,boardSnap,activeWordsSnap,nextKana,maxDepth){
+  const currentRows=boardSnap.length;
+  const cols=boardSnap[0]?boardSnap[0].length:8;
+  const simWords=activeWordsSnap.map(w=>({...w}));
+  const baseState=new SimState(boardSnap,currentRows,cols,simWords);
+  const freeCols=baseState.freeCols();
+  if(!freeCols.length)return Math.floor(cols/2);
+  let best={score:-Infinity,col:freeCols[0],cascades:0};
+  freeCols.forEach(col=>{
+    const r1=simEval(baseState,kana,col,maxDepth);
+    if(r1.score===-999999)return;
+    let bestNextScore=0;
+    if(nextKana&&r1.endState){
+      const nextFreeCols=r1.endState.freeCols();
+      if(nextFreeCols.length>0){
+        let maxN=-Infinity;
+        nextFreeCols.forEach(ncol=>{const r2=simEval(r1.endState,nextKana,ncol,maxDepth);if(r2.score>maxN)maxN=r2.score;});
+        if(maxN!==-Infinity)bestNextScore=maxN;
+      }
+    }
+    const totalScore=r1.score+(bestNextScore*.85);
+    if(totalScore>best.score||(totalScore===best.score&&r1.cascades>best.cascades)){best={score:totalScore,col,cascades:r1.cascades};}
+  });
+  return best.col!==undefined?best.col:freeCols[0];
+}
+
+self.onmessage = function(e){
+  const {kana, boardSnap, activeWords, nextKana, maxDepth} = e.data;
+  const col = botChooseBestCol(kana, boardSnap, activeWords, nextKana, maxDepth);
+  self.postMessage({col});
+};
+`;
+
+// Instance unique du Worker — créée à la demande, détruite à exitBattleMode
+let _botWorker = null;
+
+function _createBotWorker(){
+  if(_botWorker) return _botWorker;
+  const blob = new Blob([_BOT_WORKER_CODE], {type:'application/javascript'});
+  _botWorker = new Worker(URL.createObjectURL(blob));
+  return _botWorker;
+}
+
+function _destroyBotWorker(){
+  if(_botWorker){ _botWorker.terminate(); _botWorker = null; }
+}
+
 /**
- * Lance le bot IA sur l'instance P2 en battle
+ * Lance le bot IA sur l'instance P2 en battle via Web Worker
+ * Le calcul tourne off-thread → zéro freeze sur le main thread
  * Vitesse forcée à 800ms minimum pour laisser une chance au joueur
  */
 function _startBotOnP2(){
@@ -2079,28 +2156,53 @@ function _startBotOnP2(){
   const BOT_BATTLE_SPEED = 800;
   const BOT_BATTLE_DEPTH = 2;
 
+  const worker = _createBotWorker();
+
+  // _workerPending évite les doublons si un résultat arrive après stopGame
+  let _workerPending = false;
+
   function botLoop(){
-    if(!p2.gameRunning) return;
+    if(!p2.gameRunning){ _workerPending = false; return; }
     if(p2.resolvingWords || !p2.active){
       setTimeout(botLoop, 150);
       return;
     }
-    const bestCol = botChooseBestCol(
-      p2.active.char,
-      p2.getBoardSnapshot(),
-      p2.activeWords,
-      p2.nextChar,
-      BOT_BATTLE_DEPTH
-    );
-    // Déplacer vers la colonne cible
-    p2.setPos(bestCol);
+
+    // Snapshot sérialisable avant envoi (POJOs uniquement)
+    const payload = {
+      kana:        p2.active.char,
+      boardSnap:   p2.getBoardSnapshot(),
+      activeWords: p2.activeWords.map(w=>({kana:w.kana,romaji:w.romaji,meaning:w.meaning,emoji:w.emoji,boss:!!w.boss})),
+      nextKana:    p2.nextChar,
+      maxDepth:    BOT_BATTLE_DEPTH,
+    };
+
+    _workerPending = true;
+    worker.postMessage(payload);
+  }
+
+  worker.onmessage = function(e){
+    _workerPending = false;
+    if(!p2.gameRunning || !p2.active) return; // partie terminée entre-temps
+
+    const {col} = e.data;
+    p2.setPos(col);
     p2.render();
+
     setTimeout(()=>{
       if(!p2.gameRunning || !p2.active) return;
       p2.hardDrop();
       setTimeout(botLoop, BOT_BATTLE_SPEED);
     }, 100);
-  }
+  };
+
+  worker.onerror = function(err){
+    console.warn('[BotWorker] erreur :', err.message);
+    _workerPending = false;
+    // Fallback : on relance la boucle sans planter la partie
+    setTimeout(botLoop, BOT_BATTLE_SPEED);
+  };
+
   setTimeout(botLoop, 800);
 }
 
@@ -2109,6 +2211,7 @@ function _startBotOnP2(){
  */
 function exitBattleMode(){
   _teardownBattleKeyboard();
+  _destroyBotWorker(); // termine le Worker proprement avant de nettoyer le DOM
   if(window._p1) window._p1.stopGame();
   if(window._p2) window._p2.stopGame();
   window._p1 = null;
