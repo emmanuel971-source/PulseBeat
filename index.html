@@ -117,7 +117,13 @@ body::before{
 .cell.land{animation:landBounce .32s cubic-bezier(.36,.07,.19,.97) forwards;}
 .cell.malus{background:linear-gradient(135deg,#fdf3ea,#f7e8d5)!important;color:#1a1040!important;border:1px solid rgba(100,200,220,.12)!important;border-radius:8px;box-shadow:0 3px 0 rgba(139,69,19,.12),inset 0 1px 0 rgba(255,255,255,.7)!important;font-size:clamp(18px,6vw,28px)!important;line-height:1!important;padding-top:2px!important;}
 .cell.malus-incoming{animation:malusWobble .5s ease infinite alternate;}
+.cell.skull{background:#ededea!important;border:2px dashed #5f5e5a!important;border-radius:6px!important;box-shadow:none!important;font-size:clamp(17px,5.8vw,26px)!important;line-height:1!important;padding-top:1px!important;}
+@keyframes skullShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-5px)}30%{transform:translateX(5px)}45%{transform:translateX(-4px)}60%{transform:translateX(4px)}75%{transform:translateX(-2px)}90%{transform:translateX(2px)}}
+.skull-row-flash{animation:skullShake .5s ease forwards;}
 @keyframes malusWobble{from{transform:scale(1) rotate(-3deg)}to{transform:scale(1.08) rotate(3deg)}}
+.cell.skull{background:linear-gradient(135deg,#2a2a3a,#1a1a28)!important;color:#fff!important;border:1px solid rgba(100,200,220,.08)!important;border-radius:6px;box-shadow:0 3px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)!important;font-size:clamp(16px,5.5vw,25px)!important;line-height:1!important;padding-top:1px!important;}
+@keyframes arenaSkullShake{0%,100%{transform:translate(0,0) rotate(0deg)}15%{transform:translate(-5px,3px) rotate(-.5deg)}30%{transform:translate(5px,-4px) rotate(.5deg)}45%{transform:translate(-4px,3px) rotate(-.3deg)}60%{transform:translate(4px,-2px) rotate(.3deg)}75%{transform:translate(-2px,2px) rotate(-.2deg)}90%{transform:translate(2px,-1px) rotate(.1deg)}}
+.arena-skull-shake{animation:arenaSkullShake .55s cubic-bezier(.36,.07,.19,.97) forwards;}
 @keyframes landBounce{0%{transform:scaleY(1.35) scaleX(.78)}35%{transform:scaleY(.82) scaleX(1.12)}65%{transform:scaleY(1.06) scaleX(.96)}100%{transform:scaleY(1) scaleX(1)}}
 .cell.flash{animation:cellFlash .65s ease forwards !important;}
 .cell.combo-flash{animation:comboFlash .65s ease forwards !important;}
@@ -1299,6 +1305,7 @@ function createPlayer(id, dom) {
   let gameRunning=false, dropTimer=null, DROP_SPEED=1400;
   const DROP_MIN=600, DROP_STEP=25;
   let resolvingWords=false, isLastCycle=false;
+  let _skullSentThisCascade=false; // cap : 1 ligne ☠️ max par chaîne de cascades
   let LEVEL_WORDS_LOCAL=[];
 
   // ── Puzzle ──
@@ -1415,9 +1422,10 @@ function _fitBattleBoard(){
         if(isTrig)el.classList.add('puzzle-trigger');
       }else if(board[r][c].filled){
         const isMalus=board[r][c].char==='💩';
-        el.className=isMalus?'cell filled malus':'cell filled';
+        const isSkull=board[r][c].char==='☠️';
+        el.className=isMalus?'cell filled malus':isSkull?'cell filled skull':'cell filled';
         el.textContent=board[r][c].char;
-        el.style.background=isMalus?'':kanaBg(board[r][c].char);
+        el.style.background=(isMalus||isSkull)?'':kanaBg(board[r][c].char);
         if(isTrig)el.classList.add('puzzle-trigger');
       }else{
         el.className='cell empty';el.textContent='';el.style.background='';
@@ -1555,7 +1563,7 @@ function renderPanel(){
   function ok(x,y){return x>=0&&x<COLS&&y>=0&&y<ROWS&&!board[y][x].filled;}
   function startTimer(){clearInterval(dropTimer);dropTimer=setInterval(tick,DROP_SPEED);}
   function increaseSpeed(){DROP_SPEED=Math.max(DROP_MIN,DROP_SPEED-DROP_STEP);if(active&&gameRunning)startTimer();}
-  function safeSpawn(){resolvingWords=false;if(!gameRunning)return;spawn();}
+  function safeSpawn(){resolvingWords=false;_skullSentThisCascade=false;if(!gameRunning)return;spawn();}
 
   function spawn(){
     active={char:nextChar||rndKana(),x:Math.floor(COLS/2),y:0};
@@ -1598,8 +1606,8 @@ function renderPanel(){
 
   // ── Scan / cascade ──
   function scanLine(cells,found){
-    // Le 💩 est traité comme une case vide pour la détection de mots (jamais matchable)
-    const line=cells.map(({r,c})=>(board[r][c].filled&&board[r][c].char!=='💩')?board[r][c].char:'\x00').join('');
+    // Le 💩 et le ☠️ sont traités comme des cases vides pour la détection de mots (jamais matchables)
+    const line=cells.map(({r,c})=>(board[r][c].filled&&board[r][c].char!=='💩'&&board[r][c].char!=='☠️')?board[r][c].char:'\x00').join('');
     activeWords.forEach(w=>{
       let i=line.indexOf(w.kana);
       while(i!==-1){
@@ -1649,12 +1657,19 @@ function renderPanel(){
       if(hasDuplicate) _sendPoopToOpponent();
     }
 
+    // ── Malus ☠️ : cascade (depth 1+, cap 1 ligne par chaîne de cascades) ──
+    if(isCascade && !puzzleMode && !_skullSentThisCascade){
+      _skullSentThisCascade=true;
+      _sendSkullToOpponent();
+    }
+
     setTimeout(()=>{
       cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);board[r][c]={filled:false,char:''};const el=gc(r,c);if(el){el.className='cell empty';el.textContent='';}});
       gravity();render();
       if(puzzleMode)puzzleMarkTriggers();
       const cf=scanFullBoard();
       if(cf.length){setTimeout(()=>processCascade(cf,true),300);return;}
+      _skullSentThisCascade=false; // reset après la fin de la chaîne
       const allDone=activeWords.every(w=>foundRound.has(w.kana));
       if(allDone){
         if(puzzleMode)return;
@@ -1666,6 +1681,11 @@ function renderPanel(){
   // ── Envoyer un 💩 à l'adversaire (résolu au niveau battle) ──
   function _sendPoopToOpponent(){
     if(typeof _battleInjectMalus === 'function') _battleInjectMalus(id);
+  }
+
+  // ── Envoyer une ligne ☠️ à l'adversaire ──
+  function _sendSkullToOpponent(){
+    if(typeof _battleInjectSkull === 'function') _battleInjectSkull(id);
   }
 
   function introNext(){
@@ -1811,11 +1831,37 @@ function renderPanel(){
       if(!gameRunning) return;
       nextChar = '💩';
       dom.nextKanaEl.textContent = '💩';
-      // Style alerte sur le next-kana
       const baseNKClass = dom.nextKanaEl.className.replace(/\s*pop\s*/g,'').trim() || 'next-kana';
       dom.nextKanaEl.className = baseNKClass + ' malus-incoming';
-      dom.nextKanaEl.style.background = 'linear-gradient(135deg,#f5e6d3,#eddcc8)';
+      dom.nextKanaEl.style.background = 'linear-gradient(135deg,#fdf3ea,#f7e8d5)';
       dom.nextKanaEl.style.color = '#1a1040';
+    },
+    // Malus battle : insère une ligne de ☠️ en bas, remonte tout d'un cran
+    injectSkullRow(){
+      if(!gameRunning) return;
+      // Game over si la remontée pousse une case hors du plateau (ligne 0 occupée)
+      for(let c=0;c<COLS;c++){
+        if(board[0][c].filled){ endGame(); return; }
+      }
+      // Remonter toutes les lignes d'un cran
+      for(let r=0;r<ROWS-1;r++){
+        for(let c=0;c<COLS;c++){
+          board[r][c]={...board[r+1][c]};
+        }
+      }
+      // Remplir la dernière ligne avec des ☠️
+      for(let c=0;c<COLS;c++){
+        board[ROWS-1][c]={filled:true,char:'☠️'};
+      }
+      // Décaler le kana actif vers le haut s'il est en jeu
+      if(active && active.y > 0) active.y--;
+      render();
+      // Animation shake sur l'arène qui reçoit la ligne
+      const arenaEl = dom.boardColEl.closest('.player-arena') || dom.boardColEl;
+      arenaEl.classList.remove('arena-skull-shake');
+      void arenaEl.offsetWidth;
+      arenaEl.classList.add('arena-skull-shake');
+      setTimeout(()=>arenaEl.classList.remove('arena-skull-shake'), 600);
     },
   };
 }
@@ -2014,10 +2060,21 @@ function buildDomRefs(pid){
  * `senderId` : 'p1' ou 'p2' — on injecte dans l'autre joueur.
  */
 function _battleInjectMalus(senderId){
-  if(gameMode === 'solo') return; // pas de malus en solo
+  if(gameMode === 'solo') return;
   const target = senderId === 'p1' ? window._p2 : window._p1;
   if(!target || !target.gameRunning) return;
   target.injectMalus();
+}
+
+/**
+ * Appelé par _sendSkullToOpponent() lors d'une cascade.
+ * Injecte une ligne ☠️ en bas de la grille adverse.
+ */
+function _battleInjectSkull(senderId){
+  if(gameMode === 'solo') return;
+  const target = senderId === 'p1' ? window._p2 : window._p1;
+  if(!target || !target.gameRunning) return;
+  target.injectSkullRow();
 }
 
 /**
