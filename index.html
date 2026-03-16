@@ -366,6 +366,169 @@ body::before{
 .btn{font-family:'Fredoka One',sans-serif;font-size:clamp(19px,5.2vw,24px);background:linear-gradient(135deg,var(--sky),var(--mint));color:#fff;border:none;border-radius:50px;padding:14px 36px;cursor:pointer;box-shadow:0 4px 18px rgba(0,170,238,.35);width:100%;max-width:280px;transition:all .15s;letter-spacing:.5px;}
 .btn:active{transform:scale(.95);}
 .btn.secondary{background:white;color:var(--text-mid);border:2px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.06);font-size:clamp(14px,3.8vw,18px);padding:10px 24px;}
+
+/* ═══════════════════════════════════════════════════
+   BATTLE MODE — layout 2 colonnes desktop
+   ═══════════════════════════════════════════════════ */
+body.battle-mode{overflow:hidden;}
+
+body.battle-mode #shell{
+  max-width:100vw;flex-direction:row;height:100dvh;gap:0;
+}
+
+/* Chaque demi-écran */
+.player-arena{
+  flex:1;display:flex;flex-direction:column;
+  min-width:0;min-height:0;overflow:hidden;position:relative;
+}
+.p1-arena{
+  background:linear-gradient(160deg,var(--bg-top) 0%,var(--bg-mid) 50%,var(--bg-bot) 100%);
+  border-right:2px solid rgba(100,200,220,.35);
+}
+.p2-arena{
+  background:linear-gradient(160deg,#fff3d4 0%,#ffe0c0 50%,#fff8d4 100%);
+}
+
+/* Wrapper interne centré */
+body.battle-mode .arena-inner{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;min-height:0;overflow:hidden;
+}
+
+/* Middle : board-game-stack + side côte à côte */
+.arena-middle{
+  flex:1;display:flex;flex-direction:row;
+  align-items:stretch;min-height:0;
+}
+
+/* Game stack : board-col + word-panel empilés — largeur fixée par JS */
+body.battle-mode .arena-game-stack{
+  display:flex;flex-direction:column;flex:none;min-height:0;
+}
+
+/* Board col */
+body.battle-mode .arena-board-col{
+  flex:1;display:flex;flex-direction:column;
+  min-height:0;position:relative;overflow:hidden;
+}
+
+/* Cellules */
+body.battle-mode .cell{font-size:var(--battle-cell-fs,clamp(12px,1.8vw,20px));}
+body.battle-mode .cell.filled{font-size:var(--battle-cell-fs,clamp(12px,1.8vw,20px));}
+
+/* Word panel — hérite la largeur du game-stack */
+body.battle-mode .arena-word-panel{
+  background:var(--surface);border-top:2px solid var(--border);
+  flex-shrink:0;padding:4px 6px 6px;
+  display:flex;flex-direction:column;gap:3px;
+  max-height:28dvh;overflow-y:auto;width:100%;
+}
+body.battle-mode .arena-word-panel .word-row{padding:4px 8px;border-radius:10px;gap:5px;animation:none;}
+body.battle-mode .arena-word-panel .wr-emoji{font-size:clamp(16px,2.1vw,20px);}
+body.battle-mode .arena-word-panel .wr-kana{font-size:clamp(14px,1.8vw,18px);}
+body.battle-mode .arena-word-panel .wr-romaji{font-size:clamp(10px,1.3vw,14px);}
+body.battle-mode .arena-word-panel .wr-meaning{font-size:clamp(9px,1.1vw,12px);}
+body.battle-mode .arena-word-panel .wr-mult{font-size:clamp(11px,1.4vw,15px);}
+
+/* Side panel — large, next-kana visible */
+body.battle-mode .arena-side{
+  flex-shrink:0;width:clamp(82px,10vw,112px);
+  display:flex;flex-direction:column;
+  background:var(--surface);
+  border-left:2px solid var(--border);border-top:2px solid var(--border);
+  padding:10px 6px 8px;gap:10px;align-items:center;overflow:hidden;
+}
+body.battle-mode .arena-side .side-label{
+  font-family:'Fredoka One','Nunito',sans-serif;
+  font-size:clamp(10px,1.2vw,13px);color:var(--text-dim);
+  letter-spacing:2px;text-transform:uppercase;text-align:center;font-weight:700;
+}
+/* Next kana : taille proche solo */
+body.battle-mode .arena-side .next-kana-box{
+  width:80%;aspect-ratio:1;max-width:66px;border-radius:14px;
+  background:white;border:3px solid var(--border);
+  box-shadow:0 4px 12px rgba(0,170,238,.15),inset 0 1px 0 rgba(255,255,255,.9);
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(22px,3.2vw,34px);font-weight:900;
+  font-family:'Noto Sans JP',sans-serif;color:var(--text-dark);
+}
+body.battle-mode .arena-side .next-kana-box.pop{animation:nextPop .28s ease forwards;}
+/* Score */
+body.battle-mode .arena-side .score-val-box{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(17px,2.3vw,26px);
+  color:var(--neon-violet);text-align:center;
+  text-shadow:0 0 8px rgba(0,102,255,.2);word-break:break-all;line-height:1;
+}
+body.battle-mode .arena-side .score-val-box.bump{animation:scoreBump .38s ease;}
+/* Nom joueur */
+body.battle-mode .arena-side .player-name-badge{
+  font-family:'Fredoka One',cursive;font-size:clamp(11px,1.4vw,14px);
+  text-align:center;line-height:1.3;padding:3px 5px;border-radius:8px;width:94%;
+}
+.p1-arena .player-name-badge{color:var(--sky);background:rgba(0,170,238,.12);}
+.p2-arena .player-name-badge{color:#c77dff;background:rgba(168,85,247,.12);}
+/* Level badge */
+body.battle-mode .arena-side .level-badge-box{
+  font-family:'Fredoka One',sans-serif;font-size:clamp(10px,1.2vw,13px);
+  text-align:center;line-height:1.3;color:var(--text-dim);
+}
+body.battle-mode .arena-side .level-badge-box .badge-emoji{
+  font-size:clamp(24px,3.2vw,34px);display:block;line-height:1.1;
+}
+
+/* Overlays arène */
+.arena-overlay{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(240,250,255,.93);backdrop-filter:blur(10px);
+  z-index:100;gap:8px;padding:16px 12px;overflow-y:auto;
+}
+.arena-overlay.hidden{display:none;}
+.arena-overlay .ov-title{font-family:'Fredoka One',cursive;font-size:clamp(20px,2.8vw,28px);color:var(--sky);text-align:center;}
+.arena-overlay .ov-sub{font-size:clamp(12px,1.6vw,15px);color:var(--text-mid);text-align:center;line-height:1.6;font-family:'Nunito',sans-serif;font-weight:700;}
+.arena-overlay .btn{font-size:clamp(13px,1.7vw,16px);padding:10px 20px;max-width:220px;}
+.arena-overlay .btn.secondary{font-size:clamp(11px,1.4vw,14px);padding:7px 16px;}
+
+/* Popup mot */
+body.battle-mode .word-popup-box{
+  position:absolute;left:6px;right:6px;top:50%;transform:translateY(-50%);
+  background:white;border:2px solid var(--lemon);border-radius:16px;padding:8px 10px;
+  text-align:center;z-index:40;pointer-events:none;display:none;
+  box-shadow:0 6px 24px rgba(255,165,0,.3);
+}
+body.battle-mode .word-popup-box.show{display:block;animation:popupIn 2.1s ease forwards;}
+body.battle-mode .word-popup-box.combo{border-color:var(--rose);}
+body.battle-mode .word-popup-box .wp-emoji{font-size:clamp(26px,3.5vw,38px);display:block;line-height:1.1;}
+body.battle-mode .word-popup-box .wp-kana{font-family:'Fredoka One',cursive;font-size:clamp(20px,2.8vw,30px);color:var(--neon-gold);display:block;line-height:1;}
+body.battle-mode .word-popup-box .wp-romaji{font-size:clamp(10px,1.3vw,14px);color:var(--teal);letter-spacing:1px;font-family:'Fredoka One',sans-serif;text-transform:uppercase;}
+body.battle-mode .word-popup-box .wp-meaning{font-size:clamp(11px,1.4vw,15px);color:var(--text-mid);}
+body.battle-mode .word-popup-box .wp-pts{font-family:'Fredoka One',cursive;font-size:clamp(13px,2vw,20px);color:var(--neon-violet);margin-top:3px;}
+
+/* Streak */
+body.battle-mode .streak-box{
+  position:absolute;right:4px;top:5px;font-family:'Fredoka One',cursive;
+  font-size:clamp(11px,1.5vw,15px);color:var(--neon-gold);
+  text-shadow:0 0 8px rgba(232,160,0,.7);z-index:35;display:none;
+}
+
+/* Combo banner */
+body.battle-mode .combo-banner-box{
+  position:absolute;left:50%;top:15%;transform:translateX(-50%);
+  font-family:'Fredoka One',cursive;font-size:clamp(18px,2.8vw,28px);
+  color:var(--neon-pink);text-shadow:0 0 16px rgba(255,0,102,.7);
+  pointer-events:none;z-index:41;white-space:nowrap;display:none;
+}
+body.battle-mode .combo-banner-box.show{display:block;animation:comboBannerAnim 1.8s ease forwards;}
+
+/* Toast encouragement */
+body.battle-mode .enc-toast-box{
+  position:absolute;left:50%;bottom:32%;transform:translateX(-50%);
+  text-align:center;pointer-events:none;z-index:45;display:none;white-space:nowrap;
+}
+body.battle-mode .enc-toast-box .enc-jp{font-family:'Fredoka One',cursive;font-size:clamp(20px,3vw,32px);color:var(--neon-gold);text-shadow:0 0 12px rgba(232,160,0,.5);display:block;}
+body.battle-mode .enc-toast-box .enc-fr{font-size:clamp(10px,1.3vw,14px);color:var(--text-mid);display:block;margin-top:2px;}
+body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease forwards;}
 </style>
 </head>
 <body>
@@ -475,6 +638,9 @@ body::before{
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════════════════
+//  DONNÉES — niveaux, constantes partagées
+// ═══════════════════════════════════════════════════════════════════
 const ALL_LEVELS=[
   {id:1,theme:'La Mer',clan:'',emoji:'🌊',color:'#00c8e8',words:[
     {kana:'かい',romaji:'kai',meaning:'coquillage',emoji:'🐚',boss:false},
@@ -626,9 +792,50 @@ const ALL_LEVELS=[
   ]},
 ];
 
-let currentLevelIdx=0,LEVEL_WORDS=ALL_LEVELS[0].words,pendingLevelIdx=0;
+// ═══════════════════════════════════════════════════════════════════
+//  ÉTAT GLOBAL DE SESSION
+// ═══════════════════════════════════════════════════════════════════
+let currentLevelIdx = 0;
+let LEVEL_WORDS = ALL_LEVELS[0].words;
+let pendingLevelIdx = 0;
 
-/* ── confetti ── */
+// gameMode : 'solo' | 'vsBot' | 'vs2p'
+let gameMode = 'solo';
+
+// ═══════════════════════════════════════════════════════════════════
+//  UTILITAIRES PARTAGÉS
+// ═══════════════════════════════════════════════════════════════════
+const KANA_COLORS = {
+  'あ':'#FFD6A5','い':'#CAFFBF','う':'#A0C4FF','え':'#FFB3C6','お':'#BDE0FE',
+  'か':'#FDFFB6','き':'#B9FBC0','く':'#A2D2FF','け':'#FFAFCC','こ':'#CDB4DB',
+  'さ':'#FFC8DD','し':'#CBFFA9','す':'#ADE8F4','せ':'#FFE5A0','そ':'#C8E6C9',
+  'た':'#FFD7BA','ち':'#B5EAD7','つ':'#B8D8FF','て':'#FFDDD2','と':'#D4F0C0',
+  'な':'#FFC6FF','に':'#A0FFD6','ぬ':'#BAD7F2','ね':'#FFCFD2','の':'#E2F0CB',
+  'は':'#FFF1A8','ひ':'#B5F5EC','ふ':'#C3DDFD','へ':'#FFD6D6','ほ':'#D5EAFF',
+  'ま':'#FFE2B7','み':'#C3FAC3','む':'#BFDBFE','め':'#FFBBD2','も':'#D8F3DC',
+  'や':'#FFEAA7','ゆ':'#A8F0E8','よ':'#C6E2FF',
+  'ら':'#FFD3B6','り':'#BAFFD8','る':'#B6CCFE','れ':'#FFD6E0','ろ':'#D9F3EE',
+  'わ':'#FFF3CD','ゐ':'#C0F0C0','ゑ':'#C0D8FF','を':'#FFD0D0','ん':'#E8CBFF',
+  'ア':'#FFD6A5','イ':'#CAFFBF','ウ':'#A0C4FF','エ':'#FFB3C6','オ':'#BDE0FE',
+  'ラ':'#FFD3B6','リ':'#BAFFD8','ル':'#B6CCFE','レ':'#FFD6E0','ロ':'#D9F3EE',
+  'ン':'#E8CBFF','ー':'#F0F0F0',
+  'サ':'#FFC8DD','ッ':'#FFF1A8','カ':'#FDFFB6','ビ':'#C3DDFD','コ':'#CDB4DB',
+  'が':'#F0FFB0','ぎ':'#B0FFC0','ぐ':'#B0D8FF','げ':'#FFB0C8','ご':'#C0B0E8',
+  'ざ':'#FFB0D0','じ':'#C0FFA0','ず':'#A0E0F4','ぜ':'#FFD8A0','ぞ':'#B0E0C0',
+  'だ':'#FFD0B0','ぢ':'#A8E8D0','づ':'#B0D0FF','で':'#FFD0C0','ど':'#C8F0B0',
+  'ば':'#FFE8A8','び':'#A8F0E8','ぶ':'#B8D8FF','べ':'#FFB8C8','ぼ':'#C8D8FF',
+  'ぱ':'#FFD0D8','ぴ':'#D0FFD0','ぷ':'#C8ECFF','ぺ':'#FFD0E8','ぽ':'#D8E8FF',
+};
+const DEFAULT_KANA_BG='#F0F0F0';
+function kanaBg(char){return KANA_COLORS[char]||DEFAULT_KANA_BG;}
+function shuffle(a){return [...a].sort(()=>Math.random()-.5);}
+
+const COLS=8;
+let ROWS=12;
+
+// ═══════════════════════════════════════════════════════════════════
+//  CONFETTI
+// ═══════════════════════════════════════════════════════════════════
 (()=>{
   const c=document.getElementById('confetti');
   const cols=['#00c8e8','#5cb85c','#e8833a','#c4a8ff','#72e8b8','#ffaa7a'];
@@ -640,7 +847,398 @@ let currentLevelIdx=0,LEVEL_WORDS=ALL_LEVELS[0].words,pendingLevelIdx=0;
   }
 })();
 
-/* ── menu ── */
+// ═══════════════════════════════════════════════════════════════════
+//  AUDIO
+// ═══════════════════════════════════════════════════════════════════
+let audioCtx=null,muted=false;
+function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
+function playTone(freq,type,dur,vol=0.18,delay=0){if(muted)return;try{const ctx=getCtx(),osc=ctx.createOscillator(),g=ctx.createGain();osc.connect(g);g.connect(ctx.destination);osc.type=type;osc.frequency.value=freq;const t=ctx.currentTime+delay;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);osc.start(t);osc.stop(t+dur);}catch(e){}}
+const soundDrop=()=>playTone(260,'sine',.07,.12);
+const soundWord=()=>[523,659,784,1047].forEach((f,i)=>playTone(f,'sine',.18,.18,i*.07));
+const soundCombo=()=>{[523,659,784,1047,1319,1568].forEach((f,i)=>playTone(f,'sine',.22,.20,i*.055));setTimeout(()=>playTone(1568,'square',.28,.12),400);};
+const soundNewWord=()=>[440,554,659].forEach((f,i)=>playTone(f,'triangle',.18,.13,i*.08));
+const soundGameOver=()=>[440,370,311,261].forEach((f,i)=>playTone(f,'sawtooth',.20,.15,i*.13));
+const soundLevelUp=()=>[523,659,784,1047,784,1047,1319].forEach((f,i)=>playTone(f,'sine',.20,.20,i*.08));
+
+const KANA_BASE='https://raw.githubusercontent.com/emmanuel971-source/hirakataquizz/main/';
+const kanaCache={};
+function playKanaSound(kana){if(muted)return;try{if(!kanaCache[kana])kanaCache[kana]=new Audio(KANA_BASE+encodeURIComponent(kana)+'.mp3');const a=kanaCache[kana].cloneNode();a.volume=.7;a.play().catch(()=>{});}catch(e){}}
+
+// ═══════════════════════════════════════════════════════════════════
+//  EFFETS VISUELS GLOBAUX
+// ═══════════════════════════════════════════════════════════════════
+const P_COLORS=['#00c8e8','#5cb85c','#e8833a','#c4a8ff','#72e8b8','#ffaa7a'];
+function spawnParticles(cellEl,boardColEl,count=12){
+  if(!cellEl||!boardColEl)return;
+  const rect=cellEl.getBoundingClientRect();
+  const bRect=boardColEl.getBoundingClientRect();
+  const cx=rect.left-bRect.left+rect.width/2;
+  const cy=rect.top-bRect.top+rect.height/2;
+  for(let i=0;i<count;i++){
+    const p=document.createElement('div');p.className='particle';
+    const sz=Math.random()*7+3;
+    const angle=(Math.PI*2/count)*i+Math.random()*.5;
+    const dist=Math.random()*50+22;
+    const col=P_COLORS[Math.floor(Math.random()*P_COLORS.length)];
+    const dur=(Math.random()*.3+.4).toFixed(2)+'s';
+    p.style.cssText=`width:${sz}px;height:${sz}px;left:${cx-sz/2}px;top:${cy-sz/2}px;background:${col};--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist-16}px;--dur:${dur};box-shadow:0 0 ${sz}px ${col};`;
+    boardColEl.appendChild(p);
+    setTimeout(()=>p.remove(),900);
+  }
+}
+
+function screenShake(c=false){
+  const sh=document.getElementById('shell');
+  sh.classList.remove('shake','shake-combo');
+  void sh.offsetWidth;
+  sh.classList.add(c?'shake-combo':'shake');
+  setTimeout(()=>sh.classList.remove('shake','shake-combo'),500);
+}
+
+const ENCS=[{jp:'すごい！',fr:'Incroyable !'},{jp:'やった！',fr:'On l\'a eu !'},{jp:'完璧！',fr:'Parfait !'},{jp:'天才！',fr:'Génie !'},{jp:'最高！',fr:'Excellent !'}];
+const COMBO_ENCS=[{jp:'コンボ！すごい！',fr:'Combo incroyable !'},{jp:'連続！天才！',fr:'Enchaînement de génie !'},{jp:'最高のコンボ！',fr:'Combo parfait !'},{jp:'パーフェクト！',fr:'Parfait !'}];
+
+if(window.speechSynthesis)window.speechSynthesis.getVoices();
+function speakWord(kana,isCombo){
+  if(muted||!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  const voices=window.speechSynthesis.getVoices();
+  const jv=voices.find(v=>v.lang&&v.lang.startsWith('ja'))||null;
+  const u=new SpeechSynthesisUtterance(kana);
+  u.lang='ja-JP';u.rate=.85;u.pitch=isCombo?1.25:1.05;u.volume=.9;
+  if(jv)u.voice=jv;
+  window.speechSynthesis.speak(u);
+  if(isCombo){
+    const enc=COMBO_ENCS[Math.floor(Math.random()*COMBO_ENCS.length)];
+    const u2=new SpeechSynthesisUtterance(enc.jp);
+    u2.lang='ja-JP';u2.rate=1.05;u2.pitch=1.35;u2.volume=.85;
+    if(jv)u2.voice=jv;
+    window.speechSynthesis.speak(u2);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  BURST CANVAS (global, partagé)
+// ═══════════════════════════════════════════════════════════════════
+const BURST_CANVAS=document.createElement('canvas');
+BURST_CANVAS.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:999;';
+document.body.appendChild(BURST_CANVAS);
+const BURST_CTX=BURST_CANVAS.getContext('2d');
+function resizeBurst(){BURST_CANVAS.width=window.innerWidth;BURST_CANVAS.height=window.innerHeight;}
+resizeBurst();
+window.addEventListener('resize',resizeBurst);
+const BURST_COLORS={normal:['#ff6b6b','#ffbe0b','#6bcb77','#4d96ff','#c77dff','#ff3fab','#00cfff','#ffffff'],combo:['#ff0066','#ff6b35','#ffbe0b','#ffffff','#ff3fab','#fff700'],boss:['#ff0066','#c77dff','#4d96ff','#ffffff','#ffbe0b','#ff6b6b'],logo:['#ff6b6b','#ffbe0b','#6bcb77','#4d96ff','#c77dff','#ff3fab','#00cfff','#ffffff']};
+let burstParticles=[];
+function burst(x,y,count=18,mode='normal'){
+  const cols=BURST_COLORS[mode]||BURST_COLORS.normal;
+  const isCombo=mode==='combo'||mode==='boss';
+  for(let i=0;i<count;i++){
+    const angle=(Math.PI*2/count)*i+(Math.random()-.5)*.5;
+    const speed=(isCombo?5:3.5)+Math.random()*(isCombo?5:3);
+    const size=(isCombo?4:2.5)+Math.random()*(isCombo?5:4);
+    const isStar=Math.random()>(isCombo?.4:.65);
+    burstParticles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-(isCombo?2:1),size,color:cols[Math.floor(Math.random()*cols.length)],alpha:1,life:0,maxLife:45+Math.random()*(isCombo?40:25),isStar,rot:Math.random()*Math.PI*2,rotSpeed:(Math.random()-.5)*.2});
+  }
+  if(!burstAnimRunning)burstLoop();
+}
+let burstAnimRunning=false;
+function burstLoop(){
+  burstAnimRunning=true;
+  BURST_CTX.clearRect(0,0,BURST_CANVAS.width,BURST_CANVAS.height);
+  burstParticles=burstParticles.filter(p=>p.alpha>.01);
+  for(const p of burstParticles){
+    p.life++;p.x+=p.vx;p.y+=p.vy;p.vy+=.18;p.alpha=Math.max(0,1-p.life/p.maxLife);p.rot+=p.rotSpeed;
+    BURST_CTX.save();BURST_CTX.globalAlpha=p.alpha;BURST_CTX.translate(p.x,p.y);BURST_CTX.rotate(p.rot);
+    BURST_CTX.fillStyle=p.color;BURST_CTX.shadowColor=p.color;BURST_CTX.shadowBlur=6;
+    if(p.isStar){
+      const r1=p.size,r2=p.size*.4;BURST_CTX.beginPath();
+      for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2;const r=i%2===0?r1:r2;i===0?BURST_CTX.moveTo(Math.cos(a)*r,Math.sin(a)*r):BURST_CTX.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
+      BURST_CTX.closePath();BURST_CTX.fill();
+    }else{BURST_CTX.beginPath();BURST_CTX.arc(0,0,p.size,0,Math.PI*2);BURST_CTX.fill();}
+    BURST_CTX.restore();
+  }
+  if(burstParticles.length>0){requestAnimationFrame(burstLoop);}
+  else{burstAnimRunning=false;BURST_CTX.clearRect(0,0,BURST_CANVAS.width,BURST_CANVAS.height);}
+}
+document.addEventListener('click',e=>{const logo=e.target.closest('.logo-wrap');if(logo)burst(e.clientX,e.clientY,28,'logo');});
+
+// ═══════════════════════════════════════════════════════════════════
+//  SIMSTATE + BOT (partagés, pas de DOM)
+// ═══════════════════════════════════════════════════════════════════
+class SimState{
+  constructor(boardSnap,rows,cols,words){this.board=boardSnap.map(row=>row.map(c=>({...c})));this.rows=rows;this.cols=cols;this.words=words;}
+  clone(){return new SimState(this.board,this.rows,this.cols,this.words);}
+  drop(kana,col){let landRow=-1;for(let r=this.rows-1;r>=0;r--){if(!this.board[r][col].filled){landRow=r;break;}}if(landRow===-1)return false;this.board[landRow][col]={filled:true,char:kana};return landRow;}
+  applyGravity(){for(let c=0;c<this.cols;c++){const chars=[];for(let r=this.rows-1;r>=0;r--)if(this.board[r][c].filled)chars.push(this.board[r][c].char);for(let r=this.rows-1;r>=0;r--)this.board[r][c]=chars.length?{filled:true,char:chars.shift()}:{filled:false,char:''};}}
+  _scanLine(cells,found){const line=cells.map(({r,c})=>this.board[r][c].filled?this.board[r][c].char:'\x00').join('');this.words.forEach(w=>{let i=line.indexOf(w.kana);while(i!==-1){const key=cells.slice(i,i+w.kana.length).map(cc=>`${cc.r},${cc.c}`).join('|');if(!found.some(f=>f.key===key))found.push({word:w,cells:cells.slice(i,i+w.kana.length),key});i=line.indexOf(w.kana,i+1);}});}
+  scanAll(){const found=[];for(let r=0;r<this.rows;r++)this._scanLine(Array.from({length:this.cols},(_,c)=>({r,c})),found);for(let c=0;c<this.cols;c++)this._scanLine(Array.from({length:this.rows},(_,r)=>({r,c})),found);return found;}
+  explode(found){const cellSet=new Set();found.forEach(f=>f.cells.forEach(cell=>cellSet.add(`${cell.r},${cell.c}`)));cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);this.board[r][c]={filled:false,char:''};});return cellSet.size;}
+  freeCols(){const free=[];for(let c=0;c<this.cols;c++)if(!this.board[0][c].filled)free.push(c);return free;}
+}
+
+function simEval(state,kana,col,maxDepth){
+  const sim=state.clone();const landRow=sim.drop(kana,col);
+  if(landRow===false||landRow<=1)return{score:-999999,cascades:0,endState:sim};
+  let score=0,cascades=0;let found=sim.scanAll(),depth=0;
+  let filledCount=0;for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++)if(sim.board[r][c].char)filledCount++;
+  const fillRatio=filledCount/(sim.rows*sim.cols);
+  const height=sim.rows-landRow;let heightPenalty=Math.pow(height,2)*.5;
+  if(fillRatio>.7)heightPenalty*=10;score-=heightPenalty;
+  while(found.length>0&&depth<=maxDepth){let pts=found.reduce((s,f)=>{let basePts=f.word.kana.length*100;return s+basePts;},0);if(depth>0){pts*=Math.pow(3.0,depth);cascades++;score+=1000;}score+=pts;sim.explode(found);sim.applyGravity();depth++;found=sim.scanAll();}
+  score+=_proximityBonus(sim)*.5;return{score,cascades,endState:sim};
+}
+function _proximityBonus(sim){let bonus=0;sim.words.forEach(w=>{const kanas=[...w.kana];for(let i=0;i<kanas.length-1;i++){const a=kanas[i],b=kanas[i+1];const posA=[],posB=[];for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++){if(sim.board[r][c].char===a)posA.push({r,c});if(sim.board[r][c].char===b)posB.push({r,c});}posA.forEach(pa=>posB.forEach(pb=>{const dr=Math.abs(pa.r-pb.r),dc=Math.abs(pa.c-pb.c);if(dr===0&&dc===1)bonus+=120;if(dc===0&&dr===1)bonus+=120;if(dr===0&&dc<=3)bonus+=40;if(dc===0&&dr<=3)bonus+=40;}));}});return bonus;}
+
+function botChooseBestCol(kana,boardSnap,activeWordsSnap,nextKana,maxDepth){
+  const currentRows = boardSnap.length; // Le bot détecte dynamiquement la hauteur du joueur
+  const simWords=activeWordsSnap.map(w=>({...w}));
+  const baseState=new SimState(boardSnap,currentRows,COLS,simWords);
+  const freeCols=baseState.freeCols();
+  if(!freeCols.length)return Math.floor(COLS/2);
+  let best={score:-Infinity,col:freeCols[0],cascades:0};
+  freeCols.forEach(col=>{
+    const r1=simEval(baseState,kana,col,maxDepth);
+    if(r1.score===-999999)return;
+    let bestNextScore=0;
+    if(nextKana&&r1.endState){
+      const nextFreeCols=r1.endState.freeCols();
+      if(nextFreeCols.length>0){
+        let maxN=-Infinity;
+        nextFreeCols.forEach(ncol=>{const r2=simEval(r1.endState,nextKana,ncol,maxDepth);if(r2.score>maxN)maxN=r2.score;});
+        if(maxN!==-Infinity)bestNextScore=maxN;
+      }
+    }
+    const totalScore=r1.score+(bestNextScore*.85);
+    if(totalScore>best.score||(totalScore===best.score&&r1.cascades>best.cascades)){best={score:totalScore,col,cascades:r1.cascades};}
+  });
+  return best.col!==undefined?best.col:freeCols[0];
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  PUZZLE ENGINE (partagé, sans DOM)
+// ═══════════════════════════════════════════════════════════════════
+const PUZZLE_SN_DEFS=[
+  {num:1,stars:'⭐',    label:'Initiation',   desc:'1 chaîne de 2 mots · Plateau vide',
+   chains:[{chainLen:2,triggerRow:1}], fillRatio:0.0},
+  {num:2,stars:'⭐⭐',   label:'Apprentissage',desc:'1 chaîne de 3 mots · Quelques neutres',
+   chains:[{chainLen:3,triggerRow:1}], fillRatio:0.10},
+  {num:3,stars:'⭐⭐⭐',  label:'Intermédiaire',desc:'2 chaînes de 2 mots · Profondeur variable',
+   chains:[{chainLen:2,triggerRow:1},{chainLen:2,triggerRow:2}], fillRatio:0.20},
+  {num:4,stars:'⭐⭐⭐⭐', label:'Avancé',       desc:'2 chaînes de 2 mots · Plateau plus rempli',
+   chains:[{chainLen:2,triggerRow:2},{chainLen:2,triggerRow:3}], fillRatio:0.30},
+  {num:5,stars:'⭐⭐⭐⭐⭐',label:'Maîtrise',    desc:'3 chaînes (2+2+3) · Seule 1 en surface !',
+   chains:[{chainLen:2,triggerRow:1},{chainLen:2,triggerRow:3},{chainLen:3,triggerRow:4}], fillRatio:0.40},
+];
+
+function puzzleLevelKanas(levelWords){return [...new Set(levelWords.flatMap(w=>[...w.kana]))];}
+function puzzleFillColumnBelow(board,bRows,bCols,allWords,col,fromRowIdx,reservedCells){
+  const allKanas=puzzleLevelKanas(allWords);
+  const maxRowIdx=Math.floor(bRows/2);
+  for(let rowIdx=fromRowIdx+1;rowIdx<bRows;rowIdx++){
+    if(rowIdx<maxRowIdx)continue;
+    if(board[rowIdx][col].filled)continue;
+    if(reservedCells&&reservedCells.has(`${rowIdx}-${col}`))continue;
+    const kana=shuffle(allKanas).find(k=>{const tb=board.map(r=>r.map(c=>({...c})));tb[rowIdx][col]={filled:true,char:k};return new SimState(tb,bRows,bCols,allWords).scanAll().length===0;});
+    if(kana)board[rowIdx][col]={filled:true,char:kana};
+  }
+}
+function puzzlePlaceChain(board,bRows,bCols,allWords,availWords,chainLen,triggerRow,reservedCells){
+  const needed=chainLen+1;
+  const triggerRowIdx=bRows-triggerRow;
+  if(triggerRowIdx<1||triggerRowIdx>=bRows)return{ok:false,reason:'triggerRow hors grille'};
+  if(chainLen>1&&triggerRowIdx-1<0)return{ok:false,reason:'Pas de place pour les mobiles'};
+  const possibleStarts=[];
+  for(let t=0;t<=bCols-needed;t++){
+    let conflict=false;
+    for(let i=0;i<chainLen;i++){if(reservedCells.has(`${triggerRowIdx}-${t+1+i}`)){conflict=true;break;}}
+    if(!conflict&&chainLen>1){for(let i=1;i<chainLen;i++){if(reservedCells.has(`${triggerRowIdx-1}-${t+i}`)){conflict=true;break;}}}
+    if(!conflict&&reservedCells.has(`${triggerRowIdx}-${t}`))conflict=true;
+    if(!conflict)possibleStarts.push(t);
+  }
+  if(!possibleStarts.length)return{ok:false,reason:'Pas de position libre'};
+  const triggerCol=possibleStarts[Math.floor(Math.random()*possibleStarts.length)];
+  const words=shuffle(availWords).slice(0,chainLen);
+  if(words.length<chainLen)return{ok:false,reason:'Pas assez de mots'};
+  for(let i=0;i<chainLen;i++){
+    const w=words[i];const kanas=[...w.kana];const anchorCol=triggerCol+1+i;
+    if(board[triggerRowIdx][anchorCol].filled)return{ok:false,reason:`Ancre occupée col ${anchorCol}`};
+    board[triggerRowIdx][anchorCol]={filled:true,char:kanas[1]};
+    if(i>0){const mobileRowIdx=triggerRowIdx-1;if(mobileRowIdx<0||board[mobileRowIdx][triggerCol+i].filled)return{ok:false,reason:'Mobile impossible'};board[mobileRowIdx][triggerCol+i]={filled:true,char:kanas[0]};}
+  }
+  if(new SimState(board,bRows,bCols,allWords).scanAll().length>0)return{ok:false,reason:'Mot prématuré'};
+  const myCells=new Set();
+  myCells.add(`${triggerRowIdx}-${triggerCol}`);
+  for(let i=0;i<chainLen;i++){myCells.add(`${triggerRowIdx}-${triggerCol+1+i}`);if(i>0)myCells.add(`${triggerRowIdx-1}-${triggerCol+i}`);}
+  puzzleFillColumnBelow(board,bRows,bCols,allWords,triggerCol,triggerRowIdx,reservedCells);
+  for(let i=0;i<chainLen;i++){puzzleFillColumnBelow(board,bRows,bCols,allWords,triggerCol+1+i,triggerRowIdx,reservedCells);}
+  for(let i=1;i<chainLen;i++){puzzleFillColumnBelow(board,bRows,bCols,allWords,triggerCol+i,triggerRowIdx-1,reservedCells);}
+  return{ok:true,chain:words,triggerCol,triggerRow,triggerRowIdx,myCells};
+}
+function puzzlePlaceOneNeutral(board,bRows,bCols,allWords,levelKanas,preferCols){
+  const cols=preferCols&&preferCols.length?preferCols:shuffle(Array.from({length:bCols},(_,i)=>i));
+  for(const col of cols){
+    for(const kana of shuffle(levelKanas)){
+      const testBoard=board.map(r=>r.map(c=>({...c})));
+      const tmp=new SimState(testBoard,bRows,bCols,[]);
+      const row=tmp.drop(kana,col);
+      if(row===false)continue;
+      testBoard[row][col]={filled:true,char:kana};
+      if(new SimState(testBoard,bRows,bCols,allWords).scanAll().length===0){
+        const real=new SimState(board,bRows,bCols,[]);
+        const realRow=real.drop(kana,col);
+        if(realRow!==false){board[realRow][col]={filled:true,char:kana};return true;}
+      }
+    }
+  }
+  return false;
+}
+function puzzleFillNeutrals(board,bRows,bCols,allWords,fillRatio,excludeCols=new Set()){
+  const levelKanas=puzzleLevelKanas(allWords);
+  const maxRow=Math.floor(bRows/2);
+  let occupied=0;
+  for(let r=0;r<bRows;r++)for(let c=0;c<bCols;c++)if(board[r][c].filled)occupied++;
+  const totalCells=bRows*bCols;
+  const target=Math.floor(totalCells*fillRatio);
+  const toAdd=Math.max(0,target-occupied);
+  let placed=0,attempts=0;
+  while(placed<toAdd&&attempts<toAdd*20){
+    attempts++;
+    const col=Math.floor(Math.random()*bCols);
+    if(excludeCols.has(col))continue;
+    const kana=levelKanas[Math.floor(Math.random()*levelKanas.length)];
+    const tmp=new SimState(board,bRows,bCols,[]);
+    const row=tmp.drop(kana,col);
+    if(row===false||row<=maxRow)continue;
+    const testBoard=board.map(r=>r.map(c=>({...c})));
+    testBoard[row][col]={filled:true,char:kana};
+    if(new SimState(testBoard,bRows,bCols,allWords).scanAll().length===0){board[row][col]={filled:true,char:kana};placed++;}
+  }
+}
+function puzzleGenerate(levelIdx,snDef){
+  const allWords=ALL_LEVELS[levelIdx].words;
+  const eligible=allWords.filter(w=>[...w.kana].length===2);
+  const boardRows=ROWS;const boardCols=COLS;
+  const chainDefs=snDef.chains.filter(({chainLen})=>eligible.length>=chainLen);
+  const board=Array.from({length:boardRows},()=>Array.from({length:boardCols},()=>({filled:false,char:''})));
+  const reservedCells=new Set();const chains=[];
+  for(let ci=0;ci<chainDefs.length;ci++){
+    const{chainLen,triggerRow}=chainDefs[ci];
+    const avail=shuffle(eligible);let res=null;
+    for(let attempt=0;attempt<30;attempt++){
+      const bTry=board.map(r=>r.map(c=>({...c})));
+      const resTry=puzzlePlaceChain(bTry,boardRows,boardCols,allWords,avail,chainLen,triggerRow,new Set(reservedCells));
+      if(resTry.ok){for(let r=0;r<boardRows;r++)for(let c=0;c<boardCols;c++)board[r][c]=bTry[r][c];resTry.myCells.forEach(cell=>reservedCells.add(cell));res=resTry;break;}
+    }
+    if(res)chains.push({chain:res.chain,triggerCol:res.triggerCol,triggerRow:res.triggerRow,triggerRowIdx:res.triggerRowIdx});
+  }
+  const triggerCols=new Set(chains.map(ch=>ch.triggerCol));
+  puzzleFillNeutrals(board,boardRows,boardCols,allWords,snDef.fillRatio,triggerCols);
+  const triggerKanaPool=[...new Set(allWords.map(w=>[...w.kana][1]).filter(Boolean))];
+  chains.forEach(ch=>{
+    const{triggerRowIdx,triggerCol}=ch;
+    if(board[triggerRowIdx][triggerCol].filled)return;
+    const buried=Array.from({length:triggerRowIdx},(_,r)=>r).some(r=>board[r][triggerCol].filled);
+    if(!buried)return;
+    const neutral=shuffle(triggerKanaPool).find(k=>{const tb=board.map(r=>r.map(c=>({...c})));tb[triggerRowIdx][triggerCol]={filled:true,char:k};return new SimState(tb,boardRows,boardCols,allWords).scanAll().length===0;});
+    if(neutral)board[triggerRowIdx][triggerCol]={filled:true,char:neutral};
+  });
+  const triggerCells=new Set(chains.map(ch=>`${ch.triggerRowIdx}-${ch.triggerCol}`));
+  return{board,chains,triggerCells};
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MENU MODE — nouveau sélecteur 1P / vsBot / 2P
+// ═══════════════════════════════════════════════════════════════════
+(()=>{
+  // Injecter l'overlay mode-select dans le DOM avant le menu principal
+  const modeOverlay=document.createElement('div');
+  modeOverlay.id='mode-overlay';
+  modeOverlay.style.cssText=`
+    position:fixed;inset:0;z-index:300;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,var(--bg-top) 0%,var(--bg-mid) 50%,var(--bg-bot) 100%);
+    gap:20px;padding:32px 24px;
+  `;
+  modeOverlay.innerHTML=`
+    <div style="font-family:'Fredoka One',cursive;font-size:clamp(22px,6vw,32px);color:var(--sky);text-align:center;letter-spacing:1px;">⚔️ Choisir le mode</div>
+    <div style="font-size:clamp(13px,3.5vw,16px);color:var(--text-dim);text-align:center;font-family:'Nunito',sans-serif;font-weight:700;">Solo, duel contre le CPU, ou 2 joueurs en local</div>
+    <div style="display:flex;flex-direction:column;gap:14px;width:100%;max-width:320px;">
+      <button id="mode-solo" style="
+        font-family:'Fredoka One',cursive;font-size:clamp(18px,5vw,24px);
+        background:linear-gradient(135deg,#00aaee,#2ed8a0);color:#fff;
+        border:none;border-radius:20px;padding:18px 24px;cursor:pointer;
+        box-shadow:0 6px 20px rgba(0,170,238,.35);
+        display:flex;align-items:center;gap:14px;
+        transition:transform .15s,box-shadow .15s;
+      ">
+        <span style="font-size:clamp(28px,8vw,38px)">🎮</span>
+        <div style="text-align:left">
+          <div>1 Joueur</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;opacity:.85">Mode solo classique</div>
+        </div>
+      </button>
+      <button id="mode-vsbot" style="
+        font-family:'Fredoka One',cursive;font-size:clamp(18px,5vw,24px);
+        background:linear-gradient(135deg,#a855f7,#4d96ff);color:#fff;
+        border:none;border-radius:20px;padding:18px 24px;cursor:pointer;
+        box-shadow:0 6px 20px rgba(168,85,247,.35);
+        display:flex;align-items:center;gap:14px;
+        transition:transform .15s,box-shadow .15s;
+      ">
+        <span style="font-size:clamp(28px,8vw,38px)">🤖</span>
+        <div style="text-align:left">
+          <div>1P vs CPU</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;opacity:.85">Duel contre le bot IA</div>
+        </div>
+      </button>
+      <button id="mode-2p" style="
+        font-family:'Fredoka One',cursive;font-size:clamp(18px,5vw,24px);
+        background:linear-gradient(135deg,#ff5fa0,#ff8c42);color:#fff;
+        border:none;border-radius:20px;padding:18px 24px;cursor:pointer;
+        box-shadow:0 6px 20px rgba(255,95,160,.35);
+        display:flex;align-items:center;gap:14px;
+        transition:transform .15s,box-shadow .15s;
+      ">
+        <span style="font-size:clamp(28px,8vw,38px)">👥</span>
+        <div style="text-align:left">
+          <div>2 Joueurs</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;opacity:.85">Duel local · Desktop uniquement</div>
+        </div>
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modeOverlay);
+
+  // Hover effect sur les boutons
+  ['mode-solo','mode-vsbot','mode-2p'].forEach(id=>{
+    const btn=document.getElementById(id);
+    btn.addEventListener('mouseenter',()=>{btn.style.transform='translateY(-2px) scale(1.02)';btn.style.boxShadow=btn.style.boxShadow.replace('rgba','rgba');});
+    btn.addEventListener('mouseleave',()=>{btn.style.transform='';});
+  });
+
+  document.getElementById('mode-solo').addEventListener('click',()=>{
+    gameMode='solo';
+    modeOverlay.style.display='none';
+    document.getElementById('menu-overlay').classList.remove('hidden');
+  });
+  document.getElementById('mode-vsbot').addEventListener('click',()=>{
+    gameMode='vsBot';
+    modeOverlay.style.display='none';
+    document.getElementById('menu-overlay').classList.remove('hidden');
+  });
+  document.getElementById('mode-2p').addEventListener('click',()=>{
+    gameMode='vs2p';
+    modeOverlay.style.display='none';
+    document.getElementById('menu-overlay').classList.remove('hidden');
+  });
+
+  // Masquer le menu principal au démarrage, afficher le mode selector
+  document.getElementById('menu-overlay').classList.add('hidden');
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+//  MENU NIVEAUX
+// ═══════════════════════════════════════════════════════════════════
 (()=>{
   const scroll=document.getElementById('lvl-scroll');
   ALL_LEVELS.forEach((lvl,i)=>{
@@ -676,659 +1274,1001 @@ document.getElementById('tuto-start-btn').addEventListener('click',()=>{
   document.getElementById('tuto-overlay').classList.add('hidden');
   startGame(pendingLevelIdx);
 });
-
 document.getElementById('puzzle-back-btn').addEventListener('click',()=>{
   document.getElementById('puzzle-overlay').classList.add('hidden');
   document.getElementById('menu-overlay').classList.remove('hidden');
 });
 
-/* ── sound ── */
-let audioCtx=null,muted=false;
-function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
-function playTone(freq,type,dur,vol=0.18,delay=0){if(muted)return;try{const ctx=getCtx(),osc=ctx.createOscillator(),g=ctx.createGain();osc.connect(g);g.connect(ctx.destination);osc.type=type;osc.frequency.value=freq;const t=ctx.currentTime+delay;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);osc.start(t);osc.stop(t+dur);}catch(e){}}
-const soundDrop=()=>playTone(260,'sine',.07,.12);
-const soundWord=()=>[523,659,784,1047].forEach((f,i)=>playTone(f,'sine',.18,.18,i*.07));
-const soundCombo=()=>{[523,659,784,1047,1319,1568].forEach((f,i)=>playTone(f,'sine',.22,.20,i*.055));setTimeout(()=>playTone(1568,'square',.28,.12),400);};
-const soundNewWord=()=>[440,554,659].forEach((f,i)=>playTone(f,'triangle',.18,.13,i*.08));
-const soundGameOver=()=>[440,370,311,261].forEach((f,i)=>playTone(f,'sawtooth',.20,.15,i*.13));
-const soundLevelUp=()=>[523,659,784,1047,784,1047,1319].forEach((f,i)=>playTone(f,'sine',.20,.20,i*.08));
-function screenShake(c=false){const sh=document.getElementById('shell');sh.classList.remove('shake','shake-combo');void sh.offsetWidth;sh.classList.add(c?'shake-combo':'shake');setTimeout(()=>sh.classList.remove('shake','shake-combo'),500);}
+// ═══════════════════════════════════════════════════════════════════
+//  FACTORY JOUEUR — createPlayer(id, dom)
+//  id   : 'p1' | 'p2'
+//  dom  : { boardEl, boardColEl, nextKanaEl, scoreEl, wordPanelEl,
+//           popupEl, comboBannerEl, encToastEl, streakEl, overlayEl }
+// ═══════════════════════════════════════════════════════════════════
+function createPlayer(id, dom) {
 
-const KANA_BASE='https://raw.githubusercontent.com/emmanuel971-source/hirakataquizz/main/';
-const kanaCache={};
-function playKanaSound(kana){if(muted)return;try{if(!kanaCache[kana])kanaCache[kana]=new Audio(KANA_BASE+encodeURIComponent(kana)+'.mp3');const a=kanaCache[kana].cloneNode();a.volume=.7;a.play().catch(()=>{});}catch(e){}}
+  // ── État interne ──
+  let ROWS = 12; // <-- AJOUTE CECI ICI
+  let board=[], active=null, nextChar='';
+  let score=0, streak=0, lastWordTime=0;
+  let activeWords=[], wordIntroIdx=0, foundRound=new Set(), kanaPool=[], lastKana='';
+  let gameRunning=false, dropTimer=null, DROP_SPEED=1400;
+  const DROP_MIN=600, DROP_STEP=25;
+  let resolvingWords=false, isLastCycle=false;
+  let LEVEL_WORDS_LOCAL=[];
 
-const ENCS=[{jp:'すごい！',fr:'Incroyable !'},{jp:'やった！',fr:'On l\'a eu !'},{jp:'完璧！',fr:'Parfait !'},{jp:'天才！',fr:'Génie !'},{jp:'最高！',fr:'Excellent !'}];
-const COMBO_ENCS=[{jp:'コンボ！すごい！',fr:'Combo incroyable !'},{jp:'連続！天才！',fr:'Enchaînement de génie !'},{jp:'最高のコンボ！',fr:'Combo parfait !'},{jp:'パーフェクト！',fr:'Parfait !'}];
-let encTimer=null;
-function showEncToast(isCombo){const pool=isCombo?COMBO_ENCS:ENCS;const enc=pool[Math.floor(Math.random()*pool.length)];const t=document.getElementById('enc-toast');t.querySelector('.enc-jp').textContent=enc.jp;t.querySelector('.enc-fr').textContent=enc.fr;t.className='';void t.offsetWidth;t.className='show';clearTimeout(encTimer);encTimer=setTimeout(()=>t.className='',2300);}
-if(window.speechSynthesis)window.speechSynthesis.getVoices();
-function speakWord(kana,isCombo){if(muted||!window.speechSynthesis)return;window.speechSynthesis.cancel();const voices=window.speechSynthesis.getVoices();const jv=voices.find(v=>v.lang&&v.lang.startsWith('ja'))||null;const u=new SpeechSynthesisUtterance(kana);u.lang='ja-JP';u.rate=.85;u.pitch=isCombo?1.25:1.05;u.volume=.9;if(jv)u.voice=jv;window.speechSynthesis.speak(u);if(isCombo){const enc=COMBO_ENCS[Math.floor(Math.random()*COMBO_ENCS.length)];const u2=new SpeechSynthesisUtterance(enc.jp);u2.lang='ja-JP';u2.rate=1.05;u2.pitch=1.35;u2.volume=.85;if(jv)u2.voice=jv;window.speechSynthesis.speak(u2);showEncToast(true);}}
+  // ── Puzzle ──
+  let puzzleMode=false, puzzleBoard=null, puzzleChains=[], puzzleChainsResolved=new Set();
+  let puzzleSNDef=null, puzzleTriggerCells=new Set(), puzzleWordsFound=new Set();
 
-const P_COLORS=['#00c8e8','#5cb85c','#e8833a','#c4a8ff','#72e8b8','#ffaa7a'];
-function spawnParticles(cellEl,count=12){if(!cellEl)return;const rect=cellEl.getBoundingClientRect();const bRect=document.getElementById('board-col').getBoundingClientRect();const cx=rect.left-bRect.left+rect.width/2;const cy=rect.top-bRect.top+rect.height/2;const container=document.getElementById('board-col');for(let i=0;i<count;i++){const p=document.createElement('div');p.className='particle';const sz=Math.random()*7+3;const angle=(Math.PI*2/count)*i+Math.random()*.5;const dist=Math.random()*50+22;const col=P_COLORS[Math.floor(Math.random()*P_COLORS.length)];const dur=(Math.random()*.3+.4).toFixed(2)+'s';p.style.cssText=`width:${sz}px;height:${sz}px;left:${cx-sz/2}px;top:${cy-sz/2}px;background:${col};--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist-16}px;--dur:${dur};box-shadow:0 0 ${sz}px ${col};`;container.appendChild(p);setTimeout(()=>p.remove(),900);}}
+  // ── Encart toast timer ──
+  let encTimer=null;
 
-const KANA_COLORS = {
-  'あ':'#FFD6A5','い':'#CAFFBF','う':'#A0C4FF','え':'#FFB3C6','お':'#BDE0FE',
-  'か':'#FDFFB6','き':'#B9FBC0','く':'#A2D2FF','け':'#FFAFCC','こ':'#CDB4DB',
-  'さ':'#FFC8DD','し':'#CBFFA9','す':'#ADE8F4','せ':'#FFE5A0','そ':'#C8E6C9',
-  'た':'#FFD7BA','ち':'#B5EAD7','つ':'#B8D8FF','て':'#FFDDD2','と':'#D4F0C0',
-  'な':'#FFC6FF','に':'#A0FFD6','ぬ':'#BAD7F2','ね':'#FFCFD2','の':'#E2F0CB',
-  'は':'#FFF1A8','ひ':'#B5F5EC','ふ':'#C3DDFD','へ':'#FFD6D6','ほ':'#D5EAFF',
-  'ま':'#FFE2B7','み':'#C3FAC3','む':'#BFDBFE','め':'#FFBBD2','も':'#D8F3DC',
-  'や':'#FFEAA7','ゆ':'#A8F0E8','よ':'#C6E2FF',
-  'ら':'#FFD3B6','り':'#BAFFD8','る':'#B6CCFE','れ':'#FFD6E0','ろ':'#D9F3EE',
-  'わ':'#FFF3CD','ゐ':'#C0F0C0','ゑ':'#C0D8FF','を':'#FFD0D0','ん':'#E8CBFF',
-  'ア':'#FFD6A5','イ':'#CAFFBF','ウ':'#A0C4FF','エ':'#FFB3C6','オ':'#BDE0FE',
-  'ラ':'#FFD3B6','リ':'#BAFFD8','ル':'#B6CCFE','レ':'#FFD6E0','ロ':'#D9F3EE',
-  'ン':'#E8CBFF','ー':'#F0F0F0',
-  'サ':'#FFC8DD','ッ':'#FFF1A8','カ':'#FDFFB6','ビ':'#C3DDFD','コ':'#CDB4DB',
-  'が':'#F0FFB0','ぎ':'#B0FFC0','ぐ':'#B0D8FF','げ':'#FFB0C8','ご':'#C0B0E8',
-  'ざ':'#FFB0D0','じ':'#C0FFA0','ず':'#A0E0F4','ぜ':'#FFD8A0','ぞ':'#B0E0C0',
-  'だ':'#FFD0B0','ぢ':'#A8E8D0','づ':'#B0D0FF','で':'#FFD0C0','ど':'#C8F0B0',
-  'ば':'#FFE8A8','び':'#A8F0E8','ぶ':'#B8D8FF','べ':'#FFB8C8','ぼ':'#C8D8FF',
-  'ぱ':'#FFD0D8','ぴ':'#D0FFD0','ぷ':'#C8ECFF','ぺ':'#FFD0E8','ぽ':'#D8E8FF',
-};
-const DEFAULT_KANA_BG='#F0F0F0';
-function kanaBg(char){return KANA_COLORS[char]||DEFAULT_KANA_BG;}
+  // ── DOM helpers ──
+  const gc=(r,c)=>dom.boardEl.querySelector(`[data-r="${r}"][data-c="${c}"]`);
 
-const COLS=8;let ROWS=12,board=[],active=null,nextChar='';
-let score=0,streak=0,lastWordTime=0;
-let activeWords=[],wordIntroIdx=0,foundRound=new Set(),kanaPool=[];
-let gameRunning=false,dropTimer=null,DROP_SPEED=1400;
-const DROP_MIN=600,DROP_STEP=25;
+  // ── Calcul ROWS ──
+function calcRows(){
+    const panH = dom.wordPanelEl.offsetHeight || 0;
+    const avail = (window.innerHeight || document.documentElement.clientHeight) - panH;
 
-/* ══════════════════════════════════════════════
-   DERNIER CYCLE — variable d'état + mise à jour
-   ══════════════════════════════════════════════ */
-let isLastCycle = false; // true dès que tous les mots ont été introduits
+    // On restaure ton étalon max 480px, même en mode Battle sur grand écran !
+    // Cela sert juste de référence pour calculer un nombre de lignes cohérent.
+    const screenW = Math.min(window.innerWidth, 480);
+    const cellW = Math.floor(screenW * 0.75 / COLS);
 
-/**
- * Met à jour les classes CSS validated / pending sur chaque ligne de mot.
- * N'applique les couleurs QUE pendant le dernier cycle.
- * En dehors du dernier cycle, retire toutes les classes de couleur.
- */
-function updateWordRowColors() {
-  if (!isLastCycle) {
-    // Avant le dernier cycle : retirer toutes les classes de statut, rien d'autre
-    activeWords.forEach(w => {
-      const row = document.getElementById('wr-' + w.kana);
-      if (row) row.classList.remove('validated', 'pending', 'last-one');
-    });
-    return;
+    // On calcule ROWS. Le min 8 évite de casser le jeu si la fenêtre est minuscule.
+    ROWS = Math.max(8, Math.floor(avail / cellW));
   }
 
-  // Compter combien de mots sont encore en attente
-  const pendingCount = activeWords.filter(w => !foundRound.has(w.kana)).length;
+  function rebuildPool(){
+    const introduced=LEVEL_WORDS_LOCAL.slice(0,wordIntroIdx);
+    kanaPool=introduced.flatMap(w=>[...w.kana]);
+    const unique=[...new Set(kanaPool)];
+    const activeChars=new Set(activeWords.flatMap(w=>[...w.kana]));
+    kanaPool=unique.flatMap(ch=>activeChars.has(ch)?[ch,ch]:[ch]);
+  }
 
-  activeWords.forEach(w => {
-    const row = document.getElementById('wr-' + w.kana);
-    if (!row) return;
+  function rndKana(){
+    if(!kanaPool.length)return'あ';
+    const pool=kanaPool.length>1?kanaPool.filter(k=>k!==lastKana):kanaPool;
+    const k=pool[Math.floor(Math.random()*pool.length)];
+    lastKana=k;return k;
+  }
 
-    row.classList.remove('validated', 'pending', 'last-one');
+  function initBoard(){
+    board=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));
+  }
 
-    if (foundRound.has(w.kana)) {
-      row.classList.add('validated');
+  function buildDOM(){
+    dom.boardEl.innerHTML='';
+    dom.boardEl.style.gridTemplateRows=`repeat(${ROWS},1fr)`;
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      const d=document.createElement('div');
+      d.className='cell empty';d.dataset.r=r;d.dataset.c=c;
+      dom.boardEl.appendChild(d);
+    }
+    // En mode battle : contraindre la largeur du board-col pour avoir des cellules carrées
+    if(dom.boardColEl && dom.boardColEl.classList.contains('arena-board-col')){
+      _fitBattleBoard();
+    }
+  }
+
+function _fitBattleBoard(){
+    if(!dom.boardColEl) return;
+    const arenaEl = dom.boardColEl.closest('.player-arena');
+    if(!arenaEl) return;
+    
+    const arenaH = arenaEl.offsetHeight || window.innerHeight;
+    const wpH = dom.wordPanelEl.offsetHeight || 0;
+    const boardH = arenaH - wpH;
+    
+    // La hauteur de la case dépend du ROWS dynamique fraîchement calculé
+    const cellH = Math.floor(boardH / ROWS);
+    const boardW = cellH * COLS;
+    
+    if(dom.gameStackEl){
+      dom.gameStackEl.style.width = boardW + 'px';
     } else {
-      row.classList.add('pending');
-      // Pulse urgent uniquement quand c'est le DERNIER mot restant
-      if (pendingCount === 1) {
-        row.classList.add('last-one');
+      dom.boardColEl.style.width = boardW + 'px';
+    }
+    
+    dom.boardColEl.style.flex = 'none';
+    dom.boardColEl.style.height = (cellH * ROWS) + 'px';
+    
+    const fs = Math.max(11, Math.floor(cellH * 0.55));
+    dom.boardEl.style.setProperty('--battle-cell-fs', fs + 'px');
+  }
+
+  function rebuildDOMKeepContent(){
+    const old=board.length;
+    const ob=board.map(row=>row.map(c=>({...c})));
+    calcRows();
+    const nb=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));
+    const copy=Math.min(ROWS,old);
+    for(let r=0;r<copy;r++)nb[ROWS-1-r]=ob[old-1-r].map(c=>({...c}));
+    board=nb;buildDOM();
+  }
+
+  // ── Rendu ──
+  function ghostY(){
+    if(!active)return -1;
+    let g=active.y;
+    while(g+1<ROWS&&!board[g+1][active.x].filled)g++;
+    return g;
+  }
+
+  function render(){
+    const gy=ghostY();
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      const el=gc(r,c);
+      if(!el||el.classList.contains('flash')||el.classList.contains('combo-flash')||el.classList.contains('land'))continue;
+      const isTrig=puzzleMode&&puzzleTriggerCells&&puzzleTriggerCells.has(`${r}-${c}`);
+      if(active&&r===active.y&&c===active.x){
+        el.className='cell active';el.textContent=active.char;el.style.background=kanaBg(active.char);
+      }else if(active&&r===gy&&c===active.x&&gy!==active.y){
+        el.className='cell ghost';el.textContent=active.char;el.style.background='';
+        if(isTrig)el.classList.add('puzzle-trigger');
+      }else if(board[r][c].filled){
+        el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);
+        if(isTrig)el.classList.add('puzzle-trigger');
+      }else{
+        el.className='cell empty';el.textContent='';el.style.background='';
+        if(isTrig)el.classList.add('puzzle-trigger');
       }
     }
-  });
-}
-
-function increaseSpeed(){DROP_SPEED=Math.max(DROP_MIN,DROP_SPEED-DROP_STEP);if(active&&gameRunning)startTimer();}
-let resolvingWords=false;
-function safeSpawn(){resolvingWords=false;if(!gameRunning)return;spawn();}
-
-function calcRows(){const panH=document.getElementById('word-panel').offsetHeight||0;const avail=(window.innerHeight||document.documentElement.clientHeight)-panH;const screenW=Math.min(window.innerWidth,480);const cellW=Math.floor(screenW*.75/COLS);ROWS=Math.max(8,Math.floor(avail/cellW));}
-function rebuildPool(){const introduced=LEVEL_WORDS.slice(0,wordIntroIdx);kanaPool=introduced.flatMap(w=>[...w.kana]);const unique=[...new Set(kanaPool)];const activeChars=new Set(activeWords.flatMap(w=>[...w.kana]));kanaPool=unique.flatMap(ch=>activeChars.has(ch)?[ch,ch]:[ch]);}
-let lastKana='';
-function rndKana(){if(!kanaPool.length)return'あ';const pool=kanaPool.length>1?kanaPool.filter(k=>k!==lastKana):kanaPool;const k=pool[Math.floor(Math.random()*pool.length)];lastKana=k;return k;}
-function initBoard(){board=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));}
-function buildDOM(){const el=document.getElementById('board');el.innerHTML='';el.style.gridTemplateRows=`repeat(${ROWS},1fr)`;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const d=document.createElement('div');d.className='cell empty';d.dataset.r=r;d.dataset.c=c;el.appendChild(d);}}
-function rebuildDOMKeepContent(){const old=board.length;const ob=board.map(row=>row.map(c=>({...c})));calcRows();const nb=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));const copy=Math.min(ROWS,old);for(let r=0;r<copy;r++)nb[ROWS-1-r]=ob[old-1-r].map(c=>({...c}));board=nb;buildDOM();}
-const gc=(r,c)=>document.querySelector(`#board [data-r="${r}"][data-c="${c}"]`);
-
-function spawn(){active={char:nextChar||rndKana(),x:Math.floor(COLS/2),y:0};playKanaSound(active.char);nextChar=rndKana();const nk=document.getElementById('next-kana');nk.textContent=nextChar;nk.className='';void nk.offsetWidth;nk.className='pop';nk.style.background=kanaBg(nextChar);nk.style.color='#1a1040';if(board[0][active.x].filled){endGame();return;}render();startTimer();}
-function ok(x,y){return x>=0&&x<COLS&&y>=0&&y<ROWS&&!board[y][x].filled;}
-function startTimer(){clearInterval(dropTimer);dropTimer=setInterval(tick,DROP_SPEED);}
-function tick(){if(!gameRunning||resolvingWords||!active)return;ok(active.x,active.y+1)?(active.y++,render()):lock();}
-function lock(){if(!active||resolvingWords)return;clearInterval(dropTimer);resolvingWords=true;board[active.y][active.x]={filled:true,char:active.char};if(puzzleMode&&puzzleTriggerCells)puzzleTriggerCells.delete(`${active.y}-${active.x}`);const pr=active.y,pc=active.x;
-const el=gc(pr,pc);if(el){el.className='cell filled land';el.textContent=active.char;el.style.background=kanaBg(active.char);setTimeout(()=>el.classList.remove('land'),380);}active=null;soundDrop();render();checkWords(pr,pc);}
-function hardDrop(){if(!active||!gameRunning||resolvingWords)return;while(ok(active.x,active.y+1))active.y++;screenShake(false);render();lock();}
-
-function checkWords(pr,pc){const found=scanRowCol(pr,pc);if(!found.length){safeSpawn();return;}processCascade(found,false);}
-function scanRowCol(r,c){const found=[];scanLine(Array.from({length:COLS},(_,cc)=>({r,c:cc})),found);scanLine(Array.from({length:ROWS},(_,rr)=>({r:rr,c})),found);return found;}
-function scanFullBoard(){const found=[];for(let r=0;r<ROWS;r++)scanLine(Array.from({length:COLS},(_,c)=>({r,c})),found);for(let c=0;c<COLS;c++)scanLine(Array.from({length:ROWS},(_,r)=>({r,c})),found);return found;}
-function scanLine(cells,found){const line=cells.map(({r,c})=>board[r][c].filled?board[r][c].char:'\x00').join('');activeWords.forEach(w=>{let i=line.indexOf(w.kana);while(i!==-1){const key=cells.slice(i,i+w.kana.length).map(cc=>`${cc.r},${cc.c}`).join('|');if(!found.some(f=>f.key===key)){found.push({word:w,cells:Array.from({length:w.kana.length},(_,j)=>cells[i+j]),key});}i=line.indexOf(w.kana,i+1);}});}
-
-function processCascade(found,isCascade){
-  const isCombo=found.length>=2;
-  const cellSet=new Set();found.forEach(f=>f.cells.forEach(cell=>cellSet.add(`${cell.r},${cell.c}`)));
-  const flashEls=[];cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);const el=gc(r,c);if(el){el.classList.add(isCombo?'combo-flash':'flash');flashEls.push(el);}});
-  if(flashEls.length)spawnParticles(flashEls[Math.floor(flashEls.length/2)],isCombo?20:12);
-  if(flashEls.length){
-    const el=flashEls[Math.floor(flashEls.length/2)];
-    const rect=el.getBoundingClientRect();
-    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
-    const isBoss=found.some(f=>f.word.boss);
-    burst(cx,cy,isBoss?32:isCombo?24:16,isBoss?'boss':isCombo?'combo':'normal');
-  }
-  let pts=0;found.forEach(f=>{pts+=f.word.kana.length*100*(f.word.mult||1);f.word.mult=(f.word.mult||1)+1;foundRound.add(f.word.kana);});
-  const now=Date.now();if(now-lastWordTime<4000)streak++;else streak=1;lastWordTime=now;
-  if(streak>1)pts=Math.round(pts*(1+streak*.08));
-  score+=pts;increaseSpeed();
-  if(isCascade){soundCombo();screenShake(true);}else{isCombo?(soundCombo(),screenShake(true)):soundWord();}
-  showPopup(found[0].word,pts,isCombo||isCascade);
-  setTimeout(()=>speakWord(found[0].word.kana,isCombo||isCascade),850);
-  const barDone=new Set();found.forEach(f=>{if(!barDone.has(f.word.kana)){flashBar(f.word.kana,isCombo||isCascade);barDone.add(f.word.kana);}});
-  updateMults();updateScore();updateStreak();
-
-  // ── Mise à jour des couleurs de statut ──
-  updateWordRowColors();
-  // ── Mode puzzle : vérifier si une chaîne est complète ──
-  if(puzzleMode) puzzleCheckChains();
-
-  setTimeout(()=>{
-    cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);board[r][c]={filled:false,char:''};const el=gc(r,c);if(el){el.className='cell empty';el.textContent='';}});
-    gravity();render();
-    if(puzzleMode) puzzleMarkTriggers();
-    const cf=scanFullBoard();if(cf.length){setTimeout(()=>processCascade(cf,true),300);return;}
-    const allDone=activeWords.every(w=>foundRound.has(w.kana));
-    if(allDone){
-      if(puzzleMode) return; // victoire gérée par puzzleCheckChains
-      if(wordIntroIdx>=LEVEL_WORDS.length)setTimeout(levelDone,400);else introNext();
-    }else safeSpawn();
-  },820);
-}
-
-function gravity(){for(let c=0;c<COLS;c++){const ch=[];for(let r=ROWS-1;r>=0;r--)if(board[r][c].filled)ch.push(board[r][c].char);for(let r=ROWS-1;r>=0;r--)board[r][c]=ch.length?{filled:true,char:ch.shift()}:{filled:false,char:''};}}
-
-function introNext(){
-  if(wordIntroIdx>=LEVEL_WORDS.length)return;
-  const w=LEVEL_WORDS[wordIntroIdx++];
-  w.mult=1;
-  activeWords.push(w);
-  foundRound=new Set();
-
-  // Détecter si on entre dans le dernier cycle
-  // (tous les mots introduits = wordIntroIdx === LEVEL_WORDS.length)
-  if(wordIntroIdx>=LEVEL_WORDS.length){
-    isLastCycle=true;
   }
 
-  rebuildPool();soundNewWord();renderPanel();
-}
+  // ── Score / streak ──
+  function updateScore(){
+    dom.scoreEl.textContent=score.toLocaleString();
+    dom.scoreEl.classList.remove('bump');void dom.scoreEl.offsetWidth;dom.scoreEl.classList.add('bump');
+  }
+  function updateStreak(){
+    if(streak>=2){dom.streakEl.style.display='block';dom.streakEl.textContent='🔥'.repeat(Math.min(streak,5))+' ×'+streak;}
+    else dom.streakEl.style.display='none';
+  }
 
-function ghostY(){if(!active)return -1;let g=active.y;while(g+1<ROWS&&!board[g+1][active.x].filled)g++;return g;}
-function render(){const gy=ghostY();for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const el=gc(r,c);if(!el||el.classList.contains('flash')||el.classList.contains('combo-flash')||el.classList.contains('land'))continue;const isTrig=puzzleMode&&puzzleTriggerCells&&puzzleTriggerCells.has(`${r}-${c}`);if(active&&r===active.y&&c===active.x){el.className='cell active';el.textContent=active.char;el.style.background=kanaBg(active.char);}else if(active&&r===gy&&c===active.x&&gy!==active.y){el.className='cell ghost';el.textContent=active.char;el.style.background='';if(isTrig)el.classList.add('puzzle-trigger');}else if(board[r][c].filled){el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);if(isTrig)el.classList.add('puzzle-trigger');}else{el.className='cell empty';el.textContent='';el.style.background='';if(isTrig)el.classList.add('puzzle-trigger');}}}
-function updateScore(){const el=document.getElementById('score-val');el.textContent=score.toLocaleString();el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');}
-function updateStreak(){const el=document.getElementById('streak');if(streak>=2){el.style.display='block';el.textContent='🔥'.repeat(Math.min(streak,5))+' ×'+streak;}else el.style.display='none';}
+  // ── Word panel ──
+  function updateWordRowColors(){
+    if(!isLastCycle){
+      activeWords.forEach(w=>{const row=dom.wordPanelEl.querySelector('#wr-'+w.kana);if(row)row.classList.remove('validated','pending','last-one');});
+      return;
+    }
+    const pendingCount=activeWords.filter(w=>!foundRound.has(w.kana)).length;
+    activeWords.forEach(w=>{
+      const row=dom.wordPanelEl.querySelector('#wr-'+w.kana);
+      if(!row)return;
+      row.classList.remove('validated','pending','last-one');
+      if(foundRound.has(w.kana)){row.classList.add('validated');}
+      else{row.classList.add('pending');if(pendingCount===1)row.classList.add('last-one');}
+    });
+  }
+
+  function updateMults(){
+    activeWords.forEach(w=>{
+      const el=dom.wordPanelEl.querySelector('#wm-'+w.kana);
+      if(!el)return;
+      el.textContent='×'+w.mult;el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');
+    });
+  }
+
+  function flashBar(kana,isCombo){
+    const row=dom.wordPanelEl.querySelector('#wr-'+kana);
+    if(!row)return;
+    row.classList.remove('bar-flash','bar-combo');void row.offsetWidth;
+    row.classList.add(isCombo?'bar-combo':'bar-flash');
+    setTimeout(()=>row.classList.remove('bar-flash','bar-combo'),650);
+  }
 
 function renderPanel(){
-  const p=document.getElementById('word-panel');
-  p.innerHTML='';
-  activeWords.forEach(w=>{
-    const row=document.createElement('div');
-    row.className='word-row'+(w.boss?' boss':'');
-    row.id='wr-'+w.kana;
-    row.innerHTML=`<div class="wr-emoji">${w.emoji}</div><div class="wr-info"><span class="wr-kana">${w.kana}</span><span class="wr-romaji">${w.romaji}</span><span class="wr-meaning">${w.meaning}</span></div><div class="wr-mult" id="wm-${w.kana}">×${w.mult||1}</div>`;
-    p.appendChild(row);
-  });
-  // Appliquer les couleurs de statut après injection dans le DOM
-  updateWordRowColors();
-  if(puzzleMode){
-    // En mode puzzle, ne pas reconstruire le DOM (ça écraserait le plateau)
-    // Juste spawner si le jeu tourne
-    if(gameRunning) setTimeout(()=>safeSpawn(),350);
-    return;
-  }
-  requestAnimationFrame(()=>{rebuildDOMKeepContent();render();setTimeout(()=>safeSpawn(),350);});
-}
-
-function updateMults(){activeWords.forEach(w=>{const el=document.getElementById('wm-'+w.kana);if(!el)return;el.textContent='×'+w.mult;el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');});}
-function flashBar(kana,isCombo){const row=document.getElementById('wr-'+kana);if(!row)return;row.classList.remove('bar-flash','bar-combo');void row.offsetWidth;row.classList.add(isCombo?'bar-combo':'bar-flash');setTimeout(()=>row.classList.remove('bar-flash','bar-combo'),650);}
-
-let popTimer=null;
-function showPopup(word,pts,isCombo){const p=document.getElementById('word-popup');p.querySelector('.wp-emoji').textContent=word.emoji;p.querySelector('.wp-kana').textContent=word.kana;p.querySelector('.wp-romaji').textContent=word.romaji;p.querySelector('.wp-meaning').textContent=word.meaning;p.querySelector('.wp-pts').textContent=(isCombo?'🌸 COMBO ! ':'')+(streak>1?'🔥×'+streak+' ':'')+'+'+pts+' pts';p.className=isCombo?'combo show':'show';void p.offsetWidth;if(isCombo){const b=document.getElementById('combo-banner');const maxM=Math.max(...activeWords.map(w=>w.mult||1));b.textContent='🌸 COMBO ×'+maxM;b.className='show';void b.offsetWidth;setTimeout(()=>b.className='',1700);}clearTimeout(popTimer);popTimer=setTimeout(()=>p.className='',2100);}
-
-function showOverlay({title,sub,words=[],btn1,act1,btn2=null,act2=null}){clearInterval(dropTimer);gameRunning=false;document.getElementById('ov-title').innerHTML=title;document.getElementById('ov-sub').innerHTML=sub;const ow=document.getElementById('ov-words');ow.innerHTML='';words.forEach(w=>{const d=document.createElement('div');d.className='ov-word';d.innerHTML=`<span class="ow-emoji">${w.emoji}</span><span class="ow-kana">${w.kana}</span><div class="ow-sub">${w.romaji} · ${w.meaning}</div>`;ow.appendChild(d);});const b1=document.getElementById('ov-btn');b1.textContent=btn1;b1.onclick=act1;const b2=document.getElementById('ov-btn2');if(btn2){b2.textContent=btn2;b2.onclick=act2;b2.style.display='';}else b2.style.display='none';document.getElementById('ov-lvlsel').onclick=showMenu;document.getElementById('board-overlay').classList.remove('hidden');}
-function hideOverlay(){document.getElementById('board-overlay').classList.add('hidden');}
-function showMenu(){clearInterval(dropTimer);gameRunning=false;resolvingWords=false;hideOverlay();document.getElementById('tuto-overlay').classList.add('hidden');document.getElementById('menu-overlay').classList.remove('hidden');}
-
-// ═══════════════════════════════════════════════════════
-//  ⚡ MOTEUR PUZZLE
-// ═══════════════════════════════════════════════════════
-
-const PUZZLE_SN_DEFS=[
-  {num:1,stars:'⭐',    label:'Initiation',   desc:'1 chaîne de 2 mots · Plateau vide',
-   chains:[{chainLen:2,triggerRow:1}], fillRatio:0.0},
-
-  {num:2,stars:'⭐⭐',   label:'Apprentissage',desc:'1 chaîne de 3 mots · Quelques neutres',
-   chains:[{chainLen:3,triggerRow:1}], fillRatio:0.10},
-
-  {num:3,stars:'⭐⭐⭐',  label:'Intermédiaire',desc:'2 chaînes de 2 mots · Profondeur variable',
-   chains:[{chainLen:2,triggerRow:1},{chainLen:2,triggerRow:2}], fillRatio:0.20},
-
-  {num:4,stars:'⭐⭐⭐⭐', label:'Avancé',       desc:'2 chaînes de 2 mots · Plateau plus rempli',
-   chains:[{chainLen:2,triggerRow:2},{chainLen:2,triggerRow:3}], fillRatio:0.30},
-
-  {num:5,stars:'⭐⭐⭐⭐⭐',label:'Maîtrise',    desc:'3 chaînes (2+2+3) · Seule 1 en surface !',
-   chains:[{chainLen:2,triggerRow:1},{chainLen:2,triggerRow:3},{chainLen:3,triggerRow:4}], fillRatio:0.40},
-];
-
-let puzzleMode=false;
-let puzzleBoard=null; // plateau initial précalculé
-let puzzleChains=[]; // [{chain, triggerCol}] pour le suivi
-let puzzleChainsResolved=new Set(); // index des chaînes résolues
-let puzzleSNDef=null;
-let puzzleTriggerCells=new Set(); // cases trigger à signaler visuellement
-
-function shuffle(a){return [...a].sort(()=>Math.random()-.5);}
-
-function puzzleLevelKanas(levelWords){
-  return [...new Set(levelWords.flatMap(w=>[...w.kana]))];
-}
-
-// ── Remplir les cases vides sous un kana avec des neutres valides ──
-function puzzleFillColumnBelow(board,bRows,bCols,allWords,col,fromRowIdx,reservedCells){
-  const allKanas=puzzleLevelKanas(allWords);
-  const maxRowIdx=Math.floor(bRows/2); // limite : moitié basse seulement (lignes jeu 1..ROWS/2)
-  for(let rowIdx=fromRowIdx+1;rowIdx<bRows;rowIdx++){
-    if(rowIdx<maxRowIdx) continue; // ne pas dépasser la moitié haute
-    if(board[rowIdx][col].filled) continue;
-    if(reservedCells&&reservedCells.has(`${rowIdx}-${col}`)) continue;
-    const kana=shuffle(allKanas).find(k=>{
-      const tb=board.map(r=>r.map(c=>({...c})));
-      tb[rowIdx][col]={filled:true,char:k};
-      return new SimState(tb,bRows,bCols,allWords).scanAll().length===0;
-    });
-    if(kana) board[rowIdx][col]={filled:true,char:kana};
-  }
-}
-
-// ── Placement d'une chaîne sur le board ──
-// triggerRow : ligne jeu (1=fond) où le joueur doit poser kana(0)
-// reservedCells : Set de "rowIdx-col" déjà occupées par d'autres chaînes
-function puzzlePlaceChain(board,bRows,bCols,allWords,availWords,chainLen,triggerRow,reservedCells){
-  const needed=chainLen+1;
-  const triggerRowIdx=bRows-triggerRow;
-
-  if(triggerRowIdx<1||triggerRowIdx>=bRows) return{ok:false,reason:'triggerRow hors grille'};
-  if(chainLen>1&&triggerRowIdx-1<0) return{ok:false,reason:'Pas de place pour les mobiles'};
-
-  // Trouver les positions de départ possibles
-  // Une position est valide si aucune des cases requises n'est dans reservedCells
-  const possibleStarts=[];
-  for(let t=0;t<=bCols-needed;t++){
-    let conflict=false;
-    // Cases k1 (triggerRowIdx, t+1..t+chainLen)
-    for(let i=0;i<chainLen;i++){
-      if(reservedCells.has(`${triggerRowIdx}-${t+1+i}`)){conflict=true;break;}
-    }
-    // Cases k0 mobiles (triggerRowIdx-1, t+1..t+chainLen-1)
-    if(!conflict&&chainLen>1){
-      for(let i=1;i<chainLen;i++){
-        if(reservedCells.has(`${triggerRowIdx-1}-${t+i}`)){conflict=true;break;}
-      }
-    }
-    // Case trigger (triggerRowIdx, t) - doit aussi être libre
-    if(!conflict&&reservedCells.has(`${triggerRowIdx}-${t}`)) conflict=true;
-    if(!conflict) possibleStarts.push(t);
-  }
-  if(!possibleStarts.length) return{ok:false,reason:'Pas de position libre'};
-  const triggerCol=possibleStarts[Math.floor(Math.random()*possibleStarts.length)];
-
-  const words=shuffle(availWords).slice(0,chainLen);
-  if(words.length<chainLen) return{ok:false,reason:'Pas assez de mots'};
-
-  // Placer k1 de chaque mot sur triggerRowIdx
-  for(let i=0;i<chainLen;i++){
-    const w=words[i];
-    const kanas=[...w.kana];
-    const anchorCol=triggerCol+1+i;
-    if(board[triggerRowIdx][anchorCol].filled) return{ok:false,reason:`Ancre occupée col ${anchorCol}`};
-    board[triggerRowIdx][anchorCol]={filled:true,char:kanas[1]};
-    // k0 des mots 2+ (mobiles) une ligne au-dessus
-    if(i>0){
-      const mobileRowIdx=triggerRowIdx-1;
-      if(mobileRowIdx<0||board[mobileRowIdx][triggerCol+i].filled) return{ok:false,reason:'Mobile impossible'};
-      board[mobileRowIdx][triggerCol+i]={filled:true,char:kanas[0]};
-    }
-  }
-
-  // Validation : aucun mot prématuré
-  if(new SimState(board,bRows,bCols,allWords).scanAll().length>0) return{ok:false,reason:'Mot prématuré'};
-
-  // Collecter les cases occupées par cette chaîne pour les transmettre
-  const myCells=new Set();
-  myCells.add(`${triggerRowIdx}-${triggerCol}`); // case trigger
-  for(let i=0;i<chainLen;i++){
-    myCells.add(`${triggerRowIdx}-${triggerCol+1+i}`); // k1
-    if(i>0) myCells.add(`${triggerRowIdx-1}-${triggerCol+i}`); // k0 mobiles
-  }
-
-  // Remplir les cases vides sous chaque kana (sans écraser les cases réservées)
-  puzzleFillColumnBelow(board,bRows,bCols,allWords,triggerCol,triggerRowIdx,reservedCells);
-  for(let i=0;i<chainLen;i++){
-    puzzleFillColumnBelow(board,bRows,bCols,allWords,triggerCol+1+i,triggerRowIdx,reservedCells);
-  }
-  for(let i=1;i<chainLen;i++){
-    puzzleFillColumnBelow(board,bRows,bCols,allWords,triggerCol+i,triggerRowIdx-1,reservedCells);
-  }
-
-  return{ok:true,chain:words,triggerCol,triggerRow,triggerRowIdx,myCells};
-}
-// ── Placement d'un neutre (sans former de mot) ──
-function puzzlePlaceOneNeutral(board,ROWS,COLS,allWords,levelKanas,preferCols){
-  const cols=preferCols&&preferCols.length?preferCols:shuffle(Array.from({length:COLS},(_,i)=>i));
-  for(const col of cols){
-    for(const kana of shuffle(levelKanas)){
-      const testBoard=board.map(r=>r.map(c=>({...c})));
-      const tmp=new SimState(testBoard,ROWS,COLS,[]);
-      const row=tmp.drop(kana,col);
-      if(row===false) continue;
-      testBoard[row][col]={filled:true,char:kana};
-      if(new SimState(testBoard,ROWS,COLS,allWords).scanAll().length===0){
-        const real=new SimState(board,ROWS,COLS,[]);
-        const realRow=real.drop(kana,col);
-        if(realRow!==false){board[realRow][col]={filled:true,char:kana};return true;}
-      }
-    }
-  }
-  return false;
-}
-
-// ── Remplissage neutres quota ──
-function puzzleFillNeutrals(board,bRows,bCols,allWords,fillRatio,excludeCols=new Set()){
-  const levelKanas=puzzleLevelKanas(allWords);
-  const maxRow=Math.floor(bRows/2); // neutres limités à la moitié haute
-  let occupied=0;
-  for(let r=0;r<bRows;r++)for(let c=0;c<bCols;c++)if(board[r][c].filled)occupied++;
-  const totalCells=bRows*bCols;
-  const target=Math.floor(totalCells*fillRatio);
-  const toAdd=Math.max(0,target-occupied);
-  let placed=0,attempts=0;
-  while(placed<toAdd&&attempts<toAdd*20){
-    attempts++;
-    const col=Math.floor(Math.random()*bCols);
-    if(excludeCols.has(col)) continue;
-    const kana=levelKanas[Math.floor(Math.random()*levelKanas.length)];
-    const tmp=new SimState(board,bRows,bCols,[]);
-    const row=tmp.drop(kana,col);
-    // Refuser si le neutre atterrit dans la moitié basse (là où sont les chaînes)
-    if(row===false||row<=maxRow) continue;
-    const testBoard=board.map(r=>r.map(c=>({...c})));
-    testBoard[row][col]={filled:true,char:kana};
-    if(new SimState(testBoard,bRows,bCols,allWords).scanAll().length===0){
-      board[row][col]={filled:true,char:kana};placed++;
-    }
-  }
-}
-
-// ── Générer un sous-niveau complet ──
-function puzzleGenerate(levelIdx,snDef){
-  const allWords=ALL_LEVELS[levelIdx].words;
-  const eligible=allWords.filter(w=>[...w.kana].length===2);
-  const boardRows=ROWS;
-  const boardCols=COLS;
-
-  const chainDefs=snDef.chains.filter(({chainLen})=>eligible.length>=chainLen);
-
-  const board=Array.from({length:boardRows},()=>Array.from({length:boardCols},()=>({filled:false,char:''})));
-  const reservedCells=new Set();
-  const chains=[];
-
-  for(let ci=0;ci<chainDefs.length;ci++){
-    const{chainLen,triggerRow}=chainDefs[ci];
-    const avail=shuffle(eligible);
-    let res=null;
-    for(let attempt=0;attempt<30;attempt++){
-      const bTry=board.map(r=>r.map(c=>({...c})));
-      const resTry=puzzlePlaceChain(bTry,boardRows,boardCols,allWords,avail,chainLen,triggerRow,new Set(reservedCells));
-      if(resTry.ok){
-        for(let r=0;r<boardRows;r++)for(let c=0;c<boardCols;c++)board[r][c]=bTry[r][c];
-        // Ajouter les cases de cette chaîne aux réservations
-        resTry.myCells.forEach(cell=>reservedCells.add(cell));
-        res=resTry;break;
-      }
-    }
-    if(res) chains.push({chain:res.chain,triggerCol:res.triggerCol,triggerRow:res.triggerRow,triggerRowIdx:res.triggerRowIdx});
-  }
-
-  // Neutres de remplissage (hors colonnes trigger, moitié haute seulement)
-  const triggerCols=new Set(chains.map(ch=>ch.triggerCol));
-  puzzleFillNeutrals(board,boardRows,boardCols,allWords,snDef.fillRatio,triggerCols);
-
-  // ── Pass final : combler les cases trigger enfouies (kana au-dessus = gravité violée) ──
-  // On fait ce check APRÈS puzzleFillNeutrals pour voir le plateau complet
-  const triggerKanaPool=[...new Set(allWords.map(w=>[...w.kana][1]).filter(Boolean))];
-  chains.forEach(ch=>{
-    const{triggerRowIdx,triggerCol}=ch;
-    if(board[triggerRowIdx][triggerCol].filled) return; // déjà remplie, rien à faire
-    // Y a-t-il un kana quelque part au-dessus dans cette colonne ?
-    const buried=Array.from({length:triggerRowIdx},(_,r)=>r).some(r=>board[r][triggerCol].filled);
-    if(!buried) return; // en surface, on laisse vide
-    // Trouver un k1 neutre valide (sans former de mot)
-    const neutral=shuffle(triggerKanaPool).find(k=>{
-      const tb=board.map(r=>r.map(c=>({...c})));
-      tb[triggerRowIdx][triggerCol]={filled:true,char:k};
-      return new SimState(tb,boardRows,boardCols,allWords).scanAll().length===0;
-    });
-    if(neutral) board[triggerRowIdx][triggerCol]={filled:true,char:neutral};
-  });
-
-  // ── Collecter les cases trigger pour le rendu ──
-  const triggerCells=new Set(chains.map(ch=>`${ch.triggerRowIdx}-${ch.triggerCol}`));
-  return{board,chains,triggerCells};
-}
-
-// ── Afficher l'écran de sélection de sous-niveau ──
-function showPuzzleSelect(levelIdx){
-  document.getElementById('menu-overlay').classList.add('hidden');
-  const lvl=ALL_LEVELS[levelIdx];
-  document.getElementById('puzzle-level-name').textContent=`Lv.${lvl.id} ${lvl.emoji} ${lvl.theme}`;
-
-  const cards=document.getElementById('sn-cards');
-  cards.innerHTML='';
-  PUZZLE_SN_DEFS.forEach((sn,si)=>{
-    const card=document.createElement('div');
-    card.style.cssText='background:#fff;border:2px solid #b8e0f8;border-radius:14px;padding:12px 16px;cursor:pointer;transition:all .2s;';
-    card.innerHTML=`
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-        <span style="font-family:\'Fredoka One\',cursive;font-size:17px;color:#00aaee">SN-${sn.num}</span>
-        <span style="font-size:16px">${sn.stars}</span>
-        <span style="font-family:\'Fredoka One\',cursive;font-size:15px;color:#1a3050">${sn.label}</span>
-      </div>
-      <div style="font-size:12px;color:#5090a8">${sn.desc}</div>`;
-    card.addEventListener('mouseenter',()=>card.style.borderColor='#00aaee');
-    card.addEventListener('mouseleave',()=>card.style.borderColor='#b8e0f8');
-    card.addEventListener('click',()=>startPuzzle(levelIdx,si));
-    cards.appendChild(card);
-  });
-
-  document.getElementById('puzzle-overlay').classList.remove('hidden');
-}
-
-// ── Démarrer une partie puzzle ──
-function startPuzzle(levelIdx,snIdx){
-  document.getElementById('puzzle-overlay').classList.add('hidden');
-  puzzleSNDef=PUZZLE_SN_DEFS[snIdx];
-  puzzleBoard=null; // sera généré dans startGame après calcRows correct
-  puzzleChains=[];
-  puzzleChainsResolved=new Set();
-  puzzleWordsFound=new Set();
-  puzzleTriggerCells=new Set();
-  puzzleMode=true;
-  startGame(levelIdx,true);
-}
-
-// ── Vérifier la victoire puzzle : tous les mots trouvés au moins une fois ──
-let puzzleWordsFound=new Set();
-
-function puzzleCheckChains(){
-  // Accumuler tous les mots trouvés
-  activeWords.forEach(w=>{if(foundRound.has(w.kana))puzzleWordsFound.add(w.kana);});
-
-  // Victoire = tous les mots du niveau trouvés au moins une fois
-  const allDone=LEVEL_WORDS.every(w=>puzzleWordsFound.has(w.kana));
-  if(allDone){
-    setTimeout(()=>puzzleVictory(),600);
-  }
-}
-
-function showPuzzleChainToast(ci,len){
-  const t=document.getElementById('enc-toast');
-  t.querySelector('.enc-jp').textContent=`⚡ チェーン${ci+1}！`;
-  t.querySelector('.enc-fr').textContent=`Chaîne ${ci+1} résolue ! (${len} mots)`;
-  t.className='';void t.offsetWidth;t.className='show';
-  setTimeout(()=>t.className='',2300);
-}
-
-function puzzleVictory(){
-  clearInterval(dropTimer);gameRunning=false;resolvingWords=false;
-  soundLevelUp();
-  const lvlData=ALL_LEVELS[currentLevelIdx];
-  const snDef=puzzleSNDef;
-  showOverlay({
-    title:`⚡ Puzzle réussi !`,
-    sub:`<span style="font-size:26px">${lvlData.emoji}</span><br><strong style="color:var(--neon-violet)">${lvlData.theme} · SN-${snDef.num} ${snDef.stars}</strong><br>${snDef.label} maîtrisé !<br>Score : <strong style="color:var(--neon-violet)">${score.toLocaleString()}</strong>`,
-    words:[],
-    btn1:'⚡ Rejouer ce puzzle',
-    act1:()=>startPuzzle(currentLevelIdx,PUZZLE_SN_DEFS.indexOf(snDef)),
-    btn2:`SN-${Math.min(snDef.num+1,5)} suivant →`,
-    act2:()=>startPuzzle(currentLevelIdx,Math.min(snDef.num,4)),
-  });
-}
-
-// ── Marquer visuellement les triggers ──
-function puzzleMarkTriggers(){
-  document.querySelectorAll('.cell.puzzle-trigger').forEach(el=>el.classList.remove('puzzle-trigger'));
-  puzzleTriggerCells.forEach(key=>{
-    const[r,c]=key.split('-').map(Number);
-    const el=gc(r,c);
-    if(el) el.classList.add('puzzle-trigger');
-  });
-}
-
-function startGame(levelIdx,isPuzzle=false){
-  currentLevelIdx=(levelIdx!==undefined)?levelIdx:0;
-  LEVEL_WORDS=ALL_LEVELS[currentLevelIdx].words.map(w=>({...w}));
-  const lvlData=ALL_LEVELS[currentLevelIdx];
-  score=0;streak=0;DROP_SPEED=1400;
-  document.getElementById('streak').style.display='none';updateScore();
-
-  if(!isPuzzle) puzzleMode=false;
-
-  // En mode puzzle : tous les mots du niveau sont actifs dès le début
-  if(puzzleMode){
-    activeWords=LEVEL_WORDS.map(w=>({...w,mult:1}));
-    wordIntroIdx=LEVEL_WORDS.length;
-    foundRound=new Set();
-    isLastCycle=true;
-  } else {
-    activeWords=[];wordIntroIdx=0;foundRound=new Set();LEVEL_WORDS.forEach(w=>w.mult=1);
-    isLastCycle=false;
-  }
-
-  document.getElementById('word-panel').innerHTML='';resolvingWords=false;
-  // En mode puzzle : calcRows/buildDOM/plateau gérés plus bas après renderPanel
-  if(!puzzleMode){ calcRows();buildDOM();initBoard(); }
-  document.getElementById('menu-overlay').classList.add('hidden');
-  document.getElementById('tuto-overlay').classList.add('hidden');
-  document.getElementById('puzzle-overlay').classList.add('hidden');
-  hideOverlay();gameRunning=true;
-  const lv=currentLevelIdx+1;
-  const root=document.documentElement.style;
-  root.setProperty('--bg-top',`var(--lv${lv}-top,var(--lv1-top))`);
-  root.setProperty('--bg-mid',`var(--lv${lv}-mid,var(--lv1-mid))`);
-  root.setProperty('--bg-bot',`var(--lv${lv}-bot,var(--lv1-bot))`);
-  const badge=document.getElementById('level-badge');
-  if(badge){
-    badge.innerHTML=puzzleMode
-      ? `<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span><span style="font-size:10px;color:var(--neon-gold);display:block">⚡ SN-${puzzleSNDef.num} ${puzzleSNDef.stars}</span>`
-      : `<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span>`;
-  }
-
-  if(puzzleMode){
-    // Afficher d'abord le panel (tous les mots) pour que calcRows tienne compte de sa hauteur
-    rebuildPool();
-    // Injecter le panel dans le DOM sans spawner
-    const p=document.getElementById('word-panel');
-    p.innerHTML='';
+    dom.wordPanelEl.innerHTML='';
     activeWords.forEach(w=>{
       const row=document.createElement('div');
       row.className='word-row'+(w.boss?' boss':'');
       row.id='wr-'+w.kana;
       row.innerHTML=`<div class="wr-emoji">${w.emoji}</div><div class="wr-info"><span class="wr-kana">${w.kana}</span><span class="wr-romaji">${w.romaji}</span><span class="wr-meaning">${w.meaning}</span></div><div class="wr-mult" id="wm-${w.kana}">×${w.mult||1}</div>`;
-      p.appendChild(row);
+      dom.wordPanelEl.appendChild(row);
     });
     updateWordRowColors();
-    // Maintenant recalculer ROWS avec le vrai panel affiché
-    calcRows();buildDOM();
-    // Générer le plateau ICI avec les bonnes ROWS
-    const gen=puzzleGenerate(currentLevelIdx,puzzleSNDef);
-    puzzleBoard=gen.board;
-    puzzleChains=gen.chains;
-    puzzleTriggerCells=gen.triggerCells;
-    // Charger le plateau généré
-    if(puzzleBoard){
-      const pbRows=puzzleBoard.length;
-      board=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));
-      const offset=ROWS-pbRows;
-      for(let r=0;r<pbRows;r++)
-        for(let c=0;c<COLS;c++)
-          if(r+offset>=0) board[r+offset][c]={...puzzleBoard[r][c]};
-      for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
-        if(board[r][c].filled){
-          const el=gc(r,c);
-          if(el){el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);}
-        }
+    if(puzzleMode){if(gameRunning)setTimeout(()=>safeSpawn(),350);return;}
+    
+    // On applique la logique de réduction pour TOUS les modes
+    requestAnimationFrame(()=>{
+      rebuildDOMKeepContent();
+      // Si on est en battle, on cadre la grille pour que les cases restent carrées
+      if(dom.boardColEl && dom.boardColEl.classList.contains('arena-board-col')){
+        _fitBattleBoard();
       }
-      // Fix 3 : marquer les triggers et leur appliquer la classe pulse
-      puzzleMarkTriggers();
+      render();
+      setTimeout(()=>safeSpawn(),350);
+    });
+  }
+
+  // ── Popup mot ──
+  // basePopupClass : préserve la classe CSS de base de l'élément popup
+  // (différente entre solo "word-popup" et battle "word-popup-box")
+  const basePopupClass = dom.popupEl.className || 'word-popup';
+  let popTimer=null;
+  function showPopup(word,pts,isCombo){
+    const p=dom.popupEl;
+    p.querySelector('.wp-emoji').textContent=word.emoji;
+    p.querySelector('.wp-kana').textContent=word.kana;
+    p.querySelector('.wp-romaji').textContent=word.romaji;
+    p.querySelector('.wp-meaning').textContent=word.meaning;
+    p.querySelector('.wp-pts').textContent=(isCombo?'🌸 COMBO ! ':'')+(streak>1?'🔥×'+streak+' ':'')+'+'+pts+' pts';
+    // Préserver la classe de base + ajouter show/combo
+    p.className=basePopupClass+(isCombo?' combo show':' show');
+    void p.offsetWidth;
+    if(isCombo){
+      const b=dom.comboBannerEl;
+      const baseBClass=b.className.replace(/\s*show\s*/g,'').trim()||'combo-banner';
+      const maxM=Math.max(...activeWords.map(w=>w.mult||1));
+      b.textContent='🌸 COMBO ×'+maxM;
+      b.className=baseBClass;void b.offsetWidth;b.className=baseBClass+' show';
+      setTimeout(()=>b.className=baseBClass,1700);
     }
-    nextChar=rndKana();document.getElementById('next-kana').textContent=nextChar;
-    setTimeout(()=>safeSpawn(),350);
-  } else {
-    const w=LEVEL_WORDS[wordIntroIdx++];w.mult=1;activeWords.push(w);
-    rebuildPool();renderPanel();nextChar=rndKana();document.getElementById('next-kana').textContent=nextChar;
+    clearTimeout(popTimer);popTimer=setTimeout(()=>p.className=basePopupClass,2100);
+  }
+
+  // ── Toast encouragement ──
+  function showEncToast(isCombo){
+    const pool=isCombo?COMBO_ENCS:ENCS;
+    const enc=pool[Math.floor(Math.random()*pool.length)];
+    const t=dom.encToastEl;
+    t.querySelector('.enc-jp').textContent=enc.jp;
+    t.querySelector('.enc-fr').textContent=enc.fr;
+    const baseTClass=t.className.replace(/\s*show\s*/g,'').trim()||'enc-toast';
+    t.className=baseTClass;void t.offsetWidth;t.className=baseTClass+' show';
+    clearTimeout(encTimer);encTimer=setTimeout(()=>t.className=baseTClass,2300);
+  }
+
+  // ── Overlay ──
+  function showOverlay({title,sub,words=[],btn1,act1,btn2=null,act2=null}){
+    clearInterval(dropTimer);gameRunning=false;
+    // En mode battle : utiliser l'overlay de l'arène
+    if(dom._showOverlay){dom._showOverlay({title,sub,btn1,act1,btn2,act2});return;}
+    // Mode solo : overlay global
+    document.getElementById('ov-title').innerHTML=title;
+    document.getElementById('ov-sub').innerHTML=sub;
+    const ow=document.getElementById('ov-words');ow.innerHTML='';
+    words.forEach(w=>{const d=document.createElement('div');d.className='ov-word';d.innerHTML=`<span class="ow-emoji">${w.emoji}</span><span class="ow-kana">${w.kana}</span><div class="ow-sub">${w.romaji} · ${w.meaning}</div>`;ow.appendChild(d);});
+    const b1=document.getElementById('ov-btn');b1.textContent=btn1;b1.onclick=act1;
+    const b2=document.getElementById('ov-btn2');
+    if(btn2){b2.textContent=btn2;b2.onclick=act2;b2.style.display='';}else b2.style.display='none';
+    document.getElementById('ov-lvlsel').onclick=showMenu;
+    document.getElementById('board-overlay').classList.remove('hidden');
+  }
+  function hideOverlay(){
+    if(dom._pid){document.getElementById(`overlay-${dom._pid}`).classList.add('hidden');return;}
+    document.getElementById('board-overlay').classList.add('hidden');
+  }
+
+  // ── Jeu principal ──
+  function ok(x,y){return x>=0&&x<COLS&&y>=0&&y<ROWS&&!board[y][x].filled;}
+  function startTimer(){clearInterval(dropTimer);dropTimer=setInterval(tick,DROP_SPEED);}
+  function increaseSpeed(){DROP_SPEED=Math.max(DROP_MIN,DROP_SPEED-DROP_STEP);if(active&&gameRunning)startTimer();}
+  function safeSpawn(){resolvingWords=false;if(!gameRunning)return;spawn();}
+
+  function spawn(){
+    active={char:nextChar||rndKana(),x:Math.floor(COLS/2),y:0};
+    playKanaSound(active.char);
+    nextChar=rndKana();
+    dom.nextKanaEl.textContent=nextChar;
+    // Préserver la classe de base (next-kana en solo, next-kana-box en battle)
+    const baseNKClass=dom.nextKanaEl.className.replace(/\s*pop\s*/g,'').trim()||'next-kana';
+    dom.nextKanaEl.className=baseNKClass;void dom.nextKanaEl.offsetWidth;dom.nextKanaEl.className=baseNKClass+' pop';
+    dom.nextKanaEl.style.background=kanaBg(nextChar);dom.nextKanaEl.style.color='#1a1040';
+    if(board[0][active.x].filled){endGame();return;}
+    render();startTimer();
+  }
+
+  function tick(){if(!gameRunning||resolvingWords||!active)return;ok(active.x,active.y+1)?(active.y++,render()):lock();}
+
+  function lock(){
+    if(!active||resolvingWords)return;
+    clearInterval(dropTimer);resolvingWords=true;
+    board[active.y][active.x]={filled:true,char:active.char};
+    // Retirer le marquage trigger si la case vient d'être comblée
+    if(puzzleMode&&puzzleTriggerCells)puzzleTriggerCells.delete(`${active.y}-${active.x}`);
+    const pr=active.y,pc=active.x;
+    const el=gc(pr,pc);
+    if(el){el.className='cell filled land';el.textContent=active.char;el.style.background=kanaBg(active.char);setTimeout(()=>el.classList.remove('land'),380);}
+    active=null;soundDrop();render();checkWords(pr,pc);
+  }
+
+  function hardDrop(){
+    if(!active||!gameRunning||resolvingWords)return;
+    while(ok(active.x,active.y+1))active.y++;
+    screenShake(false);render();lock();
+  }
+
+  // ── Scan / cascade ──
+  function scanLine(cells,found){
+    const line=cells.map(({r,c})=>board[r][c].filled?board[r][c].char:'\x00').join('');
+    activeWords.forEach(w=>{
+      let i=line.indexOf(w.kana);
+      while(i!==-1){
+        const key=cells.slice(i,i+w.kana.length).map(cc=>`${cc.r},${cc.c}`).join('|');
+        if(!found.some(f=>f.key===key))found.push({word:w,cells:Array.from({length:w.kana.length},(_,j)=>cells[i+j]),key});
+        i=line.indexOf(w.kana,i+1);
+      }
+    });
+  }
+  function scanRowCol(r,c){const found=[];scanLine(Array.from({length:COLS},(_,cc)=>({r,c:cc})),found);scanLine(Array.from({length:ROWS},(_,rr)=>({r:rr,c})),found);return found;}
+  function scanFullBoard(){const found=[];for(let r=0;r<ROWS;r++)scanLine(Array.from({length:COLS},(_,c)=>({r,c})),found);for(let c=0;c<COLS;c++)scanLine(Array.from({length:ROWS},(_,r)=>({r,c})),found);return found;}
+  function checkWords(pr,pc){const found=scanRowCol(pr,pc);if(!found.length){safeSpawn();return;}processCascade(found,false);}
+
+  function gravity(){for(let c=0;c<COLS;c++){const ch=[];for(let r=ROWS-1;r>=0;r--)if(board[r][c].filled)ch.push(board[r][c].char);for(let r=ROWS-1;r>=0;r--)board[r][c]=ch.length?{filled:true,char:ch.shift()}:{filled:false,char:''};}}
+
+  function processCascade(found,isCascade){
+    const isCombo=found.length>=2;
+    const cellSet=new Set();found.forEach(f=>f.cells.forEach(cell=>cellSet.add(`${cell.r},${cell.c}`)));
+    const flashEls=[];
+    cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);const el=gc(r,c);if(el){el.classList.add(isCombo?'combo-flash':'flash');flashEls.push(el);}});
+    if(flashEls.length)spawnParticles(flashEls[Math.floor(flashEls.length/2)],dom.boardColEl,isCombo?20:12);
+    if(flashEls.length){
+      const el=flashEls[Math.floor(flashEls.length/2)];
+      const rect=el.getBoundingClientRect();
+      const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+      const isBoss=found.some(f=>f.word.boss);
+      burst(cx,cy,isBoss?32:isCombo?24:16,isBoss?'boss':isCombo?'combo':'normal');
+    }
+    let pts=0;
+    found.forEach(f=>{pts+=f.word.kana.length*100*(f.word.mult||1);f.word.mult=(f.word.mult||1)+1;foundRound.add(f.word.kana);});
+    const now=Date.now();if(now-lastWordTime<4000)streak++;else streak=1;lastWordTime=now;
+    if(streak>1)pts=Math.round(pts*(1+streak*.08));
+    score+=pts;increaseSpeed();
+    if(isCascade){soundCombo();screenShake(true);}else{isCombo?(soundCombo(),screenShake(true)):soundWord();}
+    showPopup(found[0].word,pts,isCombo||isCascade);
+    setTimeout(()=>speakWord(found[0].word.kana,isCombo||isCascade),850);
+    const barDone=new Set();found.forEach(f=>{if(!barDone.has(f.word.kana)){flashBar(f.word.kana,isCombo||isCascade);barDone.add(f.word.kana);}});
+    updateMults();updateScore();updateStreak();
+    updateWordRowColors();
+    if(puzzleMode)puzzleCheckChains();
+    setTimeout(()=>{
+      cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);board[r][c]={filled:false,char:''};const el=gc(r,c);if(el){el.className='cell empty';el.textContent='';}});
+      gravity();render();
+      if(puzzleMode)puzzleMarkTriggers();
+      const cf=scanFullBoard();
+      if(cf.length){setTimeout(()=>processCascade(cf,true),300);return;}
+      const allDone=activeWords.every(w=>foundRound.has(w.kana));
+      if(allDone){
+        if(puzzleMode)return;
+        if(wordIntroIdx>=LEVEL_WORDS_LOCAL.length)setTimeout(levelDone,400);else introNext();
+      }else safeSpawn();
+    },820);
+  }
+
+  function introNext(){
+    if(wordIntroIdx>=LEVEL_WORDS_LOCAL.length)return;
+    const w=LEVEL_WORDS_LOCAL[wordIntroIdx++];w.mult=1;activeWords.push(w);foundRound=new Set();
+    if(wordIntroIdx>=LEVEL_WORDS_LOCAL.length)isLastCycle=true;
+    rebuildPool();soundNewWord();renderPanel();
+  }
+
+  // ── Fin de partie ──
+  function endGame(){
+    clearInterval(dropTimer);gameRunning=false;resolvingWords=false;soundGameOver();
+    const lvlData=ALL_LEVELS[currentLevelIdx];
+    showOverlay({title:'💔 Partie terminée !',sub:`${lvlData.emoji} ${lvlData.theme}<br>Score : <strong style="color:var(--neon-violet)">${score.toLocaleString()}</strong>`,btn1:'Réessayer 🔄',act1:()=>startGame(currentLevelIdx),btn2:currentLevelIdx>0?'← Niveau précédent':null,act2:currentLevelIdx>0?()=>startGame(currentLevelIdx-1):null});
+  }
+  function levelDone(){
+    clearInterval(dropTimer);gameRunning=false;resolvingWords=false;soundLevelUp();
+    const lvlData=ALL_LEVELS[currentLevelIdx];
+    const isLast=currentLevelIdx>=ALL_LEVELS.length-1;
+    const nextLvl=ALL_LEVELS[currentLevelIdx+1];
+    showOverlay({title:`🎉 クリア！ Niveau ${lvlData.id}`,sub:`<span style="font-size:26px">${lvlData.emoji}</span><br><strong style="color:var(--neon-violet)">${lvlData.theme}</strong> maîtrisé !<br>Score : <strong style="color:var(--neon-violet)">${score.toLocaleString()}</strong>`,words:LEVEL_WORDS_LOCAL,btn1:isLast?'🏆 Rejouer depuis le début':`Niveau ${lvlData.id+1} → ${nextLvl.theme}`,act1:isLast?()=>startGame(0):()=>startGame(currentLevelIdx+1),btn2:'Rejouer ce niveau 🔄',act2:()=>startGame(currentLevelIdx)});
+  }
+
+  // ── Puzzle helpers ──
+  function puzzleMarkTriggers(){
+    dom.boardEl.querySelectorAll('.cell.puzzle-trigger').forEach(el=>el.classList.remove('puzzle-trigger'));
+    puzzleTriggerCells.forEach(key=>{const[r,c]=key.split('-').map(Number);const el=gc(r,c);if(el)el.classList.add('puzzle-trigger');});
+  }
+  function puzzleCheckChains(){
+    activeWords.forEach(w=>{if(foundRound.has(w.kana))puzzleWordsFound.add(w.kana);});
+    const allDone=LEVEL_WORDS_LOCAL.every(w=>puzzleWordsFound.has(w.kana));
+    if(allDone)setTimeout(()=>puzzleVictory(),600);
+  }
+  function showPuzzleChainToast(ci,len){
+    const t=dom.encToastEl;
+    t.querySelector('.enc-jp').textContent=`⚡ チェーン${ci+1}！`;
+    t.querySelector('.enc-fr').textContent=`Chaîne ${ci+1} résolue ! (${len} mots)`;
+    t.className='';void t.offsetWidth;t.className='show';
+    setTimeout(()=>t.className='',2300);
+  }
+  function puzzleVictory(){
+    clearInterval(dropTimer);gameRunning=false;resolvingWords=false;soundLevelUp();
+    const lvlData=ALL_LEVELS[currentLevelIdx];const snDef=puzzleSNDef;
+    showOverlay({
+      title:'⚡ Puzzle réussi !',
+      sub:`<span style="font-size:26px">${lvlData.emoji}</span><br><strong style="color:var(--neon-violet)">${lvlData.theme} · SN-${snDef.num} ${snDef.stars}</strong><br>${snDef.label} maîtrisé !<br>Score : <strong style="color:var(--neon-violet)">${score.toLocaleString()}</strong>`,
+      words:[],btn1:'⚡ Rejouer ce puzzle',act1:()=>startPuzzle(currentLevelIdx,PUZZLE_SN_DEFS.indexOf(snDef)),
+      btn2:`SN-${Math.min(snDef.num+1,5)} suivant →`,act2:()=>startPuzzle(currentLevelIdx,Math.min(snDef.num,4)),
+    });
+  }
+
+  // ── startGame ──
+  function startGame(levelIdx, isPuzzle=false){
+    currentLevelIdx=(levelIdx!==undefined)?levelIdx:0;
+    LEVEL_WORDS_LOCAL=ALL_LEVELS[currentLevelIdx].words.map(w=>({...w}));
+    LEVEL_WORDS=LEVEL_WORDS_LOCAL; // compatibilité globale mode solo
+    const lvlData=ALL_LEVELS[currentLevelIdx];
+    score=0;streak=0;DROP_SPEED=1400;
+    dom.streakEl.style.display='none';updateScore();
+    if(!isPuzzle)puzzleMode=false;
+    if(puzzleMode){
+      activeWords=LEVEL_WORDS_LOCAL.map(w=>({...w,mult:1}));
+      wordIntroIdx=LEVEL_WORDS_LOCAL.length;foundRound=new Set();isLastCycle=true;
+    }else{
+      activeWords=[];wordIntroIdx=0;foundRound=new Set();LEVEL_WORDS_LOCAL.forEach(w=>w.mult=1);isLastCycle=false;
+    }
+    dom.wordPanelEl.innerHTML='';resolvingWords=false;
+    if(!puzzleMode){
+      calcRows();buildDOM();initBoard();
+      // En battle : ajuster la largeur du board pour cellules carrées
+      if(dom.boardColEl && dom.boardColEl.classList.contains('arena-board-col')){
+        requestAnimationFrame(()=>_fitBattleBoard());
+      }
+    }
+    hideOverlay();gameRunning=true;
+    const lv=currentLevelIdx+1;
+    const root=document.documentElement.style;
+    root.setProperty('--bg-top',`var(--lv${lv}-top,var(--lv1-top))`);
+    root.setProperty('--bg-mid',`var(--lv${lv}-mid,var(--lv1-mid))`);
+    root.setProperty('--bg-bot',`var(--lv${lv}-bot,var(--lv1-bot))`);
+    const badge=document.getElementById('level-badge');
+    if(badge){badge.innerHTML=puzzleMode?`<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span><span style="font-size:10px;color:var(--neon-gold);display:block">⚡ SN-${puzzleSNDef.num} ${puzzleSNDef.stars}</span>`:`<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span>`;}
+    if(puzzleMode){
+      rebuildPool();
+      dom.wordPanelEl.innerHTML='';
+      activeWords.forEach(w=>{
+        const row=document.createElement('div');row.className='word-row'+(w.boss?' boss':'');row.id='wr-'+w.kana;
+        row.innerHTML=`<div class="wr-emoji">${w.emoji}</div><div class="wr-info"><span class="wr-kana">${w.kana}</span><span class="wr-romaji">${w.romaji}</span><span class="wr-meaning">${w.meaning}</span></div><div class="wr-mult" id="wm-${w.kana}">×${w.mult||1}</div>`;
+        dom.wordPanelEl.appendChild(row);
+      });
+      updateWordRowColors();
+      calcRows();buildDOM();
+      const gen=puzzleGenerate(currentLevelIdx,puzzleSNDef);
+      puzzleBoard=gen.board;puzzleChains=gen.chains;puzzleTriggerCells=gen.triggerCells;
+      if(puzzleBoard){
+        const pbRows=puzzleBoard.length;
+        board=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({filled:false,char:''})));
+        const offset=ROWS-pbRows;
+        for(let r=0;r<pbRows;r++)for(let c=0;c<COLS;c++)if(r+offset>=0)board[r+offset][c]={...puzzleBoard[r][c]};
+        for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+          if(board[r][c].filled){const el=gc(r,c);if(el){el.className='cell filled';el.textContent=board[r][c].char;el.style.background=kanaBg(board[r][c].char);}}
+        }
+        puzzleMarkTriggers();
+      }
+      nextChar=rndKana();dom.nextKanaEl.textContent=nextChar;
+      setTimeout(()=>safeSpawn(),350);
+    }else{
+      const w=LEVEL_WORDS_LOCAL[wordIntroIdx++];w.mult=1;activeWords.push(w);
+      rebuildPool();renderPanel();nextChar=rndKana();dom.nextKanaEl.textContent=nextChar;
+    }
+  }
+
+  function startPuzzle(levelIdx,snIdx){
+    puzzleSNDef=PUZZLE_SN_DEFS[snIdx];
+    puzzleBoard=null;puzzleChains=[];puzzleChainsResolved=new Set();
+    puzzleWordsFound=new Set();puzzleTriggerCells=new Set();puzzleMode=true;
+    startGame(levelIdx,true);
+  }
+
+  // ── API publique de l'instance ──
+  return {
+    get gameRunning(){return gameRunning;},
+    get active(){return active;},
+    get board(){return board;},
+    get activeWords(){return activeWords;},
+    get nextChar(){return nextChar;},
+    get resolvingWords(){return resolvingWords;},
+    get score(){return score;},
+    get DROP_SPEED(){return DROP_SPEED;},
+    hardDrop,
+    startGame,
+    startPuzzle,
+    render,
+    moveLeft(){ if(ok(active.x-1,active.y)){active.x--;render();}},
+    moveRight(){if(ok(active.x+1,active.y)){active.x++;render();}},
+    softDrop(){ok(active.x,active.y+1)?(active.y++,render()):lock();},
+    stopGame(){clearInterval(dropTimer);gameRunning=false;resolvingWords=false;},
+    setPos(x){if(active&&ok(x,active.y)){active.x=x;render();}},
+    // Pour le bot
+    getBoardSnapshot(){return board.map(row=>row.map(c=>({...c})));},
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  INSTANCE SOLO — wiring sur le DOM existant
+// ═══════════════════════════════════════════════════════════════════
+const domP1 = {
+  boardEl:       document.getElementById('board'),
+  boardColEl:    document.getElementById('board-col'),
+  nextKanaEl:    document.getElementById('next-kana'),
+  scoreEl:       document.getElementById('score-val'),
+  wordPanelEl:   document.getElementById('word-panel'),
+  popupEl:       document.getElementById('word-popup'),
+  comboBannerEl: document.getElementById('combo-banner'),
+  encToastEl:    document.getElementById('enc-toast'),
+  streakEl:      document.getElementById('streak'),
+  overlayEl:     document.getElementById('board-overlay'),
+};
+
+const player1 = createPlayer('p1', domP1);
+
+// Référence globale pour compatibilité avec le bot existant
+// (sera remplacée à l'étape 3 par le Worker)
+let activeWords = [];    // proxy — mis à jour par le joueur actif
+let board = [];          // proxy
+let nextChar = '';       // proxy
+let gameRunning = false; // proxy
+
+// ── Mise à jour des proxies globaux (nécessaires pour le bot actuel) ──
+function syncGlobals(){
+  activeWords = player1.activeWords;
+  board = player1.board;
+  nextChar = player1.nextChar;
+  gameRunning = player1.gameRunning;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  INPUTS — clavier (solo : flèches + espace)
+// ═══════════════════════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  const p=player1;
+  if(!p.gameRunning||p.resolvingWords||!p.active)return;
+  if(e.key==='ArrowLeft'){e.preventDefault();p.moveLeft();}
+  if(e.key==='ArrowRight'){e.preventDefault();p.moveRight();}
+  if(e.key==='ArrowDown'){e.preventDefault();p.softDrop();}
+  if(e.key===' '){e.preventDefault();p.hardDrop();}
+});
+
+// ── Touch (inchangé, solo) ──
+let txStart=0,tyStart=0,ttStart=0,lpTimer=null;
+const LP_MS=380;
+document.addEventListener('touchstart',e=>{
+  getCtx();const t=e.touches[0];txStart=t.clientX;tyStart=t.clientY;ttStart=Date.now();
+  clearTimeout(lpTimer);
+  lpTimer=setTimeout(()=>{
+    if(player1.gameRunning&&!player1.resolvingWords&&player1.active){navigator.vibrate&&navigator.vibrate(25);player1.hardDrop();lpTimer=null;}
+  },LP_MS);
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  clearTimeout(lpTimer);lpTimer=null;
+  if(!player1.gameRunning||player1.resolvingWords||!player1.active)return;
+  const t=e.changedTouches[0];const dx=t.clientX-txStart,dy=t.clientY-tyStart,dt=Date.now()-ttStart;
+  const adx=Math.abs(dx),ady=Math.abs(dy);
+  if(dt<LP_MS&&adx<12&&ady<12)return;
+  if(ady>adx&&dy>50){player1.hardDrop();return;}
+  if(adx>ady&&adx>10){
+    const screenW=Math.min(window.innerWidth,480);const cellW=Math.floor(screenW*.75/COLS);
+    const steps=Math.max(1,Math.round(adx/cellW));const dir=dx>0?1:-1;
+    for(let i=0;i<steps;i++){if(i===0)dir>0?player1.moveRight():player1.moveLeft();}
+    player1.render();
+  }
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  const t=e.touches[0];
+  if(Math.abs(t.clientX-txStart)>10||Math.abs(t.clientY-tyStart)>10){clearTimeout(lpTimer);lpTimer=null;}
+},{passive:true});
+
+window.addEventListener('resize',()=>{if(!player1.gameRunning)return;});
+
+// ═══════════════════════════════════════════════════════════════════
+//  MENU PUBLIC — showMenu / showTuto / showPuzzleSelect
+// ═══════════════════════════════════════════════════════════════════
+function showMenu(){
+  player1.stopGame();
+  document.getElementById('board-overlay').classList.add('hidden');
+  document.getElementById('tuto-overlay').classList.add('hidden');
+  document.getElementById('menu-overlay').classList.add('hidden');
+  document.getElementById('mode-overlay').style.display='flex';
+}
+
+function showPuzzleSelect(levelIdx){
+  document.getElementById('menu-overlay').classList.add('hidden');
+  const lvl=ALL_LEVELS[levelIdx];
+  document.getElementById('puzzle-level-name').textContent=`Lv.${lvl.id} ${lvl.emoji} ${lvl.theme}`;
+  const cards=document.getElementById('sn-cards');cards.innerHTML='';
+  PUZZLE_SN_DEFS.forEach((sn,si)=>{
+    const card=document.createElement('div');
+    card.style.cssText='background:#fff;border:2px solid #b8e0f8;border-radius:14px;padding:12px 16px;cursor:pointer;transition:all .2s;';
+    card.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-family:'Fredoka One',cursive;font-size:17px;color:#00aaee">SN-${sn.num}</span><span style="font-size:16px">${sn.stars}</span><span style="font-family:'Fredoka One',cursive;font-size:15px;color:#1a3050">${sn.label}</span></div><div style="font-size:12px;color:#5090a8">${sn.desc}</div>`;
+    card.addEventListener('mouseenter',()=>card.style.borderColor='#00aaee');
+    card.addEventListener('mouseleave',()=>card.style.borderColor='#b8e0f8');
+    card.addEventListener('click',()=>{ document.getElementById('puzzle-overlay').classList.add('hidden'); player1.startPuzzle(levelIdx,si); });
+    cards.appendChild(card);
+  });
+  document.getElementById('puzzle-overlay').classList.remove('hidden');
+}
+
+function startGame(levelIdx, isPuzzle=false){
+  player1.startGame(levelIdx, isPuzzle);
+  syncGlobals();
+}
+
+// Compatibilité globale processCascade (pour le bot wrapper)
+function processCascade(found,isCascade){
+  // no-op : géré en interne par createPlayer
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  BATTLE MODE — injection DOM + player2 + contrôles dual keyboard
+// ═══════════════════════════════════════════════════════════════════
+
+let player2 = null; // sera créé à l'entrée en mode battle
+
+/**
+ * Crée le HTML d'une arène joueur (board-col + side + word-panel)
+ * avec des IDs préfixés par `pid` ('p1' ou 'p2')
+ */
+function buildArenaHTML(pid, label){
+  const icon = pid==='p1' ? '🎮' : (gameMode==='vsBot'?'🤖':'🕹️');
+  return `
+  <div class="player-arena ${pid}-arena" id="arena-${pid}">
+    <div class="arena-inner">
+      <div class="arena-middle">
+        <div class="arena-game-stack" id="game-stack-${pid}">
+          <div class="arena-board-col" id="board-col-${pid}">
+            <div id="board-${pid}" style="flex:1;display:grid;grid-template-columns:repeat(8,1fr);background:var(--board-bg);border-left:2px solid rgba(100,200,220,.25);border-right:2px solid rgba(100,200,220,.25);border-top:2px solid rgba(100,200,220,.25);overflow:hidden;"></div>
+            <div class="word-popup-box" id="word-popup-${pid}">
+              <span class="wp-emoji"></span><span class="wp-kana"></span>
+              <div class="wp-romaji"></div><div class="wp-meaning"></div><div class="wp-pts"></div>
+            </div>
+            <div class="combo-banner-box" id="combo-banner-${pid}"></div>
+            <div class="enc-toast-box" id="enc-toast-${pid}"><span class="enc-jp"></span><span class="enc-fr"></span></div>
+            <div class="streak-box" id="streak-${pid}"></div>
+            <div class="arena-overlay hidden" id="overlay-${pid}">
+              <div class="ov-title" id="ov-title-${pid}"></div>
+              <div class="ov-sub" id="ov-sub-${pid}"></div>
+              <button class="btn" id="ov-btn-${pid}"></button>
+              <button class="btn secondary" id="ov-btn2-${pid}" style="display:none"></button>
+              <button class="btn secondary" id="ov-lvlsel-${pid}" style="margin-top:4px">📋 Menu</button>
+            </div>
+          </div>
+          <div class="arena-word-panel" id="word-panel-${pid}"></div>
+        </div>
+        <div class="arena-side" id="side-${pid}">
+          <div class="side-block">
+            <div class="side-label">NEXT</div>
+            <div class="next-kana-box" id="next-kana-${pid}">？</div>
+          </div>
+          <div class="side-block">
+            <div class="side-label">SCORE</div>
+            <div class="score-val-box" id="score-val-${pid}">0</div>
+          </div>
+          <div class="player-name-badge">${icon} ${label}</div>
+          <div class="side-block">
+            <div class="level-badge-box" id="level-badge-${pid}"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/**
+ * Construit les refs DOM pour un joueur battle à partir de son pid
+ */
+function buildDomRefs(pid){
+  return {
+    boardEl:       document.getElementById(`board-${pid}`),
+    boardColEl:    document.getElementById(`board-col-${pid}`),
+    gameStackEl:   document.getElementById(`game-stack-${pid}`),
+    nextKanaEl:    document.getElementById(`next-kana-${pid}`),
+    scoreEl:       document.getElementById(`score-val-${pid}`),
+    wordPanelEl:   document.getElementById(`word-panel-${pid}`),
+    popupEl:       document.getElementById(`word-popup-${pid}`),
+    comboBannerEl: document.getElementById(`combo-banner-${pid}`),
+    encToastEl:    document.getElementById(`enc-toast-${pid}`),
+    streakEl:      document.getElementById(`streak-${pid}`),
+    overlayEl:     document.getElementById(`overlay-${pid}`),
+    _pid: pid,
+  };
+}
+
+/**
+ * Passe en mode battle : reconstruit le shell, crée player2, câble les contrôles
+ */
+function enterBattleMode(levelIdx){
+  document.body.classList.add('battle-mode');
+  currentLevelIdx = levelIdx !== undefined ? levelIdx : 0;
+
+  // ── Vider et reconstruire le #shell en layout battle ──
+  const shell = document.getElementById('shell');
+  shell.innerHTML = '';
+  shell.style.cssText = 'position:relative;z-index:1;display:flex;flex-direction:row;height:100dvh;max-width:100vw;overflow:hidden;';
+
+  const p2Label = gameMode === 'vsBot' ? 'CPU' : 'Joueur 2';
+
+  shell.innerHTML = buildArenaHTML('p1','Joueur 1') + buildArenaHTML('p2', p2Label);
+
+  // ── Câbler player1 sur les nouveaux éléments DOM battle ──
+  // On recrée player1 avec les nouveaux IDs battle
+  const domBattleP1 = buildDomRefs('p1');
+  // Patch showOverlay pour P1 en battle
+  _patchPlayerOverlay(domBattleP1);
+
+  const domBattleP2 = buildDomRefs('p2');
+  _patchPlayerOverlay(domBattleP2);
+
+  // Recréer les deux instances
+  window._p1 = createPlayer('p1', domBattleP1);
+  window._p2 = createPlayer('p2', domBattleP2);
+  player2 = window._p2;
+
+  // Démarrer les deux parties
+  window._p1.startGame(currentLevelIdx);
+  window._p2.startGame(currentLevelIdx);
+
+  // ── Contrôles clavier dual ──
+  _setupBattleKeyboard();
+
+  // ── Si vsBot, lancer le bot sur P2 ──
+  if(gameMode === 'vsBot'){
+    setTimeout(()=>_startBotOnP2(), 600);
   }
 }
 
-function endGame(){clearInterval(dropTimer);gameRunning=false;resolvingWords=false;soundGameOver();const lvlData=ALL_LEVELS[currentLevelIdx];showOverlay({title:'💔 Partie terminée !',sub:`${lvlData.emoji} ${lvlData.theme}<br>Score : <strong style="color:var(--neon-violet)">${score.toLocaleString()}</strong>`,btn1:'Réessayer 🔄',act1:()=>startGame(currentLevelIdx),btn2:currentLevelIdx>0?'← Niveau précédent':null,act2:currentLevelIdx>0?()=>startGame(currentLevelIdx-1):null});}
-function levelDone(){clearInterval(dropTimer);gameRunning=false;resolvingWords=false;soundLevelUp();const lvlData=ALL_LEVELS[currentLevelIdx];const isLast=currentLevelIdx>=ALL_LEVELS.length-1;const nextLvl=ALL_LEVELS[currentLevelIdx+1];showOverlay({title:`🎉 クリア！ Niveau ${lvlData.id}`,sub:`<span style="font-size:26px">${lvlData.emoji}</span><br><strong style="color:var(--neon-violet)">${lvlData.theme}</strong> maîtrisé !<br>Score : <strong style="color:var(--neon-violet)">${score.toLocaleString()}</strong>`,words:LEVEL_WORDS,btn1:isLast?'🏆 Rejouer depuis le début':`Niveau ${lvlData.id+1} → ${nextLvl.theme}`,act1:isLast?()=>startGame(0):()=>startGame(currentLevelIdx+1),btn2:'Rejouer ce niveau 🔄',act2:()=>startGame(currentLevelIdx)});}
+/**
+ * Patch la méthode showOverlay d'un dom battle pour qu'elle
+ * utilise les éléments de l'arène au lieu des IDs globaux
+ */
+function _patchPlayerOverlay(dom){
+  dom._showOverlay = function({title, sub, btn1, act1, btn2=null, act2=null}){
+    const pid = dom._pid;
+    document.getElementById(`ov-title-${pid}`).innerHTML = title;
+    document.getElementById(`ov-sub-${pid}`).innerHTML = sub;
+    const b1 = document.getElementById(`ov-btn-${pid}`);
+    b1.textContent = btn1; b1.onclick = act1;
+    const b2 = document.getElementById(`ov-btn2-${pid}`);
+    if(btn2){b2.textContent=btn2;b2.onclick=act2;b2.style.display='';}
+    else b2.style.display='none';
+    document.getElementById(`ov-lvlsel-${pid}`).onclick = exitBattleMode;
+    document.getElementById(`overlay-${pid}`).classList.remove('hidden');
+  };
+}
 
-let txStart=0,tyStart=0,ttStart=0,lpTimer=null;
-const LP_MS=380;
-document.addEventListener('touchstart',e=>{getCtx();const t=e.touches[0];txStart=t.clientX;tyStart=t.clientY;ttStart=Date.now();clearTimeout(lpTimer);lpTimer=setTimeout(()=>{if(gameRunning&&!resolvingWords&&active){navigator.vibrate&&navigator.vibrate(25);hardDrop();lpTimer=null;}},LP_MS);},{passive:true});
-document.addEventListener('touchend',e=>{clearTimeout(lpTimer);lpTimer=null;if(!gameRunning||resolvingWords||!active)return;const t=e.changedTouches[0];const dx=t.clientX-txStart,dy=t.clientY-tyStart,dt=Date.now()-ttStart;const adx=Math.abs(dx),ady=Math.abs(dy);if(dt<LP_MS&&adx<12&&ady<12)return;if(ady>adx&&dy>50){hardDrop();return;}if(adx>ady&&adx>10){const screenW=Math.min(window.innerWidth,480);const cellW=Math.floor(screenW*.75/COLS);const steps=Math.max(1,Math.round(adx/cellW));const dir=dx>0?1:-1;for(let i=0;i<steps;i++){if(ok(active.x+dir,active.y))active.x+=dir;else break;}render();}},{passive:true});
-document.addEventListener('touchmove',e=>{const t=e.touches[0];if(Math.abs(t.clientX-txStart)>10||Math.abs(t.clientY-tyStart)>10){clearTimeout(lpTimer);lpTimer=null;}},{passive:true});
-document.addEventListener('keydown',e=>{if(!gameRunning||resolvingWords||!active)return;if(e.key==='ArrowLeft'&&ok(active.x-1,active.y)){e.preventDefault();active.x--;render();}if(e.key==='ArrowRight'&&ok(active.x+1,active.y)){e.preventDefault();active.x++;render();}if(e.key==='ArrowDown'){e.preventDefault();ok(active.x,active.y+1)?(active.y++,render()):lock();}if(e.key===' '){e.preventDefault();hardDrop();}});
-window.addEventListener('resize',()=>{if(!gameRunning)return;rebuildDOMKeepContent();if(active)render();});
+/**
+ * Contrôles clavier battle
+ * P1 : ←→↓ + Espace
+ * P2 : Q/D/S + Entrée  (layout AZERTY)
+ */
+let _battleKeysActive = false;
+function _setupBattleKeyboard(){
+  if(_battleKeysActive) return;
+  _battleKeysActive = true;
+  document.addEventListener('keydown', _battleKeyHandler);
+}
+function _teardownBattleKeyboard(){
+  _battleKeysActive = false;
+  document.removeEventListener('keydown', _battleKeyHandler);
+}
+function _battleKeyHandler(e){
+  // P1
+  const p1 = window._p1;
+  if(p1 && p1.gameRunning && !p1.resolvingWords && p1.active){
+    if(e.key==='ArrowLeft'){e.preventDefault();p1.moveLeft();}
+    if(e.key==='ArrowRight'){e.preventDefault();p1.moveRight();}
+    if(e.key==='ArrowDown'){e.preventDefault();p1.softDrop();}
+    if(e.key===' '){e.preventDefault();p1.hardDrop();}
+  }
+  // P2 (humain seulement — bot géré par son timer)
+  if(gameMode === 'vs2p'){
+    const p2 = window._p2;
+    if(p2 && p2.gameRunning && !p2.resolvingWords && p2.active){
+      if(e.key==='q'||e.key==='Q'){e.preventDefault();p2.moveLeft();}
+      if(e.key==='d'||e.key==='D'){e.preventDefault();p2.moveRight();}
+      if(e.key==='s'||e.key==='S'){e.preventDefault();p2.softDrop();}
+      if(e.key==='Enter'){e.preventDefault();p2.hardDrop();}
+    }
+  }
+}
 
-calcRows();buildDOM();
+/**
+ * Lance le bot IA sur l'instance P2 en battle
+ * Vitesse forcée à 800ms minimum pour laisser une chance au joueur
+ */
+function _startBotOnP2(){
+  const p2 = window._p2;
+  if(!p2) return;
+  const BOT_BATTLE_SPEED = 800;
+  const BOT_BATTLE_DEPTH = 2;
 
-/* ═══ BURST ═══ */
-const BURST_CANVAS=document.createElement('canvas');
-BURST_CANVAS.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:999;';
-document.body.appendChild(BURST_CANVAS);
-const BURST_CTX=BURST_CANVAS.getContext('2d');
-function resizeBurst(){BURST_CANVAS.width=window.innerWidth;BURST_CANVAS.height=window.innerHeight;}
-resizeBurst();
-window.addEventListener('resize',resizeBurst);
-const BURST_COLORS={normal:['#ff6b6b','#ffbe0b','#6bcb77','#4d96ff','#c77dff','#ff3fab','#00cfff','#ffffff'],combo:['#ff0066','#ff6b35','#ffbe0b','#ffffff','#ff3fab','#fff700'],boss:['#ff0066','#c77dff','#4d96ff','#ffffff','#ffbe0b','#ff6b6b'],logo:['#ff6b6b','#ffbe0b','#6bcb77','#4d96ff','#c77dff','#ff3fab','#00cfff','#ffffff']};
-let burstParticles=[];
-function burst(x,y,count=18,mode='normal'){const cols=BURST_COLORS[mode]||BURST_COLORS.normal;const isCombo=mode==='combo'||mode==='boss';for(let i=0;i<count;i++){const angle=(Math.PI*2/count)*i+(Math.random()-.5)*.5;const speed=(isCombo?5:3.5)+Math.random()*(isCombo?5:3);const size=(isCombo?4:2.5)+Math.random()*(isCombo?5:4);const isStar=Math.random()>(isCombo?.4:.65);burstParticles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-(isCombo?2:1),size,color:cols[Math.floor(Math.random()*cols.length)],alpha:1,life:0,maxLife:45+Math.random()*(isCombo?40:25),isStar,rot:Math.random()*Math.PI*2,rotSpeed:(Math.random()-.5)*.2});}if(!burstAnimRunning)burstLoop();}
-let burstAnimRunning=false;
-function burstLoop(){burstAnimRunning=true;BURST_CTX.clearRect(0,0,BURST_CANVAS.width,BURST_CANVAS.height);burstParticles=burstParticles.filter(p=>p.alpha>.01);for(const p of burstParticles){p.life++;p.x+=p.vx;p.y+=p.vy;p.vy+=.18;p.alpha=Math.max(0,1-p.life/p.maxLife);p.rot+=p.rotSpeed;BURST_CTX.save();BURST_CTX.globalAlpha=p.alpha;BURST_CTX.translate(p.x,p.y);BURST_CTX.rotate(p.rot);BURST_CTX.fillStyle=p.color;BURST_CTX.shadowColor=p.color;BURST_CTX.shadowBlur=6;if(p.isStar){const r1=p.size,r2=p.size*.4;BURST_CTX.beginPath();for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2;const r=i%2===0?r1:r2;i===0?BURST_CTX.moveTo(Math.cos(a)*r,Math.sin(a)*r):BURST_CTX.lineTo(Math.cos(a)*r,Math.sin(a)*r);}BURST_CTX.closePath();BURST_CTX.fill();}else{BURST_CTX.beginPath();BURST_CTX.arc(0,0,p.size,0,Math.PI*2);BURST_CTX.fill();}BURST_CTX.restore();}if(burstParticles.length>0){requestAnimationFrame(burstLoop);}else{burstAnimRunning=false;BURST_CTX.clearRect(0,0,BURST_CANVAS.width,BURST_CANVAS.height);}}
+  function botLoop(){
+    if(!p2.gameRunning) return;
+    if(p2.resolvingWords || !p2.active){
+      setTimeout(botLoop, 150);
+      return;
+    }
+    const bestCol = botChooseBestCol(
+      p2.active.char,
+      p2.getBoardSnapshot(),
+      p2.activeWords,
+      p2.nextChar,
+      BOT_BATTLE_DEPTH
+    );
+    // Déplacer vers la colonne cible
+    p2.setPos(bestCol);
+    p2.render();
+    setTimeout(()=>{
+      if(!p2.gameRunning || !p2.active) return;
+      p2.hardDrop();
+      setTimeout(botLoop, BOT_BATTLE_SPEED);
+    }, 100);
+  }
+  setTimeout(botLoop, 800);
+}
 
-document.addEventListener('click',e=>{const logo=e.target.closest('.logo-wrap');if(logo)burst(e.clientX,e.clientY,28,'logo');});
+/**
+ * Quitter le mode battle et retourner au menu
+ */
+function exitBattleMode(){
+  _teardownBattleKeyboard();
+  if(window._p1) window._p1.stopGame();
+  if(window._p2) window._p2.stopGame();
+  window._p1 = null;
+  window._p2 = null;
+  player2 = null;
+  document.body.classList.remove('battle-mode');
 
-/* ═══ BOT IA ═══ */
+  // Restaurer le shell solo
+  const shell = document.getElementById('shell');
+  shell.style.cssText = '';
+  shell.innerHTML = `
+    <div id="middle">
+      <div id="board-col">
+        <div id="board"></div>
+        <div id="word-popup">
+          <span class="wp-emoji"></span><span class="wp-kana"></span>
+          <div class="wp-romaji"></div><div class="wp-meaning"></div><div class="wp-pts"></div>
+        </div>
+        <div id="combo-banner"></div>
+        <div id="enc-toast"><span class="enc-jp"></span><span class="enc-fr"></span></div>
+        <div id="streak"></div>
+        <div id="board-overlay" class="hidden">
+          <div class="ov-title" id="ov-title"></div>
+          <div class="ov-sub" id="ov-sub"></div>
+          <div class="ov-words" id="ov-words"></div>
+          <button class="btn" id="ov-btn"></button>
+          <button class="btn secondary" id="ov-btn2" style="display:none"></button>
+          <button class="btn secondary" id="ov-lvlsel" style="margin-top:4px">📋 Changer de niveau</button>
+        </div>
+      </div>
+      <div id="side-panel">
+        <div class="side-block"><div class="side-label">NEXT</div><div id="next-kana">？</div></div>
+        <div class="side-block"><div class="side-label">SCORE</div><div id="score-val">0</div></div>
+        <div class="side-block"><div id="level-badge">Lv.1<br>🐬</div></div>
+      </div>
+    </div>
+    <div id="word-panel"></div>`;
+
+  // Recâbler domP1 sur les IDs restaurés
+  domP1.boardEl       = document.getElementById('board');
+  domP1.boardColEl    = document.getElementById('board-col');
+  domP1.nextKanaEl    = document.getElementById('next-kana');
+  domP1.scoreEl       = document.getElementById('score-val');
+  domP1.wordPanelEl   = document.getElementById('word-panel');
+  domP1.popupEl       = document.getElementById('word-popup');
+  domP1.comboBannerEl = document.getElementById('combo-banner');
+  domP1.encToastEl    = document.getElementById('enc-toast');
+  domP1.streakEl      = document.getElementById('streak');
+  domP1.overlayEl     = document.getElementById('board-overlay');
+
+  showMenu();
+}
+
+// ── Brancher le mode selector sur enterBattleMode ──
+// Remplacer les listeners du mode-overlay pour vsBot et vs2p
+document.addEventListener('DOMContentLoaded', ()=>{}, {once:true});
+// Les boutons mode-overlay sont déjà créés plus haut, on les repatch ici
+// pour que vsBot et vs2p passent par enterBattleMode
+setTimeout(()=>{
+  const modeVsBot = document.getElementById('mode-vsbot');
+  const mode2p    = document.getElementById('mode-2p');
+  if(modeVsBot){
+    // Clone pour retirer l'ancien listener
+    const nb = modeVsBot.cloneNode(true);
+    modeVsBot.parentNode.replaceChild(nb, modeVsBot);
+    nb.addEventListener('click',()=>{
+      gameMode='vsBot';
+      document.getElementById('mode-overlay').style.display='none';
+      // Pour battle : sélection de niveau puis enterBattleMode
+      _pendingBattleMode = true;
+      document.getElementById('menu-overlay').classList.remove('hidden');
+    });
+  }
+  if(mode2p){
+    const nb2 = mode2p.cloneNode(true);
+    mode2p.parentNode.replaceChild(nb2, mode2p);
+    nb2.addEventListener('click',()=>{
+      gameMode='vs2p';
+      document.getElementById('mode-overlay').style.display='none';
+      _pendingBattleMode = true;
+      document.getElementById('menu-overlay').classList.remove('hidden');
+    });
+  }
+}, 100);
+
+// Flag : la prochaine sélection de niveau lance enterBattleMode
+let _pendingBattleMode = false;
+
+// Monkey-patch showTuto pour intercepter le lancement battle
+const _origShowTuto = window.showTuto || function(){};
+window.showTuto = function(idx){
+  if(_pendingBattleMode){
+    _pendingBattleMode = false;
+    document.getElementById('menu-overlay').classList.add('hidden');
+    enterBattleMode(idx);
+    return;
+  }
+  // Solo : comportement normal
+  pendingLevelIdx = idx;
+  document.getElementById('menu-overlay').classList.add('hidden');
+  document.getElementById('tuto-overlay').classList.remove('hidden');
+};
+// Recâbler les cards du menu sur le nouveau showTuto
+setTimeout(()=>{
+  document.querySelectorAll('.lvl-card').forEach((card, i)=>{
+    // Retirer l'ancien listener en clonant
+    const nc = card.cloneNode(true);
+    card.parentNode.replaceChild(nc, card);
+    nc.addEventListener('click',()=>window.showTuto(i));
+    const pb = nc.querySelector('.puzzle-btn');
+    if(pb) pb.addEventListener('click',e=>{e.stopPropagation();showPuzzleSelect(i);});
+  });
+}, 150);
+
+
+const BOT_LOG={
+  entries:[],_current:null,
+  startLevel(levelIdx){this._current={ts:new Date().toISOString(),level:ALL_LEVELS[levelIdx].id,theme:ALL_LEVELS[levelIdx].theme,depth:0,speed:0,moves:0,words:0,combos:0,cascades:0,maxCascade:0,score:0,duration_s:0,_t0:Date.now(),_cascadeRun:0};},
+  onWord(isCombo,isCascade){if(!this._current)return;this._current.words++;if(isCombo)this._current.combos++;if(isCascade){this._current._cascadeRun++;this._current.cascades++;this._current.maxCascade=Math.max(this._current.maxCascade,this._current._cascadeRun);}else{this._current._cascadeRun=0;}},
+  endLevel(finalScore){if(!this._current)return;this._current.score=finalScore;this._current.duration_s=((Date.now()-this._current._t0)/1000).toFixed(1);this._current.depth=BOT.maxDepth;this._current.speed=BOT.speed;this._current.moves=BOT.totalMoves;const{_t0,_cascadeRun,...entry}=this._current;this.entries.push(entry);this._current=null;},
+  exportCSV(){if(!this.entries.length)return;const cols=['ts','level','theme','depth','speed','moves','words','combos','cascades','maxCascade','score','duration_s'];const header=cols.join(',');const rows=this.entries.map(e=>cols.map(k=>JSON.stringify(e[k]??'')).join(','));const csv=[header,...rows].join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`kanadrop_bot_${new Date().toISOString().slice(0,10)}.csv`;a.click();},
+  summary(){if(!this.entries.length)return'—';const n=this.entries.length;const avgS=(this.entries.reduce((s,e)=>s+(+e.score),0)/n).toFixed(0);const totC=this.entries.reduce((s,e)=>s+e.cascades,0);const totX=this.entries.reduce((s,e)=>s+e.combos,0);const best=Math.max(...this.entries.map(e=>+e.score));return`${n} niveaux · moy. ${(+avgS).toLocaleString()} pts · ${totX} combos · ${totC} cascades · best ${best.toLocaleString()}`;}
+};
+
+const BOT={
+  running:false,speed:350,maxDepth:2,timer:null,totalMoves:0,sessionCascades:0,sessionCombos:0,
+  start(){
+    if(this.running)return;
+    if(!player1.gameRunning){this._status('⚠️ Lance une partie !','#ffaa7a');return;}
+    this.running=true;this.totalMoves=0;this.sessionCascades=0;this.sessionCombos=0;
+    BOT_LOG.startLevel(currentLevelIdx);this._status('🤖 En jeu…','#72e8b8');this._loop();
+  },
+  stop(){this.running=false;clearTimeout(this.timer);this._status('⏹ Arrêté','#c77dff');this._updateSummary();},
+  _loop(){
+    if(!this.running||!player1.gameRunning){this.stop();return;}
+    if(player1.resolvingWords||!player1.active){this.timer=setTimeout(()=>this._loop(),120);return;}
+    const kana=player1.active.char;
+    const bestCol=botChooseBestCol(kana,player1.getBoardSnapshot(),player1.activeWords,player1.nextChar,this.maxDepth);
+    this._highlightCol(bestCol);
+    this.timer=setTimeout(()=>{
+      if(!this.running||!player1.gameRunning||!player1.active)return;
+      player1.setPos(bestCol);player1.render();
+      setTimeout(()=>{
+        if(!this.running||!player1.gameRunning||!player1.active)return;
+        this.totalMoves++;player1.hardDrop();this._updateStats();
+        this.timer=setTimeout(()=>this._loop(),Math.max(80,this.speed*.6));
+      },80);
+    },Math.max(60,this.speed*.4));
+  },
+  _highlightCol(col){
+    for(let r=0;r<ROWS;r++){
+      const el=domP1.boardEl.querySelector(`[data-r="${r}"][data-c="${col}"]`);
+      if(el&&!player1.board[r][col].filled){el.style.background='rgba(168,85,247,.22)';setTimeout(()=>{if(el)el.style.background='';},250);}
+    }
+  },
+  _status(msg,color='#a0d8ff'){const el=document.getElementById('bot-status');if(el){el.textContent=msg;el.style.color=color;}},
+  _updateStats(){const el=document.getElementById('bot-stats');if(!el)return;el.innerHTML=`🎮 <b>${this.totalMoves}</b> coups &nbsp;🌸 <b>${this.sessionCombos}</b> combos &nbsp;⚡ <b>${this.sessionCascades}</b> cascades`;},
+  _updateSummary(){const el=document.getElementById('bot-summary');if(el)el.textContent=BOT_LOG.summary();}
+};
+
+// ── UI Bot ──
 (()=>{
   const ui=document.createElement('div');
   ui.id='bot-ui';
@@ -1364,55 +2304,9 @@ document.addEventListener('click',e=>{const logo=e.target.closest('.logo-wrap');
   document.getElementById('bot-csv-btn').addEventListener('click',()=>{if(!BOT_LOG.entries.length){alert('Aucune donnée à exporter — laisse le bot jouer d\'abord !');return;}BOT_LOG.exportCSV();});
 })();
 
-class SimState{
-  constructor(boardSnap,rows,cols,words){this.board=boardSnap.map(row=>row.map(c=>({...c})));this.rows=rows;this.cols=cols;this.words=words;}
-  clone(){return new SimState(this.board,this.rows,this.cols,this.words);}
-  drop(kana,col){let landRow=-1;for(let r=this.rows-1;r>=0;r--){if(!this.board[r][col].filled){landRow=r;break;}}if(landRow===-1)return false;this.board[landRow][col]={filled:true,char:kana};return landRow;}
-  applyGravity(){for(let c=0;c<this.cols;c++){const chars=[];for(let r=this.rows-1;r>=0;r--)if(this.board[r][c].filled)chars.push(this.board[r][c].char);for(let r=this.rows-1;r>=0;r--)this.board[r][c]=chars.length?{filled:true,char:chars.shift()}:{filled:false,char:''};}}
-  _scanLine(cells,found){const line=cells.map(({r,c})=>this.board[r][c].filled?this.board[r][c].char:'\x00').join('');this.words.forEach(w=>{let i=line.indexOf(w.kana);while(i!==-1){const key=cells.slice(i,i+w.kana.length).map(cc=>`${cc.r},${cc.c}`).join('|');if(!found.some(f=>f.key===key))found.push({word:w,cells:cells.slice(i,i+w.kana.length),key});i=line.indexOf(w.kana,i+1);}});}
-  scanAll(){const found=[];for(let r=0;r<this.rows;r++)this._scanLine(Array.from({length:this.cols},(_,c)=>({r,c})),found);for(let c=0;c<this.cols;c++)this._scanLine(Array.from({length:this.rows},(_,r)=>({r,c})),found);return found;}
-  explode(found){const cellSet=new Set();found.forEach(f=>f.cells.forEach(cell=>cellSet.add(`${cell.r},${cell.c}`)));cellSet.forEach(key=>{const[r,c]=key.split(',').map(Number);this.board[r][c]={filled:false,char:''};});return cellSet.size;}
-  freeCols(){const free=[];for(let c=0;c<this.cols;c++)if(!this.board[0][c].filled)free.push(c);return free;}
-}
+// Init initial calcRows
+calcRows();
 
-function simEval(state,kana,col,maxDepth){
-  const sim=state.clone();const landRow=sim.drop(kana,col);
-  if(landRow===false||landRow<=1)return{score:-999999,cascades:0,endState:sim};
-  let score=0,cascades=0;let found=sim.scanAll(),depth=0;
-  let filledCount=0;for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++)if(sim.board[r][c].char)filledCount++;
-  const fillRatio=filledCount/(sim.rows*sim.cols);
-  const height=sim.rows-landRow;let heightPenalty=Math.pow(height,2)*.5;
-  if(fillRatio>.7)heightPenalty*=10;score-=heightPenalty;
-  while(found.length>0&&depth<=maxDepth){let pts=found.reduce((s,f)=>{let basePts=f.word.kana.length*100;if(typeof foundRound!=='undefined'&&!foundRound.has(f.word.kana))basePts*=5;return s+basePts;},0);if(depth>0){pts*=Math.pow(3.0,depth);cascades++;score+=1000;}score+=pts;sim.explode(found);sim.applyGravity();depth++;found=sim.scanAll();}
-  score+=_proximityBonus(sim)*.5;return{score,cascades,endState:sim};
-}
-function _proximityBonus(sim){let bonus=0;sim.words.forEach(w=>{const kanas=[...w.kana];for(let i=0;i<kanas.length-1;i++){const a=kanas[i],b=kanas[i+1];const posA=[],posB=[];for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++){if(sim.board[r][c].char===a)posA.push({r,c});if(sim.board[r][c].char===b)posB.push({r,c});}posA.forEach(pa=>posB.forEach(pb=>{const dr=Math.abs(pa.r-pb.r),dc=Math.abs(pa.c-pb.c);if(dr===0&&dc===1)bonus+=120;if(dc===0&&dr===1)bonus+=120;if(dr===0&&dc<=3)bonus+=40;if(dc===0&&dr<=3)bonus+=40;}));}});return bonus;}
-function botChooseBestCol(kana){const simWords=activeWords.map(w=>({...w}));const baseState=new SimState(board,ROWS,COLS,simWords);const freeCols=baseState.freeCols();if(!freeCols.length)return Math.floor(COLS/2);let best={score:-Infinity,col:freeCols[0],cascades:0};freeCols.forEach(col=>{const r1=simEval(baseState,kana,col,BOT.maxDepth);if(r1.score===-999999)return;let bestNextScore=0,bestNextCascades=0;const nextK=(typeof nextChar!=='undefined'&&nextChar)?nextChar:null;if(nextK&&r1.endState){const nextFreeCols=r1.endState.freeCols();if(nextFreeCols.length>0){let maxN=-Infinity;nextFreeCols.forEach(ncol=>{const r2=simEval(r1.endState,nextK,ncol,BOT.maxDepth);if(r2.score>maxN){maxN=r2.score;bestNextCascades=r2.cascades;}});if(maxN!==-Infinity)bestNextScore=maxN;}}const totalScore=r1.score+(bestNextScore*.85);const totalCascades=r1.cascades+bestNextCascades;if(totalScore>best.score||(totalScore===best.score&&totalCascades>best.cascades)){best={score:totalScore,col:col,cascades:totalCascades};}});return best.col!==undefined?best.col:freeCols[0];}
-
-const BOT_LOG={
-  entries:[],_current:null,
-  startLevel(levelIdx){this._current={ts:new Date().toISOString(),level:ALL_LEVELS[levelIdx].id,theme:ALL_LEVELS[levelIdx].theme,depth:0,speed:0,moves:0,words:0,combos:0,cascades:0,maxCascade:0,score:0,duration_s:0,_t0:Date.now(),_cascadeRun:0};},
-  onWord(isCombo,isCascade){if(!this._current)return;this._current.words++;if(isCombo)this._current.combos++;if(isCascade){this._current._cascadeRun++;this._current.cascades++;this._current.maxCascade=Math.max(this._current.maxCascade,this._current._cascadeRun);}else{this._current._cascadeRun=0;}},
-  endLevel(finalScore){if(!this._current)return;this._current.score=finalScore;this._current.duration_s=((Date.now()-this._current._t0)/1000).toFixed(1);this._current.depth=BOT.maxDepth;this._current.speed=BOT.speed;this._current.moves=BOT.totalMoves;const{_t0,_cascadeRun,...entry}=this._current;this.entries.push(entry);this._current=null;},
-  exportCSV(){if(!this.entries.length)return;const cols=['ts','level','theme','depth','speed','moves','words','combos','cascades','maxCascade','score','duration_s'];const header=cols.join(',');const rows=this.entries.map(e=>cols.map(k=>JSON.stringify(e[k]??'')).join(','));const csv=[header,...rows].join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`kanadrop_bot_${new Date().toISOString().slice(0,10)}.csv`;a.click();},
-  summary(){if(!this.entries.length)return'—';const n=this.entries.length;const avgS=(this.entries.reduce((s,e)=>s+(+e.score),0)/n).toFixed(0);const totC=this.entries.reduce((s,e)=>s+e.cascades,0);const totX=this.entries.reduce((s,e)=>s+e.combos,0);const best=Math.max(...this.entries.map(e=>+e.score));return`${n} niveaux · moy. ${(+avgS).toLocaleString()} pts · ${totX} combos · ${totC} cascades · best ${best.toLocaleString()}`;}
-};
-
-const _origProcessCascade=processCascade;
-window.processCascade=function(found,isCascade){if(BOT.running){const isCombo=found.length>=2;BOT_LOG.onWord(isCombo,isCascade);if(isCascade)BOT.sessionCascades++;if(isCombo)BOT.sessionCombos++;BOT._updateStats();}return _origProcessCascade(found,isCascade);};
-const _origLevelDone=levelDone;
-window.levelDone=function(){if(BOT.running){BOT_LOG.endLevel(score);BOT._updateStats();BOT._updateSummary();const isLast=currentLevelIdx>=ALL_LEVELS.length-1;setTimeout(()=>{if(!BOT.running)return;if(isLast){BOT._status('🏆 Tous les niveaux finis !','#ffbe0b');BOT.running=false;}else{BOT._status(`▶ Niveau ${ALL_LEVELS[currentLevelIdx+1].id}…`,'#72e8b8');startGame(currentLevelIdx+1);BOT_LOG.startLevel(currentLevelIdx);setTimeout(()=>BOT._loop(),600);}},1200);return;}return _origLevelDone();};
-
-const BOT={
-  running:false,speed:350,maxDepth:2,timer:null,totalMoves:0,sessionCascades:0,sessionCombos:0,
-  start(){if(this.running)return;if(!gameRunning){this._status('⚠️ Lance une partie !','#ffaa7a');return;}this.running=true;this.totalMoves=0;this.sessionCascades=0;this.sessionCombos=0;BOT_LOG.startLevel(currentLevelIdx);this._status('🤖 En jeu…','#72e8b8');this._loop();},
-  stop(){this.running=false;clearTimeout(this.timer);this._status('⏹ Arrêté','#c77dff');this._updateSummary();},
-  _loop(){if(!this.running||!gameRunning){this.stop();return;}if(resolvingWords||!active){this.timer=setTimeout(()=>this._loop(),120);return;}const kana=active.char;const bestCol=botChooseBestCol(kana);this._highlightCol(bestCol);this.timer=setTimeout(()=>{if(!this.running||!gameRunning||!active)return;active.x=bestCol;render();setTimeout(()=>{if(!this.running||!gameRunning||!active)return;this.totalMoves++;hardDrop();this._updateStats();this.timer=setTimeout(()=>this._loop(),Math.max(80,this.speed*.6));},80);},Math.max(60,this.speed*.4));},
-  _highlightCol(col){for(let r=0;r<ROWS;r++){const el=gc(r,col);if(el&&!board[r][col].filled){el.style.background='rgba(168,85,247,.22)';setTimeout(()=>{if(el)el.style.background='';},250);}}},
-  _status(msg,color='#a0d8ff'){const el=document.getElementById('bot-status');if(el){el.textContent=msg;el.style.color=color;}},
-  _updateStats(){const el=document.getElementById('bot-stats');if(!el)return;el.innerHTML=`🎮 <b>${this.totalMoves}</b> coups &nbsp;🌸 <b>${this.sessionCombos}</b> combos &nbsp;⚡ <b>${this.sessionCascades}</b> cascades`;},
-  _updateSummary(){const el=document.getElementById('bot-summary');if(el)el.textContent=BOT_LOG.summary();}
-};
 </script>
 </body>
 </html>
