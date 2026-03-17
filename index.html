@@ -1845,7 +1845,14 @@ function renderPanel(){
     showOverlay({title:'💔 Partie terminée !',sub:`${lvlData.emoji} ${lvlData.theme}<br>Score : <strong style="color:var(--neon-violet)">${score.toLocaleString()}</strong>`,btn1:'Réessayer 🔄',act1:()=>startGame(currentLevelIdx),btn2:currentLevelIdx>0?'← Niveau précédent':null,act2:currentLevelIdx>0?()=>startGame(currentLevelIdx-1):null});
   }
   function levelDone(){
-    clearInterval(dropTimer);gameRunning=false;resolvingWords=false;soundLevelUp();
+    clearInterval(dropTimer);gameRunning=false;resolvingWords=false;
+    // En mode battle : le joueur qui finit tous ses mots gagne
+    if((gameMode==='vsBot'||gameMode==='vs2p') && typeof _battleEndGame==='function'){
+      soundLevelUp();
+      _battleEndGame(id==='p1'?'p2':'p1'); // l'adversaire perd
+      return;
+    }
+    soundLevelUp();
     const lvlData=ALL_LEVELS[currentLevelIdx];
     const isLast=currentLevelIdx>=ALL_LEVELS.length-1;
     const nextLvl=ALL_LEVELS[currentLevelIdx+1];
@@ -2240,6 +2247,28 @@ function _battleTriggerCrossControl(senderId){
   const targetPid = senderId === 'p1' ? 'p2' : 'p1';
   const attackerLabel = senderId === 'p1' ? 'Joueur 1' : (gameMode==='vsBot'?'CPU':'Joueur 2');
   _showCrossControlBanner(targetPid, attackerLabel);
+
+  // 5. Si c'est le bot qui attaque (senderId==='p2' en vsBot), auto-drop sur la colonne la plus remplie
+  if(gameMode === 'vsBot' && senderId === 'p2'){
+    setTimeout(()=>{
+      if(!crossControlActive || !target.gameRunning) return;
+      // Trouver la colonne la plus haute (plus de kanas = plus dangereuse pour P1)
+      const snap = target.getBoardSnapshot();
+      const cols = snap[0] ? snap[0].length : 8;
+      let tallestCol = Math.floor(cols/2);
+      let maxFilled = -1;
+      for(let c=0;c<cols;c++){
+        // Vérifier que la colonne du haut est libre (sinon on ne peut pas poser)
+        if(snap[0][c] && snap[0][c].filled) continue;
+        let filled = 0;
+        for(let r=0;r<snap.length;r++) if(snap[r][c].filled) filled++;
+        if(filled > maxFilled){ maxFilled = filled; tallestCol = c; }
+      }
+      target.setPos(tallestCol);
+      target.render();
+      setTimeout(()=>{ if(crossControlActive && target.gameRunning) target.hardDrop(); }, 120);
+    }, 350); // petit délai pour que le spawn soit visible
+  }
 }
 
 /**
