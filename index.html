@@ -2337,6 +2337,13 @@ function _battleTriggerCrossControl(senderId){
       setTimeout(()=>{ if(crossControlActive && target.gameRunning) target.hardDrop(); }, 120);
     }, 350); // petit délai pour que le spawn soit visible
   }
+
+  // 6. Timeout de sécurité — si le 💩 ne se pose jamais (edge case), forcer la fin après 8s
+  const _crossControlGuard = setTimeout(()=>{
+    if(crossControlActive) _endCrossControl(senderId==='p1'?'p2':'p1');
+  }, 8000);
+  // Stocker le guard pour pouvoir l'annuler si la fin se produit normalement
+  window._crossControlGuard = _crossControlGuard;
 }
 
 /**
@@ -2346,15 +2353,15 @@ function _battleTriggerCrossControl(senderId){
 function _endCrossControl(targetId){
   if(!crossControlActive) return;
   crossControlActive = false;
-
-  const attackerId = targetId === 'p2' ? 'p1' : 'p2';
-  const attacker = attackerId === 'p1' ? window._p1 : window._p2;
-
-  // Reprendre le kana de l'attaquant
-  if(attacker) attacker.resumeAfterCrossControl();
-
-  // Reprendre le bot
   window._botPaused = false;
+
+  // Annuler le timeout de sécurité si présent
+  if(window._crossControlGuard){ clearTimeout(window._crossControlGuard); window._crossControlGuard=null; }
+
+  // Reprendre P1 (toujours — qu'il soit attaquant ou cible)
+  if(window._p1 && window._p1.gameRunning) window._p1.resumeAfterCrossControl();
+  // Reprendre P2 humain si besoin (vsBot : le bot reprend via _botPaused=false)
+  if(window._p2 && window._p2.gameRunning && gameMode==='vs2p') window._p2.resumeAfterCrossControl();
 
   // Masquer la bannière
   _hideCrossControlBanner(targetId);
