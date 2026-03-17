@@ -870,6 +870,72 @@ let pendingLevelIdx = 0;
 // gameMode : 'solo' | 'vsBot' | 'vs2p'
 let gameMode = 'solo';
 
+
+// ═══════════════════════════════════════════════════════════════════
+//  STORAGE — mémoire locale (localStorage)
+// ═══════════════════════════════════════════════════════════════════
+const KS = {
+  KEYS: {
+    SOLO_BEST:       'kanadrop_solo_best',
+    BATTLE_HISTORY:  'kanadrop_battle_history',
+    KEYBINDS:        'kanadrop_keybinds',
+    PLAYERS:         'kanadrop_players',
+  },
+  BATTLE_MAX: 25,
+
+  // ── Lecture sécurisée ──
+  _get(key){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):null; }catch(e){ return null; } },
+  _set(key,val){ try{ localStorage.setItem(key,JSON.stringify(val)); }catch(e){} },
+
+  // ── Solo : meilleur score par niveau ──
+  getSoloBest(levelId){ const d=this._get(this.KEYS.SOLO_BEST)||{}; return d[levelId]||null; },
+  saveSoloBest(levelId, score, name){
+    const d=this._get(this.KEYS.SOLO_BEST)||{};
+    const prev=d[levelId];
+    if(!prev||score>prev.score){
+      d[levelId]={score,name:name||'Anonyme',date:new Date().toISOString()};
+      this._set(this.KEYS.SOLO_BEST,d);
+      return true; // nouveau record
+    }
+    return false;
+  },
+  getAllSoloBest(){ return this._get(this.KEYS.SOLO_BEST)||{}; },
+
+  // ── Battle : historique 25 parties ──
+  getBattleHistory(){ return this._get(this.KEYS.BATTLE_HISTORY)||[]; },
+  saveBattleResult({winner, scores, mode, levelId}){
+    const hist=this.getBattleHistory();
+    hist.unshift({winner,scores,mode,levelId,date:new Date().toISOString()});
+    if(hist.length>this.BATTLE_MAX) hist.length=this.BATTLE_MAX;
+    this._set(this.KEYS.BATTLE_HISTORY,hist);
+  },
+  // Top 10 battle pour le wall of fame
+  getBattleTop(n=10){
+    const hist=this.getBattleHistory();
+    // Classer par meilleur score du gagnant
+    return [...hist]
+      .sort((a,b)=>Math.max(b.scores.p1,b.scores.p2)-Math.max(a.scores.p1,a.scores.p2))
+      .slice(0,n);
+  },
+
+  // ── Touches clavier ──
+  getKeybinds(){
+    return this._get(this.KEYS.KEYBINDS) || {
+      p1:{ left:'q', right:'d', soft:'x', hard:' ' },
+      p2:{ left:'ArrowLeft', right:'ArrowRight', soft:'ArrowDown', hard:'Enter' },
+    };
+  },
+  saveKeybinds(binds){ this._set(this.KEYS.KEYBINDS,binds); },
+
+  // ── Noms des joueurs ──
+  getPlayers(){ return this._get(this.KEYS.PLAYERS)||{p1:'Joueur 1',p2:'Joueur 2'}; },
+  savePlayers(players){ this._set(this.KEYS.PLAYERS,players); },
+  getPlayerName(pid){ return this.getPlayers()[pid]||'Joueur 1'; },
+};
+
+// Charger les keybinds sauvegardés au démarrage
+// (les contrôles battle les liront via KS.getKeybinds() à l'étape suivante)
+
 // ═══════════════════════════════════════════════════════════════════
 //  UTILITAIRES PARTAGÉS
 // ═══════════════════════════════════════════════════════════════════
@@ -1853,6 +1919,8 @@ function renderPanel(){
       return;
     }
     soundLevelUp();
+    // Sauvegarder le meilleur score solo
+    if(typeof KS!=='undefined') KS.saveSoloBest(ALL_LEVELS[currentLevelIdx].id, score, KS.getPlayerName('p1'));
     const lvlData=ALL_LEVELS[currentLevelIdx];
     const isLast=currentLevelIdx>=ALL_LEVELS.length-1;
     const nextLvl=ALL_LEVELS[currentLevelIdx+1];
@@ -2339,9 +2407,20 @@ function _showBattleEndOverlay(winnerId){
   const p1Score = window._p1 ? window._p1.score : 0;
   const p2Score = window._p2 ? window._p2.score : 0;
 
+  // Sauvegarder le résultat battle
+  if(typeof KS !== 'undefined'){
+    KS.saveBattleResult({
+      winner: winnerId,
+      scores: { p1: p1Score, p2: p2Score },
+      mode: gameMode,
+      levelId: ALL_LEVELS[currentLevelIdx].id,
+    });
+  }
+
+  const players = typeof KS !== 'undefined' ? KS.getPlayers() : {p1:'Joueur 1', p2:'Joueur 2'};
   const labels = {
-    p1: 'Joueur 1',
-    p2: gameMode === 'vsBot' ? 'CPU' : 'Joueur 2',
+    p1: players.p1 || 'Joueur 1',
+    p2: gameMode === 'vsBot' ? 'CPU' : (players.p2 || 'Joueur 2'),
   };
 
   ['p1','p2'].forEach(pid => {
@@ -2490,35 +2569,42 @@ function _teardownBattleKeyboard(){
   document.removeEventListener('keydown', _battleKeyHandler);
 }
 function _battleKeyHandler(e){
+  const kb = typeof KS !== 'undefined' ? KS.getKeybinds() : {
+    p1:{left:'q',right:'d',soft:'x',hard:' '},
+    p2:{left:'ArrowLeft',right:'ArrowRight',soft:'ArrowDown',hard:'Enter'},
+  };
+
   // ── MODE PRISE DE CONTRÔLE : P1 pilote le 💩 sur la grille P2 ──
   if(crossControlActive){
     const p2 = window._p2;
     if(p2 && p2.gameRunning && p2.active){
-      if(e.key==='q'||e.key==='Q'){e.preventDefault();p2.moveLeft();}
-      if(e.key==='d'||e.key==='D'){e.preventDefault();p2.moveRight();}
-      if(e.key==='x'||e.key==='X'){e.preventDefault();p2.softDrop();}
-      if(e.key===' '){e.preventDefault();p2.hardDrop();}
+      const b=kb.p1;
+      if(e.key===b.left||e.key===b.left.toUpperCase()){e.preventDefault();p2.moveLeft();}
+      if(e.key===b.right||e.key===b.right.toUpperCase()){e.preventDefault();p2.moveRight();}
+      if(e.key===b.soft||e.key===b.soft.toUpperCase()){e.preventDefault();p2.softDrop();}
+      if(e.key===b.hard){e.preventDefault();p2.hardDrop();}
     }
-    return; // bloquer tous les autres inputs pendant la prise de contrôle
+    return;
   }
 
   // ── MODE NORMAL ──
-  // P1 : Q=gauche · D=droite · X=soft drop · Espace=hard drop
   const p1 = window._p1;
   if(p1 && p1.gameRunning && !p1.resolvingWords && p1.active){
-    if(e.key==='q'||e.key==='Q'){e.preventDefault();p1.moveLeft();}
-    if(e.key==='d'||e.key==='D'){e.preventDefault();p1.moveRight();}
-    if(e.key==='x'||e.key==='X'){e.preventDefault();p1.softDrop();}
-    if(e.key===' '){e.preventDefault();p1.hardDrop();}
+    const b=kb.p1;
+    if(e.key===b.left||e.key===b.left.toUpperCase()){e.preventDefault();p1.moveLeft();}
+    if(e.key===b.right||e.key===b.right.toUpperCase()){e.preventDefault();p1.moveRight();}
+    if(e.key===b.soft||e.key===b.soft.toUpperCase()){e.preventDefault();p1.softDrop();}
+    if(e.key===b.hard){e.preventDefault();p1.hardDrop();}
   }
-  // P2 humain : fleches + Entree (pavé num inclus) — bot géré par Worker
+  // P2 humain — bot géré par Worker
   if(gameMode === 'vs2p'){
     const p2 = window._p2;
     if(p2 && p2.gameRunning && !p2.resolvingWords && p2.active){
-      if(e.key==='ArrowLeft'){e.preventDefault();p2.moveLeft();}
-      if(e.key==='ArrowRight'){e.preventDefault();p2.moveRight();}
-      if(e.key==='ArrowDown'){e.preventDefault();p2.softDrop();}
-      if(e.key==='Enter'){e.preventDefault();p2.hardDrop();}
+      const b=kb.p2;
+      if(e.key===b.left){e.preventDefault();p2.moveLeft();}
+      if(e.key===b.right){e.preventDefault();p2.moveRight();}
+      if(e.key===b.soft){e.preventDefault();p2.softDrop();}
+      if(e.key===b.hard){e.preventDefault();p2.hardDrop();}
     }
   }
 }
