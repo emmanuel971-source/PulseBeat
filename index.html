@@ -122,6 +122,33 @@ body::before{
 .skull-row-flash{animation:skullShake .5s ease forwards;}
 @keyframes malusWobble{from{transform:scale(1) rotate(-3deg)}to{transform:scale(1.08) rotate(3deg)}}
 .cell.active.is-malus{font-size:clamp(20px,7vw,32px)!important;}
+#cross-control-banner{
+  position:absolute;inset:0;z-index:50;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(255,0,102,.13);
+  pointer-events:none;
+  border:3px solid var(--neon-pink);
+  border-radius:6px;
+  opacity:0;transition:opacity .2s;
+}
+#cross-control-banner.active{opacity:1;}
+#cross-control-banner .ccb-title{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(14px,2.5vw,20px);
+  color:var(--neon-pink);
+  text-shadow:0 0 12px rgba(255,0,102,.6);
+  text-align:center;
+  line-height:1.3;
+  padding:0 8px;
+}
+#cross-control-banner .ccb-sub{
+  font-family:'Nunito',sans-serif;
+  font-size:clamp(11px,1.8vw,14px);
+  color:#8b4513;
+  margin-top:4px;
+  text-align:center;
+  font-weight:800;
+}
 @keyframes arenaSkullShake{0%,100%{transform:translate(0,0) rotate(0deg)}15%{transform:translate(-5px,3px) rotate(-.5deg)}30%{transform:translate(5px,-4px) rotate(.5deg)}45%{transform:translate(-4px,3px) rotate(-.3deg)}60%{transform:translate(4px,-2px) rotate(.3deg)}75%{transform:translate(-2px,2px) rotate(-.2deg)}90%{transform:translate(2px,-1px) rotate(.1deg)}}
 .arena-skull-shake{animation:arenaSkullShake .55s cubic-bezier(.36,.07,.19,.97) forwards;}
 @keyframes landBounce{0%{transform:scaleY(1.35) scaleX(.78)}35%{transform:scaleY(.82) scaleX(1.12)}65%{transform:scaleY(1.06) scaleX(.96)}100%{transform:scaleY(1) scaleX(1)}}
@@ -1601,6 +1628,10 @@ function renderPanel(){
       el.style.background = isMalus ? '' : kanaBg(active.char);
       setTimeout(()=>el.classList.remove('land'),380);
     }
+    // Si c'est le 💩 de prise de contrôle qui vient de se poser → fin de séquence
+    if(isMalus && crossControlActive && typeof _endCrossControl === 'function'){
+      _endCrossControl(id);
+    }
     active=null;soundDrop();render();checkWords(pr,pc);
   }
 
@@ -1663,6 +1694,12 @@ function renderPanel(){
       if(hasDuplicate) _sendPoopToOpponent();
     }
 
+    // ── Super malus : prise de contrôle (2 mots DIFFÉRENTS en un seul drop) ──
+    if(!isCascade && !puzzleMode){
+      const uniqueKanas=new Set(found.map(f=>f.word.kana));
+      if(uniqueKanas.size>=2) _sendCrossControl(id);
+    }
+
     // ── Malus ☠️ : cascade (depth 1+, cap 1 ligne par chaîne de cascades) ──
     if(isCascade && !puzzleMode && !_skullSentThisCascade){
       _skullSentThisCascade=true;
@@ -1692,6 +1729,34 @@ function renderPanel(){
   // ── Envoyer une ligne ☠️ à l'adversaire ──
   function _sendSkullToOpponent(){
     if(typeof _battleInjectSkull === 'function') _battleInjectSkull(id);
+  }
+
+  // ── Déclencher la prise de contrôle ──
+  function _sendCrossControl(senderId){
+    if(typeof _battleTriggerCrossControl === 'function') _battleTriggerCrossControl(senderId);
+  }
+
+  // ── Geler le kana en cours (P1 pendant la prise de contrôle) ──
+  function freezeForCrossControl(){
+    clearInterval(dropTimer);
+    // On garde active en place — juste le timer est arrêté
+  }
+
+  // ── Reprendre après la prise de contrôle ──
+  function resumeAfterCrossControl(){
+    if(!gameRunning||!active) return;
+    startTimer();
+  }
+
+  // ── Spawner un 💩 de contrôle sur la grille adverse (appelé depuis battle) ──
+  function spawnCrossControlPoop(){
+    if(!gameRunning) return;
+    // Freeze le timer adverse (bot ou humain ne doit plus jouer)
+    clearInterval(dropTimer);
+    // Forcer un 💩 comme pièce active, centré
+    active={char:'💩', x:Math.floor(COLS/2), y:0};
+    render();
+    startTimer();
   }
 
   function introNext(){
@@ -1832,6 +1897,10 @@ function renderPanel(){
     setPos(x){if(active&&ok(x,active.y)){active.x=x;render();}},
     // Pour le bot
     getBoardSnapshot(){return board.map(row=>row.map(c=>({...c})));},
+    // Prise de contrôle (étape 7)
+    freezeForCrossControl,
+    resumeAfterCrossControl,
+    spawnCrossControlPoop,
     // Malus battle : injecte un 💩 comme prochain kana
     injectMalus(){
       if(!gameRunning) return;
@@ -2063,6 +2132,84 @@ function buildDomRefs(pid){
   };
 }
 
+// Flag global prise de contrôle
+let crossControlActive = false;
+
+/**
+ * Déclenché quand un joueur fait un super combo (2 mots différents).
+ * senderId : 'p1' ou 'p2'
+ */
+function _battleTriggerCrossControl(senderId){
+  if(crossControlActive) return; // déjà en cours, on ignore
+  if(gameMode === 'solo') return;
+
+  const attacker = senderId === 'p1' ? window._p1 : window._p2;
+  const target   = senderId === 'p1' ? window._p2 : window._p1;
+  if(!attacker || !target) return;
+  if(!attacker.gameRunning || !target.gameRunning) return;
+
+  crossControlActive = true;
+
+  // 1. Geler le kana de l'attaquant sur place
+  attacker.freezeForCrossControl();
+
+  // 2. Pause du bot si vsBot et que la cible est P2
+  if(gameMode === 'vsBot' && senderId === 'p1'){
+    window._botPaused = true;
+  }
+
+  // 3. Spawner un 💩 sur la grille cible contrôlé par l'attaquant
+  target.spawnCrossControlPoop();
+
+  // 4. Afficher la bannière sur la grille cible
+  const targetPid = senderId === 'p1' ? 'p2' : 'p1';
+  const attackerLabel = senderId === 'p1' ? 'Joueur 1' : (gameMode==='vsBot'?'CPU':'Joueur 2');
+  _showCrossControlBanner(targetPid, attackerLabel);
+}
+
+/**
+ * Fin de la prise de contrôle — appelé quand le 💩 de contrôle se pose.
+ * targetId : 'p1' ou 'p2' (la grille qui était contrôlée)
+ */
+function _endCrossControl(targetId){
+  if(!crossControlActive) return;
+  crossControlActive = false;
+
+  const attackerId = targetId === 'p2' ? 'p1' : 'p2';
+  const attacker = attackerId === 'p1' ? window._p1 : window._p2;
+
+  // Reprendre le kana de l'attaquant
+  if(attacker) attacker.resumeAfterCrossControl();
+
+  // Reprendre le bot
+  window._botPaused = false;
+
+  // Masquer la bannière
+  _hideCrossControlBanner(targetId);
+}
+
+function _showCrossControlBanner(pid, attackerLabel){
+  // Injecter la bannière dans la board-col cible si pas déjà présente
+  const boardCol = document.getElementById(`board-col-${pid}`);
+  if(!boardCol) return;
+  let banner = document.getElementById('cross-control-banner');
+  if(!banner){
+    banner = document.createElement('div');
+    banner.id = 'cross-control-banner';
+    banner.innerHTML = `<div class="ccb-title">🎮 ${attackerLabel}<br>prend le contrôle !</div><div class="ccb-sub">Pose le 💩 où tu veux</div>`;
+    boardCol.appendChild(banner);
+  } else {
+    banner.querySelector('.ccb-title').innerHTML = `🎮 ${attackerLabel}<br>prend le contrôle !`;
+    boardCol.appendChild(banner);
+  }
+  requestAnimationFrame(()=>banner.classList.add('active'));
+}
+
+function _hideCrossControlBanner(pid){
+  const banner = document.getElementById('cross-control-banner');
+  if(banner){ banner.classList.remove('active'); }
+}
+
 /**
  * Appelé par _sendPoopToOpponent() depuis une instance createPlayer.
  * `senderId` : 'p1' ou 'p2' — on injecte dans l'autre joueur.
@@ -2163,6 +2310,19 @@ function _teardownBattleKeyboard(){
   document.removeEventListener('keydown', _battleKeyHandler);
 }
 function _battleKeyHandler(e){
+  // ── MODE PRISE DE CONTRÔLE : P1 pilote le 💩 sur la grille P2 ──
+  if(crossControlActive){
+    const p2 = window._p2;
+    if(p2 && p2.gameRunning && p2.active){
+      if(e.key==='q'||e.key==='Q'){e.preventDefault();p2.moveLeft();}
+      if(e.key==='d'||e.key==='D'){e.preventDefault();p2.moveRight();}
+      if(e.key==='x'||e.key==='X'){e.preventDefault();p2.softDrop();}
+      if(e.key===' '){e.preventDefault();p2.hardDrop();}
+    }
+    return; // bloquer tous les autres inputs pendant la prise de contrôle
+  }
+
+  // ── MODE NORMAL ──
   // P1 : Q=gauche · D=droite · X=soft drop · Espace=hard drop
   const p1 = window._p1;
   if(p1 && p1.gameRunning && !p1.resolvingWords && p1.active){
@@ -2277,6 +2437,8 @@ function _startBotOnP2(){
 
   function botLoop(){
     if(!p2.gameRunning){ _workerPending = false; return; }
+    // Pause pendant la prise de contrôle
+    if(window._botPaused){ setTimeout(botLoop, 200); return; }
     if(p2.resolvingWords || !p2.active){
       setTimeout(botLoop, 150);
       return;
@@ -2325,7 +2487,9 @@ function _startBotOnP2(){
  */
 function exitBattleMode(){
   _teardownBattleKeyboard();
-  _destroyBotWorker(); // termine le Worker proprement avant de nettoyer le DOM
+  _destroyBotWorker();
+  crossControlActive = false;
+  window._botPaused = false;
   if(window._p1) window._p1.stopGame();
   if(window._p2) window._p2.stopGame();
   window._p1 = null;
