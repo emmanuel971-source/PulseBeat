@@ -117,10 +117,11 @@ body::before{
 .cell.land{animation:landBounce .32s cubic-bezier(.36,.07,.19,.97) forwards;}
 .cell.malus{background:linear-gradient(135deg,#fdf3ea,#f7e8d5)!important;color:#1a1040!important;border:1px solid rgba(100,200,220,.12)!important;border-radius:8px;box-shadow:0 3px 0 rgba(139,69,19,.12),inset 0 1px 0 rgba(255,255,255,.7)!important;font-size:clamp(20px,7vw,32px)!important;line-height:1!important;padding-top:2px!important;}
 .cell.malus-incoming{animation:malusWobble .5s ease infinite alternate;}
-.cell.skull{background:#ededea!important;border:2px dashed #5f5e5a!important;border-radius:6px!important;box-shadow:none!important;font-size:clamp(19px,6.5vw,30px)!important;line-height:1!important;padding-top:1px!important;}
+.cell.skull{background:#1a1a28!important;border:none!important;border-radius:6px!important;box-shadow:0 3px 0 rgba(0,0,0,.5)!important;font-size:clamp(20px,7vw,32px)!important;line-height:1!important;padding-top:1px!important;}
 @keyframes skullShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-5px)}30%{transform:translateX(5px)}45%{transform:translateX(-4px)}60%{transform:translateX(4px)}75%{transform:translateX(-2px)}90%{transform:translateX(2px)}}
 .skull-row-flash{animation:skullShake .5s ease forwards;}
 @keyframes malusWobble{from{transform:scale(1) rotate(-3deg)}to{transform:scale(1.08) rotate(3deg)}}
+.cell.active.is-malus{font-size:clamp(20px,7vw,32px)!important;}
 @keyframes arenaSkullShake{0%,100%{transform:translate(0,0) rotate(0deg)}15%{transform:translate(-5px,3px) rotate(-.5deg)}30%{transform:translate(5px,-4px) rotate(.5deg)}45%{transform:translate(-4px,3px) rotate(-.3deg)}60%{transform:translate(4px,-2px) rotate(.3deg)}75%{transform:translate(-2px,2px) rotate(-.2deg)}90%{transform:translate(2px,-1px) rotate(.1deg)}}
 .arena-skull-shake{animation:arenaSkullShake .55s cubic-bezier(.36,.07,.19,.97) forwards;}
 @keyframes landBounce{0%{transform:scaleY(1.35) scaleX(.78)}35%{transform:scaleY(.82) scaleX(1.12)}65%{transform:scaleY(1.06) scaleX(.96)}100%{transform:scaleY(1) scaleX(1)}}
@@ -1415,9 +1416,14 @@ function _fitBattleBoard(){
       if(!el||el.classList.contains('flash')||el.classList.contains('combo-flash')||el.classList.contains('land'))continue;
       const isTrig=puzzleMode&&puzzleTriggerCells&&puzzleTriggerCells.has(`${r}-${c}`);
       if(active&&r===active.y&&c===active.x){
-        el.className='cell active';el.textContent=active.char;el.style.background=kanaBg(active.char);
+        const isActiveMalus=active.char==='💩';
+        el.className='cell active'+(isActiveMalus?' is-malus':'');
+        el.textContent=active.char;
+        el.style.background=isActiveMalus?'linear-gradient(135deg,#fdf3ea,#f7e8d5)':kanaBg(active.char);
       }else if(active&&r===gy&&c===active.x&&gy!==active.y){
-        el.className='cell ghost';el.textContent=active.char;el.style.background='';
+        const isGhostMalus=active.char==='💩';
+        el.className='cell ghost'+(isGhostMalus?' is-malus':'');
+        el.textContent=active.char;el.style.background='';
         if(isTrig)el.classList.add('puzzle-trigger');
       }else if(board[r][c].filled){
         const isMalus=board[r][c].char==='💩';
@@ -1840,22 +1846,23 @@ function renderPanel(){
     // Malus battle : insère une ligne de ☠️ en bas, remonte tout d'un cran
     injectSkullRow(){
       if(!gameRunning) return;
+      const cols = board[0] ? board[0].length : COLS;
       // Game over si la remontée pousse une case hors du plateau (ligne 0 occupée)
-      for(let c=0;c<COLS;c++){
+      for(let c=0;c<cols;c++){
         if(board[0][c].filled){ endGame(); return; }
       }
       // Remonter toutes les lignes d'un cran
       for(let r=0;r<ROWS-1;r++){
-        for(let c=0;c<COLS;c++){
+        for(let c=0;c<cols;c++){
           board[r][c]={...board[r+1][c]};
         }
       }
-      // Remplir la dernière ligne avec des ☠️
-      for(let c=0;c<COLS;c++){
+      // Remplir TOUTE la dernière ligne avec des ☠️
+      for(let c=0;c<cols;c++){
         board[ROWS-1][c]={filled:true,char:'☠️'};
       }
-      // Décaler le kana actif vers le haut s'il est en jeu
-      if(active && active.y > 0) active.y--;
+      // Remonter le kana actif d'un cran pour qu'il ne soit pas écrasé
+      if(active) active.y = Math.max(0, active.y - 1);
       render();
       // Animation shake sur l'arène qui reçoit la ligne
       const arenaEl = dom.boardColEl.closest('.player-arena') || dom.boardColEl;
