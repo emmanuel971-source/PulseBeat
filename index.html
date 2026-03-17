@@ -386,26 +386,68 @@ body::before{
 @keyframes hintPulse{0%,100%{opacity:.4;transform:translateY(0)}50%{opacity:.9;transform:translateY(3px)}}
 
 /* ═══ TUTO ═══ */
-#tuto-overlay{position:fixed;inset:0;z-index:210;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--bg-top),var(--bg-mid),var(--bg-bot));padding:20px 22px;gap:0;max-width:480px;margin:0 auto;}
-#tuto-overlay.hidden{display:none;}
+/* tuto-overlay supprimé — sera remplacé à l'étape 6 */
 .tuto-title{font-family:'Fredoka One',cursive;font-size:clamp(26px,8vw,34px);color:var(--sky);text-align:center;margin-bottom:5px;}
 .tuto-sub{font-family:'Nunito',sans-serif;font-size:clamp(15px,4vw,18px);color:var(--text-mid);text-align:center;margin-bottom:18px;font-weight:700;}
 .tuto-steps{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;}
 .tuto-step{background:white;border-radius:20px;border:2px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 16px rgba(0,0,0,.07);animation:tutoStepIn .5s cubic-bezier(.34,1.56,.64,1) both;}
-.tuto-step:nth-child(1){animation-delay:.1s}.tuto-step:nth-child(2){animation-delay:.25s}.tuto-step:nth-child(3){animation-delay:.4s}
-@keyframes tutoStepIn{from{opacity:0;transform:translateX(-20px) scale(.92)}to{opacity:1;transform:none}}
-.tuto-anim{width:52px;flex-shrink:0;text-align:center;}
-.hand-swipe{font-size:32px;display:inline-block;animation:handSwipe 1.2s ease-in-out infinite;}
-@keyframes handSwipe{0%{transform:translateX(-10px);opacity:.5}50%{transform:translateX(10px);opacity:1}100%{transform:translateX(-10px);opacity:.5}}
-.hand-drop{font-size:32px;display:inline-block;animation:handDrop 1.1s ease-in-out infinite;}
-@keyframes handDrop{0%{transform:translateY(-8px);opacity:.5}50%{transform:translateY(8px);opacity:1}100%{transform:translateY(-8px);opacity:.5}}
-.hand-hold{font-size:32px;display:inline-block;animation:handHold 1.3s ease-in-out infinite;}
-@keyframes handHold{0%,40%{transform:scale(1)}20%{transform:scale(1.25)}60%,100%{transform:scale(.9) translateY(6px)}}
-.tuto-step-text{flex:1;}
-.tuto-step-title{font-family:'Nunito',sans-serif;font-size:clamp(16px,4.8vw,20px);color:var(--text-dark);font-weight:900;}
-.tuto-step-desc{font-family:'Nunito',sans-serif;font-size:clamp(13px,3.5vw,15px);color:var(--text-mid);margin-top:2px;line-height:1.4;font-weight:700;}
-.tuto-btn{font-family:'Fredoka One',sans-serif;font-size:clamp(20px,5.5vw,25px);background:linear-gradient(135deg,var(--sky),var(--mint));color:#fff;border:none;border-radius:50px;padding:14px 44px;cursor:pointer;box-shadow:0 4px 18px rgba(0,170,238,.4);margin-top:20px;transition:transform .15s;letter-spacing:.5px;animation:tutoStepIn .5s .55s cubic-bezier(.34,1.56,.64,1) both;}
-.tuto-btn:active{transform:scale(.95);}
+/* ═══ MODE SELECT OVERLAY ═══ */
+#mode-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:linear-gradient(160deg,var(--bg-top) 0%,var(--bg-mid) 50%,var(--bg-bot) 100%);
+  display:flex;flex-direction:column;align-items:center;
+  padding:24px 16px 16px;gap:14px;overflow-y:auto;
+}
+#mode-overlay.hidden{display:none !important;}
+.mode-title{
+  font-family:'Fredoka One',cursive;font-size:clamp(18px,5vw,26px);
+  color:var(--sky);text-align:center;line-height:1.2;
+  max-width:300px;
+}
+.mode-tabs{
+  display:flex;gap:8px;width:100%;max-width:340px;
+  background:rgba(255,255,255,.6);border-radius:16px;padding:4px;
+}
+.mode-tab{
+  flex:1;font-family:'Fredoka One',cursive;font-size:clamp(15px,4vw,18px);
+  border:none;border-radius:12px;padding:10px 8px;cursor:pointer;
+  background:transparent;color:var(--text-dim);transition:all .2s;
+}
+.mode-tab.active{
+  background:white;color:var(--sky);
+  box-shadow:0 2px 10px rgba(0,170,238,.2);
+}
+.mode-panel{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;}
+.mode-panel-hint{
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:clamp(12px,3vw,14px);
+  color:var(--text-dim);text-align:center;
+}
+.mode-btn{
+  display:flex;align-items:center;gap:14px;
+  font-family:'Fredoka One',cursive;font-size:clamp(17px,4.5vw,22px);
+  color:#fff;border:none;border-radius:20px;padding:16px 20px;cursor:pointer;
+  transition:transform .15s,box-shadow .15s;text-align:left;
+}
+.mode-btn:hover{transform:translateY(-2px) scale(1.02);}
+.mode-btn:active{transform:scale(.97);}
+.mode-btn-solo {background:linear-gradient(135deg,#00aaee,#2ed8a0);box-shadow:0 5px 18px rgba(0,170,238,.35);}
+.mode-btn-bot  {background:linear-gradient(135deg,#a855f7,#4d96ff);box-shadow:0 5px 18px rgba(168,85,247,.35);}
+.mode-btn-2p   {background:linear-gradient(135deg,#ff5fa0,#ff8c42);box-shadow:0 5px 18px rgba(255,95,160,.35);}
+.mode-btn-icon {font-size:clamp(26px,7vw,34px);flex-shrink:0;}
+.mode-btn-label{font-size:clamp(17px,4.5vw,22px);}
+.mode-btn-sub  {font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;opacity:.85;}
+.mode-sn-card{
+  background:#fff;border:2px solid #b8e0f8;border-radius:14px;
+  padding:12px 16px;cursor:pointer;transition:border-color .2s;
+}
+.mode-sn-card:hover{border-color:#00aaee;}
+.mode-back-btn{
+  font-family:'Fredoka One',cursive;font-size:15px;
+  padding:9px 22px;border:2px solid var(--border);border-radius:12px;
+  background:#fff;color:var(--text-dim);cursor:pointer;margin-top:4px;
+  transition:background .15s;
+}
+.mode-back-btn:hover{background:var(--surface);}
 
 /* ═══ PUZZLE TRIGGER PULSE ═══ */
 .cell.puzzle-trigger{
@@ -416,9 +458,6 @@ body::before{
   0%,100%{box-shadow:0 0 0 2px #f9d000, 0 0 8px 3px rgba(249,208,0,.5);filter:brightness(1.1);}
   50%{box-shadow:0 0 0 4px #ff8c00, 0 0 16px 6px rgba(255,140,0,.6);filter:brightness(1.3);}
 }
-#puzzle-overlay{position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,#d4f4ff 0%,#d8f7ef 50%,#fdf6d8 100%);display:flex;flex-direction:column;align-items:center;padding:20px 16px;overflow-y:auto;gap:14px;}
-#puzzle-overlay.hidden{display:none !important;}
-
 /* ═══ GAME OVERLAY ═══ */
 #board-overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(240,250,255,.95);backdrop-filter:blur(12px);z-index:100;gap:11px;padding:22px 16px;max-width:480px;margin:0 auto;overflow-y:auto;}
 #board-overlay.hidden{display:none;}
@@ -634,45 +673,40 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
   <div class="menu-scroll-hint">↕ Fais défiler pour voir tous les niveaux</div>
 </div>
 
-<!-- ═══ TUTO ═══ -->
-<div id="tuto-overlay" class="hidden">
-  <div class="tuto-title">Comment jouer ? 🎮</div>
-  <div class="tuto-sub">C'est super simple, promis !</div>
-  <div class="tuto-steps">
-    <div class="tuto-step">
-      <div class="tuto-anim"><span class="hand-swipe">👆</span></div>
-      <div class="tuto-step-text">
-        <div class="tuto-step-title">Déplace le kana</div>
-        <div class="tuto-step-desc">Swipe à gauche ou droite pour choisir la colonne</div>
-      </div>
-    </div>
-    <div class="tuto-step">
-      <div class="tuto-anim"><span class="hand-drop">👇</span></div>
-      <div class="tuto-step-text">
-        <div class="tuto-step-title">Fais-le tomber vite !</div>
-        <div class="tuto-step-desc">Swipe vers le bas ou appui long pour chute rapide</div>
-      </div>
-    </div>
-    <div class="tuto-step">
-      <div class="tuto-anim"><span class="hand-hold">🤏</span></div>
-      <div class="tuto-step-text">
-        <div class="tuto-step-title">Forme les mots !</div>
-        <div class="tuto-step-desc">Place les kanas pour écrire les mots du panneau en bas</div>
-      </div>
-    </div>
-  </div>
-  <button class="tuto-btn" id="tuto-start-btn">C'est parti ! 🚀</button>
-</div>
+<!-- ═══ MODE SELECT ═══ -->
+<div id="mode-overlay" class="hidden">
+  <div class="mode-title">⚔️ <span id="mode-level-name"></span></div>
 
-<!-- ═══ PUZZLE SN SELECT ═══ -->
-<div id="puzzle-overlay" class="hidden">
-  <div style="font-family:'Fredoka One',cursive;font-size:22px;color:#00aaee;text-align:center;">⚡ Mode Puzzle</div>
-  <div id="puzzle-level-name" style="font-size:14px;color:#5090a8;text-align:center;margin-top:-8px;"></div>
-  <div style="font-size:12px;color:#5090a8;text-align:center;background:#fff;border:2px solid #b8e0f8;border-radius:12px;padding:8px 14px;max-width:340px;">
-    Le plateau démarre pré-rempli avec des chaînes en cascade.<br>Pose le bon kana pour déclencher la réaction !
+  <!-- Tabs Standard / Puzzle -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tab-standard" onclick="modeTabSwitch('standard')">🎮 Standard</button>
+    <button class="mode-tab" id="tab-puzzle" onclick="modeTabSwitch('puzzle')">⚡ Puzzle</button>
   </div>
-  <div id="sn-cards" style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;"></div>
-  <button id="puzzle-back-btn" style="font-family:'Fredoka One',cursive;font-size:15px;padding:9px 22px;border:2px solid #b8e0f8;border-radius:12px;background:#fff;color:#5090a8;cursor:pointer;margin-top:4px;">← Retour</button>
+
+  <!-- Panel Standard : choix nombre de joueurs -->
+  <div id="mode-panel-standard" class="mode-panel">
+    <div class="mode-panel-hint">Choisis ton adversaire</div>
+    <button class="mode-btn mode-btn-solo"  onclick="modeStart('solo')">
+      <span class="mode-btn-icon">🎮</span>
+      <div><div class="mode-btn-label">1 Joueur</div><div class="mode-btn-sub">Mode solo classique</div></div>
+    </button>
+    <button class="mode-btn mode-btn-bot"   onclick="modeStart('vsBot')">
+      <span class="mode-btn-icon">🤖</span>
+      <div><div class="mode-btn-label">1P vs CPU</div><div class="mode-btn-sub">Duel contre le bot IA</div></div>
+    </button>
+    <button class="mode-btn mode-btn-2p"    onclick="modeStart('vs2p')">
+      <span class="mode-btn-icon">👥</span>
+      <div><div class="mode-btn-label">2 Joueurs</div><div class="mode-btn-sub">Duel local · Desktop</div></div>
+    </button>
+  </div>
+
+  <!-- Panel Puzzle : choix difficulté SN -->
+  <div id="mode-panel-puzzle" class="mode-panel" style="display:none">
+    <div class="mode-panel-hint">Choisis la difficulté</div>
+    <div id="mode-sn-cards"></div>
+  </div>
+
+  <button class="mode-back-btn" onclick="modeBack()">← Retour</button>
 </div>
 
 <!-- ═══ JEU ═══ -->
@@ -1317,101 +1351,15 @@ function puzzleGenerate(levelIdx, snDef, customRows){
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  MENU MODE — nouveau sélecteur 1P / vsBot / 2P
+//  NAVIGATION — Menu niveaux → Écran mode → Jeu
 // ═══════════════════════════════════════════════════════════════════
-(()=>{
-  // Injecter l'overlay mode-select dans le DOM avant le menu principal
-  const modeOverlay=document.createElement('div');
-  modeOverlay.id='mode-overlay';
-  modeOverlay.style.cssText=`
-    position:fixed;inset:0;z-index:300;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:linear-gradient(160deg,var(--bg-top) 0%,var(--bg-mid) 50%,var(--bg-bot) 100%);
-    gap:20px;padding:32px 24px;
-  `;
-  modeOverlay.innerHTML=`
-    <div style="font-family:'Fredoka One',cursive;font-size:clamp(22px,6vw,32px);color:var(--sky);text-align:center;letter-spacing:1px;">⚔️ Choisir le mode</div>
-    <div style="font-size:clamp(13px,3.5vw,16px);color:var(--text-dim);text-align:center;font-family:'Nunito',sans-serif;font-weight:700;">Solo, duel contre le CPU, ou 2 joueurs en local</div>
-    <div style="display:flex;flex-direction:column;gap:14px;width:100%;max-width:320px;">
-      <button id="mode-solo" style="
-        font-family:'Fredoka One',cursive;font-size:clamp(18px,5vw,24px);
-        background:linear-gradient(135deg,#00aaee,#2ed8a0);color:#fff;
-        border:none;border-radius:20px;padding:18px 24px;cursor:pointer;
-        box-shadow:0 6px 20px rgba(0,170,238,.35);
-        display:flex;align-items:center;gap:14px;
-        transition:transform .15s,box-shadow .15s;
-      ">
-        <span style="font-size:clamp(28px,8vw,38px)">🎮</span>
-        <div style="text-align:left">
-          <div>1 Joueur</div>
-          <div style="font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;opacity:.85">Mode solo classique</div>
-        </div>
-      </button>
-      <button id="mode-vsbot" style="
-        font-family:'Fredoka One',cursive;font-size:clamp(18px,5vw,24px);
-        background:linear-gradient(135deg,#a855f7,#4d96ff);color:#fff;
-        border:none;border-radius:20px;padding:18px 24px;cursor:pointer;
-        box-shadow:0 6px 20px rgba(168,85,247,.35);
-        display:flex;align-items:center;gap:14px;
-        transition:transform .15s,box-shadow .15s;
-      ">
-        <span style="font-size:clamp(28px,8vw,38px)">🤖</span>
-        <div style="text-align:left">
-          <div>1P vs CPU</div>
-          <div style="font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;opacity:.85">Duel contre le bot IA</div>
-        </div>
-      </button>
-      <button id="mode-2p" style="
-        font-family:'Fredoka One',cursive;font-size:clamp(18px,5vw,24px);
-        background:linear-gradient(135deg,#ff5fa0,#ff8c42);color:#fff;
-        border:none;border-radius:20px;padding:18px 24px;cursor:pointer;
-        box-shadow:0 6px 20px rgba(255,95,160,.35);
-        display:flex;align-items:center;gap:14px;
-        transition:transform .15s,box-shadow .15s;
-      ">
-        <span style="font-size:clamp(28px,8vw,38px)">👥</span>
-        <div style="text-align:left">
-          <div>2 Joueurs</div>
-          <div style="font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;opacity:.85">Duel local · Desktop uniquement</div>
-        </div>
-      </button>
-    </div>
-  `;
-  document.body.appendChild(modeOverlay);
 
-  // Hover effect sur les boutons
-  ['mode-solo','mode-vsbot','mode-2p'].forEach(id=>{
-    const btn=document.getElementById(id);
-    btn.addEventListener('mouseenter',()=>{btn.style.transform='translateY(-2px) scale(1.02)';btn.style.boxShadow=btn.style.boxShadow.replace('rgba','rgba');});
-    btn.addEventListener('mouseleave',()=>{btn.style.transform='';});
-  });
-
-  document.getElementById('mode-solo').addEventListener('click',()=>{
-    gameMode='solo';
-    modeOverlay.style.display='none';
-    document.getElementById('menu-overlay').classList.remove('hidden');
-  });
-  document.getElementById('mode-vsbot').addEventListener('click',()=>{
-    gameMode='vsBot';
-    modeOverlay.style.display='none';
-    document.getElementById('menu-overlay').classList.remove('hidden');
-  });
-  document.getElementById('mode-2p').addEventListener('click',()=>{
-    gameMode='vs2p';
-    modeOverlay.style.display='none';
-    document.getElementById('menu-overlay').classList.remove('hidden');
-  });
-
-  // Masquer le menu principal au démarrage, afficher le mode selector
-  document.getElementById('menu-overlay').classList.add('hidden');
-})();
-
-// ═══════════════════════════════════════════════════════════════════
-//  MENU NIVEAUX
-// ═══════════════════════════════════════════════════════════════════
+// ── Construction des cards de niveau (sans bouton Puzzle) ──
 (()=>{
   const scroll=document.getElementById('lvl-scroll');
   ALL_LEVELS.forEach((lvl,i)=>{
+    const best=KS.getSoloBest(lvl.id);
+    const bestHtml=best?`<span style="font-size:11px;color:${lvl.color};font-family:'Fredoka One',cursive;">🏆 ${best.score.toLocaleString()}</span>`:'';
     const card=document.createElement('div');
     card.className='lvl-card';
     card.style.cssText=`--lc:${lvl.color};border-color:${lvl.color}55;`;
@@ -1426,28 +1374,72 @@ function puzzleGenerate(levelIdx, snDef, customRows){
         <div class="lvl-card-words">${chips}</div>
         <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
           <div class="lvl-card-count" style="flex:1">${lvl.words.length} mots ✨</div>
-          <div class="puzzle-btn" style="font-family:'Fredoka One',cursive;font-size:13px;padding:5px 13px;background:linear-gradient(135deg,#f9d000,#ff8c42);color:#fff;border-radius:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(249,208,0,.4);">⚡ Puzzle</div>
+          ${bestHtml}
         </div>
       </div>`;
-    card.addEventListener('click',()=>showTuto(i));
+    card.addEventListener('click',()=>showModeSelect(i));
     scroll.appendChild(card);
-    card.querySelector('.puzzle-btn').addEventListener('click',e=>{e.stopPropagation();showPuzzleSelect(i);});
   });
 })();
 
-function showTuto(idx){
-  pendingLevelIdx=idx;
+// ── Afficher l'écran de choix de mode pour un niveau ──
+function showModeSelect(levelIdx){
+  pendingLevelIdx=levelIdx;
+  const lvl=ALL_LEVELS[levelIdx];
+  document.getElementById('mode-level-name').textContent=`${lvl.emoji} ${lvl.theme}`;
+  // Remplir les cards SN puzzle
+  const snContainer=document.getElementById('mode-sn-cards');
+  snContainer.innerHTML='';
+  snContainer.style.cssText='display:flex;flex-direction:column;gap:10px;';
+  PUZZLE_SN_DEFS.forEach((sn,si)=>{
+    const card=document.createElement('div');
+    card.className='mode-sn-card';
+    card.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-family:'Fredoka One',cursive;font-size:17px;color:#00aaee">SN-${sn.num}</span><span style="font-size:16px">${sn.stars}</span><span style="font-family:'Fredoka One',cursive;font-size:15px;color:#1a3050">${sn.label}</span></div><div style="font-size:12px;color:#5090a8">${sn.desc}</div>`;
+    card.addEventListener('click',()=>{
+      document.getElementById('mode-overlay').classList.add('hidden');
+      document.getElementById('menu-overlay').classList.add('hidden');
+      player1.startPuzzle(levelIdx,si);
+    });
+    snContainer.appendChild(card);
+  });
+  // Afficher tab Standard par défaut
+  modeTabSwitch('standard');
   document.getElementById('menu-overlay').classList.add('hidden');
-  document.getElementById('tuto-overlay').classList.remove('hidden');
+  document.getElementById('mode-overlay').classList.remove('hidden');
 }
-document.getElementById('tuto-start-btn').addEventListener('click',()=>{
-  document.getElementById('tuto-overlay').classList.add('hidden');
-  startGame(pendingLevelIdx);
-});
-document.getElementById('puzzle-back-btn').addEventListener('click',()=>{
-  document.getElementById('puzzle-overlay').classList.add('hidden');
+
+// ── Switch entre tabs Standard / Puzzle ──
+function modeTabSwitch(tab){
+  document.getElementById('tab-standard').classList.toggle('active', tab==='standard');
+  document.getElementById('tab-puzzle').classList.toggle('active', tab==='puzzle');
+  document.getElementById('mode-panel-standard').style.display = tab==='standard' ? 'flex' : 'none';
+  document.getElementById('mode-panel-puzzle').style.display   = tab==='puzzle'   ? 'flex' : 'none';
+}
+
+// ── Lancer le jeu depuis l'écran mode ──
+function modeStart(mode){
+  document.getElementById('mode-overlay').classList.add('hidden');
+  gameMode=mode;
+  if(mode==='solo'){
+    startGame(pendingLevelIdx);
+  } else {
+    enterBattleMode(pendingLevelIdx);
+  }
+}
+
+// ── Retour au menu niveaux ──
+function modeBack(){
+  document.getElementById('mode-overlay').classList.add('hidden');
   document.getElementById('menu-overlay').classList.remove('hidden');
-});
+}
+
+// showTuto devient showModeSelect pour compatibilité avec exitBattleMode etc.
+window.showTuto = function(idx){ showModeSelect(idx); };
+
+// Listeners existants qui référençaient tuto/puzzle-back-btn — nettoyés
+// (les éléments n'existent plus)
+
+
 
 // ═══════════════════════════════════════════════════════════════════
 //  FACTORY JOUEUR — createPlayer(id, dom)
@@ -2174,27 +2166,11 @@ window.addEventListener('resize',()=>{if(!player1.gameRunning)return;});
 function showMenu(){
   player1.stopGame();
   document.getElementById('board-overlay').classList.add('hidden');
-  document.getElementById('tuto-overlay').classList.add('hidden');
-  document.getElementById('menu-overlay').classList.add('hidden');
-  document.getElementById('mode-overlay').style.display='flex';
+  document.getElementById('mode-overlay').classList.add('hidden');
+  document.getElementById('menu-overlay').classList.remove('hidden');
 }
 
-function showPuzzleSelect(levelIdx){
-  document.getElementById('menu-overlay').classList.add('hidden');
-  const lvl=ALL_LEVELS[levelIdx];
-  document.getElementById('puzzle-level-name').textContent=`Lv.${lvl.id} ${lvl.emoji} ${lvl.theme}`;
-  const cards=document.getElementById('sn-cards');cards.innerHTML='';
-  PUZZLE_SN_DEFS.forEach((sn,si)=>{
-    const card=document.createElement('div');
-    card.style.cssText='background:#fff;border:2px solid #b8e0f8;border-radius:14px;padding:12px 16px;cursor:pointer;transition:all .2s;';
-    card.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-family:'Fredoka One',cursive;font-size:17px;color:#00aaee">SN-${sn.num}</span><span style="font-size:16px">${sn.stars}</span><span style="font-family:'Fredoka One',cursive;font-size:15px;color:#1a3050">${sn.label}</span></div><div style="font-size:12px;color:#5090a8">${sn.desc}</div>`;
-    card.addEventListener('mouseenter',()=>card.style.borderColor='#00aaee');
-    card.addEventListener('mouseleave',()=>card.style.borderColor='#b8e0f8');
-    card.addEventListener('click',()=>{ document.getElementById('puzzle-overlay').classList.add('hidden'); player1.startPuzzle(levelIdx,si); });
-    cards.appendChild(card);
-  });
-  document.getElementById('puzzle-overlay').classList.remove('hidden');
-}
+function showPuzzleSelect(levelIdx){ showModeSelect(levelIdx); } // compat
 
 function startGame(levelIdx, isPuzzle=false){
   player1.startGame(levelIdx, isPuzzle);
@@ -2815,68 +2791,6 @@ function exitBattleMode(){
 
   showMenu();
 }
-
-// ── Brancher le mode selector sur enterBattleMode ──
-// Remplacer les listeners du mode-overlay pour vsBot et vs2p
-document.addEventListener('DOMContentLoaded', ()=>{}, {once:true});
-// Les boutons mode-overlay sont déjà créés plus haut, on les repatch ici
-// pour que vsBot et vs2p passent par enterBattleMode
-setTimeout(()=>{
-  const modeVsBot = document.getElementById('mode-vsbot');
-  const mode2p    = document.getElementById('mode-2p');
-  if(modeVsBot){
-    // Clone pour retirer l'ancien listener
-    const nb = modeVsBot.cloneNode(true);
-    modeVsBot.parentNode.replaceChild(nb, modeVsBot);
-    nb.addEventListener('click',()=>{
-      gameMode='vsBot';
-      document.getElementById('mode-overlay').style.display='none';
-      // Pour battle : sélection de niveau puis enterBattleMode
-      _pendingBattleMode = true;
-      document.getElementById('menu-overlay').classList.remove('hidden');
-    });
-  }
-  if(mode2p){
-    const nb2 = mode2p.cloneNode(true);
-    mode2p.parentNode.replaceChild(nb2, mode2p);
-    nb2.addEventListener('click',()=>{
-      gameMode='vs2p';
-      document.getElementById('mode-overlay').style.display='none';
-      _pendingBattleMode = true;
-      document.getElementById('menu-overlay').classList.remove('hidden');
-    });
-  }
-}, 100);
-
-// Flag : la prochaine sélection de niveau lance enterBattleMode
-let _pendingBattleMode = false;
-
-// Monkey-patch showTuto pour intercepter le lancement battle
-const _origShowTuto = window.showTuto || function(){};
-window.showTuto = function(idx){
-  if(_pendingBattleMode){
-    _pendingBattleMode = false;
-    document.getElementById('menu-overlay').classList.add('hidden');
-    enterBattleMode(idx);
-    return;
-  }
-  // Solo : comportement normal
-  pendingLevelIdx = idx;
-  document.getElementById('menu-overlay').classList.add('hidden');
-  document.getElementById('tuto-overlay').classList.remove('hidden');
-};
-// Recâbler les cards du menu sur le nouveau showTuto
-setTimeout(()=>{
-  document.querySelectorAll('.lvl-card').forEach((card, i)=>{
-    // Retirer l'ancien listener en clonant
-    const nc = card.cloneNode(true);
-    card.parentNode.replaceChild(nc, card);
-    nc.addEventListener('click',()=>window.showTuto(i));
-    const pb = nc.querySelector('.puzzle-btn');
-    if(pb) pb.addEventListener('click',e=>{e.stopPropagation();showPuzzleSelect(i);});
-  });
-}, 150);
-
 
 const BOT_LOG={
   entries:[],_current:null,
