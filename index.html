@@ -1085,17 +1085,12 @@ function simEval(state,kana,col,maxDepth){
   let score=0,cascades=0;let found=sim.scanAll(),depth=0;
   let filledCount=0;for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++)if(sim.board[r][c].char)filledCount++;
   const fillRatio=filledCount/(sim.rows*sim.cols);
-  const height=sim.rows-landRow;
-  // Réduire la pénalité de hauteur pour laisser le bot empiler les mots longs (boss 3 kanas)
-  const maxWordLen=state.words.reduce((m,w)=>Math.max(m,[...w.kana].length),0);
-  const heightFactor=maxWordLen>=3?0.25:0.5;
-  let heightPenalty=Math.pow(height,2)*heightFactor;
+  const height=sim.rows-landRow;let heightPenalty=Math.pow(height,2)*.5;
   if(fillRatio>.7)heightPenalty*=10;score-=heightPenalty;
   while(found.length>0&&depth<=maxDepth){let pts=found.reduce((s,f)=>{let basePts=f.word.kana.length*100;return s+basePts;},0);if(depth>0){pts*=Math.pow(3.0,depth);cascades++;score+=1000;}score+=pts;sim.explode(found);sim.applyGravity();depth++;found=sim.scanAll();}
-  // Augmenter le poids du bonus de proximité pour favoriser la complétion des mots longs
-  score+=_proximityBonus(sim)*1.8;return{score,cascades,endState:sim};
+  score+=_proximityBonus(sim)*.5;return{score,cascades,endState:sim};
 }
-function _proximityBonus(sim){let bonus=0;sim.words.forEach(w=>{const kanas=[...w.kana];const wordLen=kanas.length;const lenMult=wordLen>=3?2.5:1;for(let i=0;i<kanas.length-1;i++){const a=kanas[i],b=kanas[i+1];const posA=[],posB=[];for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++){if(sim.board[r][c].char===a)posA.push({r,c});if(sim.board[r][c].char===b)posB.push({r,c});}posA.forEach(pa=>posB.forEach(pb=>{const dr=Math.abs(pa.r-pb.r),dc=Math.abs(pa.c-pb.c);if(dr===0&&dc===1)bonus+=120*lenMult;if(dc===0&&dr===1)bonus+=120*lenMult;if(dr===0&&dc<=3)bonus+=40*lenMult;if(dc===0&&dr<=3)bonus+=40*lenMult;}));}});return bonus;}
+function _proximityBonus(sim){let bonus=0;sim.words.forEach(w=>{const kanas=[...w.kana];for(let i=0;i<kanas.length-1;i++){const a=kanas[i],b=kanas[i+1];const posA=[],posB=[];for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++){if(sim.board[r][c].char===a)posA.push({r,c});if(sim.board[r][c].char===b)posB.push({r,c});}posA.forEach(pa=>posB.forEach(pb=>{const dr=Math.abs(pa.r-pb.r),dc=Math.abs(pa.c-pb.c);if(dr===0&&dc===1)bonus+=120;if(dc===0&&dr===1)bonus+=120;if(dr===0&&dc<=3)bonus+=40;if(dc===0&&dr<=3)bonus+=40;}));}});return bonus;}
 
 function botChooseBestCol(kana,boardSnap,activeWordsSnap,nextKana,maxDepth){
   const currentRows = boardSnap.length; // Le bot détecte dynamiquement la hauteur du joueur
@@ -2514,7 +2509,7 @@ class SimState{
   freeCols(){const free=[];for(let c=0;c<this.cols;c++)if(!this.board[0][c].filled)free.push(c);return free;}
 }
 
-function _proximityBonus(sim){let bonus=0;sim.words.forEach(w=>{const kanas=[...w.kana];const wordLen=kanas.length;const lenMult=wordLen>=3?2.5:1;for(let i=0;i<kanas.length-1;i++){const a=kanas[i],b=kanas[i+1];const posA=[],posB=[];for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++){if(sim.board[r][c].char===a)posA.push({r,c});if(sim.board[r][c].char===b)posB.push({r,c});}posA.forEach(pa=>posB.forEach(pb=>{const dr=Math.abs(pa.r-pb.r),dc=Math.abs(pa.c-pb.c);if(dr===0&&dc===1)bonus+=120*lenMult;if(dc===0&&dr===1)bonus+=120*lenMult;if(dr===0&&dc<=3)bonus+=40*lenMult;if(dc===0&&dr<=3)bonus+=40*lenMult;}));}});return bonus;}
+function _proximityBonus(sim){let bonus=0;sim.words.forEach(w=>{const kanas=[...w.kana];for(let i=0;i<kanas.length-1;i++){const a=kanas[i],b=kanas[i+1];const posA=[],posB=[];for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++){if(sim.board[r][c].char===a)posA.push({r,c});if(sim.board[r][c].char===b)posB.push({r,c});}posA.forEach(pa=>posB.forEach(pb=>{const dr=Math.abs(pa.r-pb.r),dc=Math.abs(pa.c-pb.c);if(dr===0&&dc===1)bonus+=120;if(dc===0&&dr===1)bonus+=120;if(dr===0&&dc<=3)bonus+=40;if(dc===0&&dr<=3)bonus+=40;}));}});return bonus;}
 
 function simEval(state,kana,col,maxDepth){
   const sim=state.clone();const landRow=sim.drop(kana,col);
@@ -2522,13 +2517,10 @@ function simEval(state,kana,col,maxDepth){
   let score=0,cascades=0;let found=sim.scanAll(),depth=0;
   let filledCount=0;for(let r=0;r<sim.rows;r++)for(let c=0;c<sim.cols;c++)if(sim.board[r][c].char)filledCount++;
   const fillRatio=filledCount/(sim.rows*sim.cols);
-  const height=sim.rows-landRow;
-  const maxWordLen=state.words.reduce((m,w)=>Math.max(m,[...w.kana].length),0);
-  const heightFactor=maxWordLen>=3?0.25:0.5;
-  let heightPenalty=Math.pow(height,2)*heightFactor;
+  const height=sim.rows-landRow;let heightPenalty=Math.pow(height,2)*.5;
   if(fillRatio>.7)heightPenalty*=10;score-=heightPenalty;
   while(found.length>0&&depth<=maxDepth){let pts=found.reduce((s,f)=>{let basePts=f.word.kana.length*100;return s+basePts;},0);if(depth>0){pts*=Math.pow(3.0,depth);cascades++;score+=1000;}score+=pts;sim.explode(found);sim.applyGravity();depth++;found=sim.scanAll();}
-  score+=_proximityBonus(sim)*1.8;return{score,cascades,endState:sim};
+  score+=_proximityBonus(sim)*.5;return{score,cascades,endState:sim};
 }
 
 function botChooseBestCol(kana,boardSnap,activeWordsSnap,nextKana,maxDepth){
