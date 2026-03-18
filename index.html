@@ -408,7 +408,7 @@ body::before{
   background:linear-gradient(160deg,var(--bg-top) 0%,var(--bg-mid) 50%,var(--bg-bot) 100%);
   display:flex;flex-direction:column;align-items:center;
   overflow-y:auto;max-width:480px;margin:0 auto;
-  padding-top:16px;gap:14px;
+  padding-top:24px;gap:16px;
 }
 #keybinds-overlay::before{
   content:'';position:fixed;inset:0;max-width:480px;margin:0 auto;
@@ -418,52 +418,91 @@ body::before{
   pointer-events:none;z-index:0;animation:blobDrift 8s ease-in-out infinite alternate;
 }
 #keybinds-overlay.hidden{display:none !important;}
-
+.kb-header{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  position:relative;z-index:1;
+}
+.kb-header-emoji{
+  font-size:clamp(56px,16vw,80px);line-height:1;
+  filter:drop-shadow(0 4px 12px rgba(0,170,238,.35));
+  animation:floatPulse 3s ease-in-out infinite;
+}
+.kb-header-title{
+  font-family:'Fredoka One',cursive;font-size:clamp(24px,6.5vw,32px);
+  color:var(--sky);text-align:center;line-height:1;
+}
+.kb-header-hint{
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:clamp(12px,3.2vw,14px);
+  color:var(--text-dim);text-align:center;
+}
 .kb-grid{
   display:grid;grid-template-columns:auto 1fr 1fr;
   gap:8px;width:calc(100% - 32px);max-width:340px;
   position:relative;z-index:1;
 }
-.kb-action-header,.kb-player-header{
+.kb-action-header{border-radius:14px;padding:10px 8px;}
+.kb-player-header{
   border-radius:14px;padding:10px 8px;text-align:center;
   font-family:'Fredoka One',cursive;font-size:clamp(14px,4vw,17px);
-}
-.kb-player-header{
-  color:#1a3050;font-size:clamp(14px,4vw,17px);
-  box-shadow:0 4px 14px rgba(0,0,0,.1);
+  color:#1a3050;box-shadow:0 4px 14px rgba(0,0,0,.1);
 }
 .kb-action{
   display:flex;align-items:center;
   font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(13px,3.5vw,15px);
   color:var(--text-mid);padding-right:6px;white-space:nowrap;
 }
+/* Touches style clavier mécanique anthracite */
 .kb-key{
-  background:white;border:2.5px solid var(--border);border-radius:12px;
-  padding:10px 6px;font-family:'Fredoka One',cursive;font-size:clamp(13px,3.5vw,16px);
-  color:var(--text-dark);cursor:pointer;text-align:center;
-  transition:all .18s;box-shadow:0 3px 8px rgba(0,0,0,.08);
+  background:linear-gradient(180deg,#3a3a4a 0%,#2a2a38 60%,#1e1e2a 100%);
+  border:none;border-radius:10px;
+  padding:11px 6px;
+  font-family:'Fredoka One',cursive;font-size:clamp(13px,3.5vw,16px);
+  color:#ffffff;font-weight:900;
+  cursor:pointer;text-align:center;
+  transition:all .15s;
   min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  /* Effet épaisseur clavier mécanique */
+  box-shadow:
+    0 4px 0 #111118,
+    0 6px 10px rgba(0,0,0,.4),
+    inset 0 1px 0 rgba(255,255,255,.12);
 }
-.kb-key:hover{border-color:var(--sky);transform:scale(1.04);}
+.kb-key:hover{
+  background:linear-gradient(180deg,#4a4a5e 0%,#3a3a4e 60%,#2e2e3e 100%);
+  transform:translateY(-1px);
+  box-shadow:0 5px 0 #111118,0 8px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15);
+}
+.kb-key:active{
+  transform:translateY(3px);
+  box-shadow:0 1px 0 #111118,0 2px 6px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.08);
+}
 .kb-key.waiting{
-  border-color:var(--neon-pink);color:var(--neon-pink);
+  background:linear-gradient(180deg,#6b1a3a 0%,#4d1228 100%);
+  color:var(--neon-pink);
+  box-shadow:0 4px 0 #2a0814,0 0 14px rgba(255,0,102,.5),inset 0 1px 0 rgba(255,100,150,.2);
   animation:kbPulse .6s ease-in-out infinite alternate;
-  background:rgba(255,0,102,.06);
 }
-@keyframes kbPulse{from{box-shadow:0 0 0 2px rgba(255,0,102,.2)}to{box-shadow:0 0 0 5px rgba(255,0,102,.35)}}
+@keyframes kbPulse{from{box-shadow:0 4px 0 #2a0814,0 0 8px rgba(255,0,102,.4)}to{box-shadow:0 4px 0 #2a0814,0 0 20px rgba(255,0,102,.7)}}
 .kb-key.saved{
-  border-color:var(--mint);background:rgba(46,216,160,.1);
+  background:linear-gradient(180deg,#1a4a2e 0%,#0e3020 100%);
+  color:var(--mint);
+  box-shadow:0 4px 0 #071a10,0 0 12px rgba(46,216,160,.4),inset 0 1px 0 rgba(100,255,180,.2);
   animation:kbSaved .5s ease forwards;
 }
-@keyframes kbSaved{0%{transform:scale(1.12)}60%{transform:scale(.97)}100%{transform:scale(1)}}
-.kb-reset-btn{
-  flex:1;font-family:'Fredoka One',cursive;font-size:clamp(14px,4vw,16px);
-  background:white;border:2px solid var(--border);border-radius:14px;
-  color:var(--text-dim);padding:10px;cursor:pointer;
-  transition:transform .15s,box-shadow .15s;
-  box-shadow:0 2px 8px rgba(0,0,0,.06);position:relative;z-index:1;
+@keyframes kbSaved{0%{transform:scale(1.1) translateY(-2px)}60%{transform:scale(.98)}100%{transform:scale(1)}}
+
+/* Bouton retour coloré */
+.kb-back-btn{
+  font-family:'Fredoka One',cursive;font-size:clamp(16px,4.5vw,20px);
+  padding:13px 36px;border:none;border-radius:50px;
+  background:linear-gradient(135deg,#00aaee,#2ed8a0);
+  color:#fff;cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,170,238,.38),inset 0 1px 0 rgba(255,255,255,.25);
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;
+  position:relative;z-index:1;margin-bottom:20px;
 }
-.kb-reset-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.1);}
+.kb-back-btn:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 8px 26px rgba(0,170,238,.45);}
+.kb-back-btn:active{transform:scale(.97);}
 
 /* ═══ MODE SELECT OVERLAY ═══ */
 #mode-overlay{
@@ -835,37 +874,32 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
 
 <!-- ═══ CONFIG TOUCHES ═══ -->
 <div id="keybinds-overlay" class="hidden">
-  <div class="mode-logo-header" style="padding-bottom:4px">
-    <div style="font-family:'Fredoka One',cursive;font-size:clamp(22px,6vw,30px);color:var(--sky);text-align:center;">⌨️ Config touches</div>
-    <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--text-dim);text-align:center;font-weight:700;margin-top:2px;">Clique sur une touche puis appuie sur la nouvelle</div>
+
+  <div class="kb-header">
+    <div class="kb-header-emoji">⌨️</div>
+    <div class="kb-header-title">Config touches</div>
+    <div class="kb-header-hint">Clique sur une touche · appuie sur la nouvelle</div>
   </div>
 
   <div class="kb-grid">
-    <!-- Headers -->
     <div class="kb-action-header"></div>
     <div class="kb-player-header" style="background:linear-gradient(135deg,#d4ff44,#aaee22);">🎮 Joueur 1</div>
     <div class="kb-player-header" style="background:linear-gradient(135deg,#ffdd44,#ff8800);">🕹️ Joueur 2</div>
-    <!-- Rows -->
     <div class="kb-action">← Gauche</div>
-    <button class="kb-key" id="kb-p1-left"   onclick="startRebind('p1','left')"></button>
-    <button class="kb-key" id="kb-p2-left"   onclick="startRebind('p2','left')"></button>
+    <button class="kb-key" id="kb-p1-left"  onclick="startRebind('p1','left')"></button>
+    <button class="kb-key" id="kb-p2-left"  onclick="startRebind('p2','left')"></button>
     <div class="kb-action">→ Droite</div>
-    <button class="kb-key" id="kb-p1-right"  onclick="startRebind('p1','right')"></button>
-    <button class="kb-key" id="kb-p2-right"  onclick="startRebind('p2','right')"></button>
+    <button class="kb-key" id="kb-p1-right" onclick="startRebind('p1','right')"></button>
+    <button class="kb-key" id="kb-p2-right" onclick="startRebind('p2','right')"></button>
     <div class="kb-action">↓ Descente</div>
-    <button class="kb-key" id="kb-p1-soft"   onclick="startRebind('p1','soft')"></button>
-    <button class="kb-key" id="kb-p2-soft"   onclick="startRebind('p2','soft')"></button>
+    <button class="kb-key" id="kb-p1-soft"  onclick="startRebind('p1','soft')"></button>
+    <button class="kb-key" id="kb-p2-soft"  onclick="startRebind('p2','soft')"></button>
     <div class="kb-action">⬇ Drop !</div>
-    <button class="kb-key" id="kb-p1-hard"   onclick="startRebind('p1','hard')"></button>
-    <button class="kb-key" id="kb-p2-hard"   onclick="startRebind('p2','hard')"></button>
+    <button class="kb-key" id="kb-p1-hard"  onclick="startRebind('p1','hard')"></button>
+    <button class="kb-key" id="kb-p2-hard"  onclick="startRebind('p2','hard')"></button>
   </div>
 
-  <div style="display:flex;gap:10px;width:calc(100% - 32px);max-width:340px;margin-top:4px;">
-    <button class="kb-reset-btn" onclick="resetKeybinds('p1')">↺ Reset P1</button>
-    <button class="kb-reset-btn" onclick="resetKeybinds('p2')">↺ Reset P2</button>
-  </div>
-
-  <button class="mode-back-btn" style="margin-top:10px;margin-bottom:16px" onclick="hideKeybinds()">← Retour</button>
+  <button class="kb-back-btn" onclick="hideKeybinds()">← Retour</button>
 </div>
 
 <!-- ═══ MODE SELECT ═══ -->
