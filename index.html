@@ -391,63 +391,222 @@ body::before{
 .tuto-sub{font-family:'Nunito',sans-serif;font-size:clamp(15px,4vw,18px);color:var(--text-mid);text-align:center;margin-bottom:18px;font-weight:700;}
 .tuto-steps{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;}
 .tuto-step{background:white;border-radius:20px;border:2px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 16px rgba(0,0,0,.07);animation:tutoStepIn .5s cubic-bezier(.34,1.56,.64,1) both;}
+/* ═══ MENU SETTINGS BUTTON ═══ */
+.menu-settings-btn{
+  position:absolute;top:12px;right:12px;
+  background:rgba(255,255,255,.7);border:2px solid var(--border);
+  border-radius:50%;width:38px;height:38px;font-size:20px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);transition:transform .15s,box-shadow .15s;
+  z-index:10;
+}
+.menu-settings-btn:hover{transform:rotate(30deg) scale(1.1);box-shadow:0 4px 14px rgba(0,0,0,.12);}
+
+/* ═══ KEYBINDS OVERLAY ═══ */
+#keybinds-overlay{
+  position:fixed;inset:0;z-index:250;
+  background:linear-gradient(160deg,var(--bg-top) 0%,var(--bg-mid) 50%,var(--bg-bot) 100%);
+  display:flex;flex-direction:column;align-items:center;
+  overflow-y:auto;max-width:480px;margin:0 auto;
+  padding-top:16px;gap:14px;
+}
+#keybinds-overlay::before{
+  content:'';position:fixed;inset:0;max-width:480px;margin:0 auto;
+  background:
+    radial-gradient(ellipse 60% 35% at 15% 20%,rgba(0,170,238,.2) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 30% at 85% 75%,rgba(46,216,160,.18) 0%,transparent 60%);
+  pointer-events:none;z-index:0;animation:blobDrift 8s ease-in-out infinite alternate;
+}
+#keybinds-overlay.hidden{display:none !important;}
+
+.kb-grid{
+  display:grid;grid-template-columns:auto 1fr 1fr;
+  gap:8px;width:calc(100% - 32px);max-width:340px;
+  position:relative;z-index:1;
+}
+.kb-action-header,.kb-player-header{
+  border-radius:14px;padding:10px 8px;text-align:center;
+  font-family:'Fredoka One',cursive;font-size:clamp(14px,4vw,17px);
+}
+.kb-player-header{
+  color:#1a3050;font-size:clamp(14px,4vw,17px);
+  box-shadow:0 4px 14px rgba(0,0,0,.1);
+}
+.kb-action{
+  display:flex;align-items:center;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(13px,3.5vw,15px);
+  color:var(--text-mid);padding-right:6px;white-space:nowrap;
+}
+.kb-key{
+  background:white;border:2.5px solid var(--border);border-radius:12px;
+  padding:10px 6px;font-family:'Fredoka One',cursive;font-size:clamp(13px,3.5vw,16px);
+  color:var(--text-dark);cursor:pointer;text-align:center;
+  transition:all .18s;box-shadow:0 3px 8px rgba(0,0,0,.08);
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.kb-key:hover{border-color:var(--sky);transform:scale(1.04);}
+.kb-key.waiting{
+  border-color:var(--neon-pink);color:var(--neon-pink);
+  animation:kbPulse .6s ease-in-out infinite alternate;
+  background:rgba(255,0,102,.06);
+}
+@keyframes kbPulse{from{box-shadow:0 0 0 2px rgba(255,0,102,.2)}to{box-shadow:0 0 0 5px rgba(255,0,102,.35)}}
+.kb-key.saved{
+  border-color:var(--mint);background:rgba(46,216,160,.1);
+  animation:kbSaved .5s ease forwards;
+}
+@keyframes kbSaved{0%{transform:scale(1.12)}60%{transform:scale(.97)}100%{transform:scale(1)}}
+.kb-reset-btn{
+  flex:1;font-family:'Fredoka One',cursive;font-size:clamp(14px,4vw,16px);
+  background:white;border:2px solid var(--border);border-radius:14px;
+  color:var(--text-dim);padding:10px;cursor:pointer;
+  transition:transform .15s,box-shadow .15s;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);position:relative;z-index:1;
+}
+.kb-reset-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.1);}
+
 /* ═══ MODE SELECT OVERLAY ═══ */
 #mode-overlay{
   position:fixed;inset:0;z-index:200;
   background:linear-gradient(160deg,var(--bg-top) 0%,var(--bg-mid) 50%,var(--bg-bot) 100%);
   display:flex;flex-direction:column;align-items:center;
-  padding:24px 16px 16px;gap:14px;overflow-y:auto;
+  overflow-y:auto;overflow-x:hidden;
+  max-width:480px;margin:0 auto;
+}
+#mode-overlay::before{
+  content:'';position:fixed;inset:0;max-width:480px;margin:0 auto;
+  background:
+    radial-gradient(ellipse 60% 35% at 15% 20%,rgba(0,170,238,.25) 0%,transparent 60%),
+    radial-gradient(ellipse 55% 30% at 85% 75%,rgba(46,216,160,.22) 0%,transparent 60%),
+    radial-gradient(ellipse 45% 28% at 50% 50%,rgba(249,208,0,.13) 0%,transparent 65%);
+  pointer-events:none;z-index:0;animation:blobDrift 8s ease-in-out infinite alternate;
 }
 #mode-overlay.hidden{display:none !important;}
-.mode-title{
-  font-family:'Fredoka One',cursive;font-size:clamp(18px,5vw,26px);
-  color:var(--sky);text-align:center;line-height:1.2;
-  max-width:300px;
+
+.mode-logo-header{
+  flex-shrink:0;width:100%;text-align:center;
+  padding:clamp(8px,2.5dvh,18px) 16px clamp(2px,0.8dvh,6px);
+  position:relative;z-index:1;
 }
+.mode-level-badge{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(17px,4.8vw,23px);
+  color:var(--text-mid);text-align:center;
+  margin-bottom:4px;position:relative;z-index:1;
+  animation:rowSlideIn .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+/* ── Tabs ── */
 .mode-tabs{
-  display:flex;gap:8px;width:100%;max-width:340px;
-  background:rgba(255,255,255,.6);border-radius:16px;padding:4px;
+  display:flex;gap:8px;width:calc(100% - 32px);max-width:340px;
+  background:rgba(255,255,255,.45);border-radius:20px;padding:5px;
+  box-shadow:0 4px 18px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.8);
+  position:relative;z-index:1;flex-shrink:0;
 }
 .mode-tab{
   flex:1;font-family:'Fredoka One',cursive;font-size:clamp(15px,4vw,18px);
-  border:none;border-radius:12px;padding:10px 8px;cursor:pointer;
-  background:transparent;color:var(--text-dim);transition:all .2s;
+  border:none;border-radius:15px;padding:11px 8px;cursor:pointer;
+  background:transparent;color:var(--text-dim);transition:all .22s;
 }
-.mode-tab.active{
-  background:white;color:var(--sky);
-  box-shadow:0 2px 10px rgba(0,170,238,.2);
+/* Tab Standard : dégradé sky→mint */
+#tab-standard.active{
+  background:linear-gradient(135deg,#00aaee,#2ed8a0);color:#fff;
+  box-shadow:0 4px 14px rgba(0,170,238,.38);transform:scale(1.02);
 }
-.mode-panel{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;}
+/* Tab Puzzle : dégradé lemon→peach */
+#tab-puzzle.active{
+  background:linear-gradient(135deg,#f9d000,#ff8c42);color:#fff;
+  box-shadow:0 4px 14px rgba(249,208,0,.4);transform:scale(1.02);
+}
+
+/* ── Panels ── */
+.mode-panel{
+  width:calc(100% - 32px);max-width:340px;
+  display:flex;flex-direction:column;gap:11px;
+  position:relative;z-index:1;flex-shrink:0;
+}
 .mode-panel-hint{
-  font-family:'Nunito',sans-serif;font-weight:700;font-size:clamp(12px,3vw,14px);
-  color:var(--text-dim);text-align:center;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(12px,3.2vw,14px);
+  color:var(--text-dim);text-align:center;letter-spacing:.8px;text-transform:uppercase;
 }
+
+/* ── Boutons mode joueurs ── */
 .mode-btn{
-  display:flex;align-items:center;gap:14px;
-  font-family:'Fredoka One',cursive;font-size:clamp(17px,4.5vw,22px);
-  color:#fff;border:none;border-radius:20px;padding:16px 20px;cursor:pointer;
-  transition:transform .15s,box-shadow .15s;text-align:left;
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:'Fredoka One',cursive;font-size:clamp(19px,5.2vw,24px);
+  color:#fff;border:none;border-radius:24px;padding:18px 22px;cursor:pointer;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;
+  position:relative;overflow:hidden;gap:8px;
 }
-.mode-btn:hover{transform:translateY(-2px) scale(1.02);}
+.mode-btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.24) 0%,transparent 55%);
+  pointer-events:none;
+}
+.mode-btn:hover{transform:translateY(-3px) scale(1.03);}
 .mode-btn:active{transform:scale(.97);}
-.mode-btn-solo {background:linear-gradient(135deg,#00aaee,#2ed8a0);box-shadow:0 5px 18px rgba(0,170,238,.35);}
-.mode-btn-bot  {background:linear-gradient(135deg,#a855f7,#4d96ff);box-shadow:0 5px 18px rgba(168,85,247,.35);}
-.mode-btn-2p   {background:linear-gradient(135deg,#ff5fa0,#ff8c42);box-shadow:0 5px 18px rgba(255,95,160,.35);}
-.mode-btn-icon {font-size:clamp(26px,7vw,34px);flex-shrink:0;}
-.mode-btn-label{font-size:clamp(17px,4.5vw,22px);}
-.mode-btn-sub  {font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;opacity:.85;}
+/* Couleurs acidulées de la palette */
+.mode-btn-solo{
+  background:linear-gradient(135deg,#d4ff44,#c8ff00,#aaee22);
+  box-shadow:0 7px 24px rgba(170,220,0,.4),0 2px 6px rgba(0,0,0,.08);
+  color:#1a3050;
+}
+.mode-btn-bot{
+  background:linear-gradient(135deg,#eec8ff,#dda8ff,#cc88ff);
+  box-shadow:0 7px 24px rgba(200,140,255,.38),0 2px 6px rgba(0,0,0,.08);
+  color:#1a3050;
+}
+.mode-btn-2p{
+  background:linear-gradient(135deg,#ffdd44,#ffaa00,#ff8800);
+  box-shadow:0 7px 24px rgba(255,160,0,.4),0 2px 6px rgba(0,0,0,.08);
+  color:#1a3050;
+}
+/* Contenu centré avec emojis de chaque côté */
+.mode-btn-inner{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:3px;
+}
+.mode-btn-label{font-size:clamp(19px,5.2vw,24px);line-height:1.1;text-shadow:none;}
+.mode-btn-sub{font-family:'Nunito',sans-serif;font-size:clamp(11px,2.8vw,13px);font-weight:800;opacity:.75;}
+
+/* ── Cards SN puzzle (style cohérent avec boutons) ── */
 .mode-sn-card{
-  background:#fff;border:2px solid #b8e0f8;border-radius:14px;
-  padding:12px 16px;cursor:pointer;transition:border-color .2s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  border:none;border-radius:24px;padding:16px 20px;cursor:pointer;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;
+  position:relative;overflow:hidden;color:#1a3050;
+  font-family:'Fredoka One',cursive;
 }
-.mode-sn-card:hover{border-color:#00aaee;}
+.mode-sn-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.28) 0%,transparent 55%);
+  pointer-events:none;
+}
+.mode-sn-card:nth-child(1){background:linear-gradient(135deg,#d4ff44,#aaee22);box-shadow:0 6px 20px rgba(170,220,0,.35);}
+.mode-sn-card:nth-child(2){background:linear-gradient(135deg,#ffe566,#ffcc00);box-shadow:0 6px 20px rgba(255,200,0,.35);}
+.mode-sn-card:nth-child(3){background:linear-gradient(135deg,#ffdd44,#ff8800);box-shadow:0 6px 20px rgba(255,140,0,.35);}
+.mode-sn-card:nth-child(4){background:linear-gradient(135deg,#eec8ff,#cc88ff);box-shadow:0 6px 20px rgba(200,140,255,.35);}
+.mode-sn-card:nth-child(5){background:linear-gradient(135deg,#b4f0ff,#44ccff);box-shadow:0 6px 20px rgba(68,200,255,.35);}
+.mode-sn-card:hover{transform:translateY(-3px) scale(1.03);}
+.mode-sn-card:active{transform:scale(.97);}.mode-btn-emoji{font-size:clamp(34px,9.5vw,46px);flex-shrink:0;line-height:1;
+  filter:drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 2px 5px rgba(0,0,0,.12));}
+.mode-btn-emoji-right{font-size:clamp(34px,9.5vw,46px);flex-shrink:0;line-height:1;
+  filter:drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 2px 5px rgba(0,0,0,.12));}
+.mode-sn-stars{font-size:clamp(22px,6vw,30px);
+  filter:drop-shadow(0 0 8px rgba(255,220,0,.99)) drop-shadow(0 0 16px rgba(255,180,0,.75));}
+.mode-sn-label{font-size:clamp(17px,4.5vw,22px);text-shadow:0 1px 4px rgba(0,0,0,.18);}
+.mode-sn-num{font-size:clamp(14px,3.5vw,17px);opacity:.88;font-family:'Nunito',sans-serif;font-weight:800;}
+
+/* ── Bouton retour ── */
 .mode-back-btn{
-  font-family:'Fredoka One',cursive;font-size:15px;
-  padding:9px 22px;border:2px solid var(--border);border-radius:12px;
-  background:#fff;color:var(--text-dim);cursor:pointer;margin-top:4px;
-  transition:background .15s;
+  font-family:'Fredoka One',cursive;font-size:clamp(15px,4vw,17px);
+  padding:10px 28px;border:2.5px solid var(--border);border-radius:50px;
+  background:white;color:var(--text-dim);cursor:pointer;
+  transition:transform .15s,box-shadow .15s;flex-shrink:0;
+  box-shadow:0 3px 10px rgba(0,0,0,.06);position:relative;z-index:1;
+  margin-bottom:16px;
 }
-.mode-back-btn:hover{background:var(--surface);}
+.mode-back-btn:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(0,0,0,.1);}
 
 /* ═══ PUZZLE TRIGGER PULSE ═══ */
 .cell.puzzle-trigger{
@@ -643,7 +802,8 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
 
 <!-- ═══ MENU ═══ -->
 <div id="menu-overlay">
-  <div class="menu-header">
+  <div class="menu-header" style="position:relative;">
+    <button class="menu-settings-btn" onclick="showKeybinds()" title="Config touches">⚙️</button>
     <div class="logo-wrap">
       <div class="logo-card">
         <div class="logo-droplet ld1"><svg width="16" height="21" viewBox="0 0 16 22"><path d="M8 0C8 0 16 10 16 14A8 8 0 0 1 0 14C0 10 8 0 8 0Z" fill="#ff6b6b" stroke="#fff" stroke-width="3"/></svg></div>
@@ -673,9 +833,62 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
   <div class="menu-scroll-hint">↕ Fais défiler pour voir tous les niveaux</div>
 </div>
 
+<!-- ═══ CONFIG TOUCHES ═══ -->
+<div id="keybinds-overlay" class="hidden">
+  <div class="mode-logo-header" style="padding-bottom:4px">
+    <div style="font-family:'Fredoka One',cursive;font-size:clamp(22px,6vw,30px);color:var(--sky);text-align:center;">⌨️ Config touches</div>
+    <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--text-dim);text-align:center;font-weight:700;margin-top:2px;">Clique sur une touche puis appuie sur la nouvelle</div>
+  </div>
+
+  <div class="kb-grid">
+    <!-- Headers -->
+    <div class="kb-action-header"></div>
+    <div class="kb-player-header" style="background:linear-gradient(135deg,#d4ff44,#aaee22);">🎮 Joueur 1</div>
+    <div class="kb-player-header" style="background:linear-gradient(135deg,#ffdd44,#ff8800);">🕹️ Joueur 2</div>
+    <!-- Rows -->
+    <div class="kb-action">← Gauche</div>
+    <button class="kb-key" id="kb-p1-left"   onclick="startRebind('p1','left')"></button>
+    <button class="kb-key" id="kb-p2-left"   onclick="startRebind('p2','left')"></button>
+    <div class="kb-action">→ Droite</div>
+    <button class="kb-key" id="kb-p1-right"  onclick="startRebind('p1','right')"></button>
+    <button class="kb-key" id="kb-p2-right"  onclick="startRebind('p2','right')"></button>
+    <div class="kb-action">↓ Descente</div>
+    <button class="kb-key" id="kb-p1-soft"   onclick="startRebind('p1','soft')"></button>
+    <button class="kb-key" id="kb-p2-soft"   onclick="startRebind('p2','soft')"></button>
+    <div class="kb-action">⬇ Drop !</div>
+    <button class="kb-key" id="kb-p1-hard"   onclick="startRebind('p1','hard')"></button>
+    <button class="kb-key" id="kb-p2-hard"   onclick="startRebind('p2','hard')"></button>
+  </div>
+
+  <div style="display:flex;gap:10px;width:calc(100% - 32px);max-width:340px;margin-top:4px;">
+    <button class="kb-reset-btn" onclick="resetKeybinds('p1')">↺ Reset P1</button>
+    <button class="kb-reset-btn" onclick="resetKeybinds('p2')">↺ Reset P2</button>
+  </div>
+
+  <button class="mode-back-btn" style="margin-top:10px;margin-bottom:16px" onclick="hideKeybinds()">← Retour</button>
+</div>
+
 <!-- ═══ MODE SELECT ═══ -->
 <div id="mode-overlay" class="hidden">
-  <div class="mode-title">⚔️ <span id="mode-level-name"></span></div>
+
+  <!-- Logo identique à la page d'accueil -->
+  <div class="mode-logo-header">
+    <div class="logo-wrap">
+      <div class="logo-card">
+        <div class="kana-group">
+          <span class="kana-outline-d">かな</span>
+          <span class="kana-outline-w">かな</span>
+          <span class="kana-main">かな</span>
+        </div>
+        <div class="drop-group">
+          <span class="drop-outline-d">DROP!</span>
+          <span class="drop-outline-w">DROP!</span>
+          <span class="drop-main">DROP!</span>
+        </div>
+      </div>
+    </div>
+    <div class="mode-level-badge" id="mode-level-name"></div>
+  </div>
 
   <!-- Tabs Standard / Puzzle -->
   <div class="mode-tabs">
@@ -684,29 +897,48 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
   </div>
 
   <!-- Panel Standard : choix nombre de joueurs -->
-  <div id="mode-panel-standard" class="mode-panel">
-    <div class="mode-panel-hint">Choisis ton adversaire</div>
-    <button class="mode-btn mode-btn-solo"  onclick="modeStart('solo')">
-      <span class="mode-btn-icon">🎮</span>
-      <div><div class="mode-btn-label">1 Joueur</div><div class="mode-btn-sub">Mode solo classique</div></div>
+  <div id="mode-panel-standard" class="mode-panel" style="margin-top:10px">
+    <div class="mode-panel-hint">Choisis ton mode</div>
+
+    <!-- 1 Joueur : manette xbox seule à gauche -->
+    <button class="mode-btn mode-btn-solo" onclick="modeStart('solo')">
+      <span class="mode-btn-emoji">🎮</span>
+      <div class="mode-btn-inner">
+        <div class="mode-btn-label">1 Joueur</div>
+        <div class="mode-btn-sub">Mode solo classique</div>
+      </div>
+      <span class="mode-btn-emoji-right" style="opacity:0">🎮</span>
     </button>
-    <button class="mode-btn mode-btn-bot"   onclick="modeStart('vsBot')">
-      <span class="mode-btn-icon">🤖</span>
-      <div><div class="mode-btn-label">1P vs CPU</div><div class="mode-btn-sub">Duel contre le bot IA</div></div>
+
+    <!-- 1P vs CPU : manette xbox à gauche, robot à droite -->
+    <button class="mode-btn mode-btn-bot" onclick="modeStart('vsBot')">
+      <span class="mode-btn-emoji">🎮</span>
+      <div class="mode-btn-inner">
+        <div class="mode-btn-label">1P vs CPU</div>
+        <div class="mode-btn-sub">Duel contre le bot IA</div>
+      </div>
+      <span class="mode-btn-emoji-right">🤖</span>
     </button>
-    <button class="mode-btn mode-btn-2p"    onclick="modeStart('vs2p')">
-      <span class="mode-btn-icon">👥</span>
-      <div><div class="mode-btn-label">2 Joueurs</div><div class="mode-btn-sub">Duel local · Desktop</div></div>
+
+    <!-- 2 Joueurs : manette xbox à gauche, manette arcade à droite -->
+    <button class="mode-btn mode-btn-2p" onclick="modeStart('vs2p')">
+      <span class="mode-btn-emoji">🎮</span>
+      <div class="mode-btn-inner">
+        <div class="mode-btn-label">2 Joueurs</div>
+        <div class="mode-btn-sub">Duel local · Desktop</div>
+      </div>
+      <span class="mode-btn-emoji-right">🕹️</span>
     </button>
   </div>
 
   <!-- Panel Puzzle : choix difficulté SN -->
-  <div id="mode-panel-puzzle" class="mode-panel" style="display:none">
+  <div id="mode-panel-puzzle" class="mode-panel" style="display:none;margin-top:10px">
     <div class="mode-panel-hint">Choisis la difficulté</div>
-    <div id="mode-sn-cards"></div>
+    <div id="mode-sn-cards" style="display:flex;flex-direction:column;gap:11px;"></div>
   </div>
 
-  <button class="mode-back-btn" onclick="modeBack()">← Retour</button>
+  <button class="mode-back-btn" style="margin-top:14px" onclick="modeBack()">← Retour aux niveaux</button>
+  <button class="mode-back-btn" style="margin-top:0;margin-bottom:16px;border-color:var(--lavender);color:var(--lavender)" onclick="showKeybinds()">⚙️ Config touches</button>
 </div>
 
 <!-- ═══ JEU ═══ -->
@@ -1009,8 +1241,8 @@ let ROWS=12;
   const cols=['#00c8e8','#5cb85c','#e8833a','#c4a8ff','#72e8b8','#ffaa7a'];
   for(let i=0;i<40;i++){
     const d=document.createElement('div');d.className='cdot';
-    const sz=Math.random()*6+3;
-    d.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;background:${cols[i%cols.length]};--cd:${(Math.random()*5+3).toFixed(1)}s;--cdelay:${(Math.random()*4).toFixed(1)}s;--cop:.35;`;
+    const sz=Math.random()*18+9; // 3× plus grandes (était 6+3)
+    d.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;background:${cols[i%cols.length]};--cd:${(Math.random()*5+3).toFixed(1)}s;--cdelay:${(Math.random()*4).toFixed(1)}s;--cop:.28;`;
     c.appendChild(d);
   }
 })();
@@ -1392,9 +1624,9 @@ function showModeSelect(levelIdx){
   snContainer.innerHTML='';
   snContainer.style.cssText='display:flex;flex-direction:column;gap:10px;';
   PUZZLE_SN_DEFS.forEach((sn,si)=>{
-    const card=document.createElement('div');
+    const card=document.createElement('button');
     card.className='mode-sn-card';
-    card.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-family:'Fredoka One',cursive;font-size:17px;color:#00aaee">SN-${sn.num}</span><span style="font-size:16px">${sn.stars}</span><span style="font-family:'Fredoka One',cursive;font-size:15px;color:#1a3050">${sn.label}</span></div><div style="font-size:12px;color:#5090a8">${sn.desc}</div>`;
+    card.innerHTML=`<span class="mode-sn-stars">${sn.stars}</span><div class="mode-btn-inner"><div class="mode-btn-label">${sn.label}</div></div>`;
     card.addEventListener('click',()=>{
       document.getElementById('mode-overlay').classList.add('hidden');
       document.getElementById('menu-overlay').classList.add('hidden');
@@ -1458,6 +1690,7 @@ function createPlayer(id, dom) {
   const DROP_MIN=600, DROP_STEP=25;
   let resolvingWords=false, isLastCycle=false;
   let _skullSentThisCascade=false; // cap : 1 ligne ☠️ max par chaîne de cascades
+  let _pendingCrossControlPoop=false; // 💩 de contrôle en attente si resolvingWords au moment du spawn
   let LEVEL_WORDS_LOCAL=[];
 
   // ── Puzzle ──
@@ -1720,7 +1953,20 @@ function renderPanel(){
   function ok(x,y){return x>=0&&x<COLS&&y>=0&&y<ROWS&&!board[y][x].filled;}
   function startTimer(){clearInterval(dropTimer);dropTimer=setInterval(tick,DROP_SPEED);}
   function increaseSpeed(){DROP_SPEED=Math.max(DROP_MIN,DROP_SPEED-DROP_STEP);if(active&&gameRunning)startTimer();}
-  function safeSpawn(){resolvingWords=false;_skullSentThisCascade=false;if(!gameRunning)return;spawn();}
+  function safeSpawn(){
+    resolvingWords=false;
+    _skullSentThisCascade=false;
+    if(!gameRunning) return;
+    // Si un 💩 de prise de contrôle attendait la fin de résolution, on le spawne maintenant
+    if(_pendingCrossControlPoop){
+      _pendingCrossControlPoop=false;
+      console.log(`[CrossControl][${id}] safeSpawn → spawn différé du 💩 de contrôle`);
+      clearInterval(dropTimer); // s'assurer que le timer normal ne repart pas
+      _doCrossControlPoopSpawn();
+      return;
+    }
+    spawn();
+  }
 
   function spawn(){
     active={char:nextChar||rndKana(),x:Math.floor(COLS/2),y:0};
@@ -1755,6 +2001,7 @@ function renderPanel(){
     }
     // Si c'est le 💩 de prise de contrôle qui vient de se poser → fin de séquence
     if(isMalus && crossControlActive && typeof _endCrossControl === 'function'){
+      console.log(`[CrossControl][${id}] 💩 posé → _endCrossControl`);
       _endCrossControl(id);
     }
     active=null;soundDrop();render();checkWords(pr,pc);
@@ -1876,9 +2123,26 @@ function renderPanel(){
   // ── Spawner un 💩 de contrôle sur la grille adverse (appelé depuis battle) ──
   function spawnCrossControlPoop(){
     if(!gameRunning) return;
-    // Freeze le timer adverse (bot ou humain ne doit plus jouer)
+    console.log(`[CrossControl][${id}] spawnCrossControlPoop — resolvingWords:${resolvingWords} active:${active?.char??'null'}`);
+
+    // Freeze le timer adverse
     clearInterval(dropTimer);
-    // Forcer un 💩 comme pièce active, centré
+
+    if(resolvingWords){
+      // La grille est en train de résoudre un mot — on ne peut pas spawner maintenant.
+      // On marque un flag pour que safeSpawn pose le 💩 à la place du prochain kana.
+      console.log(`[CrossControl][${id}] resolvingWords=true → spawn différé`);
+      _pendingCrossControlPoop = true;
+      return;
+    }
+
+    // Spawn immédiat
+    _doCrossControlPoopSpawn();
+  }
+
+  // ── Spawn effectif du 💩 de contrôle ──
+  function _doCrossControlPoopSpawn(){
+    console.log(`[CrossControl][${id}] _doCrossControlPoopSpawn`);
     active={char:'💩', x:Math.floor(COLS/2), y:0};
     render();
     startTimer();
@@ -2040,6 +2304,7 @@ function renderPanel(){
     freezeForCrossControl,
     resumeAfterCrossControl,
     spawnCrossControlPoop,
+    cancelPendingCrossControlPoop(){ _pendingCrossControlPoop=false; },
     // Malus battle : injecte un 💩 comme prochain kana
     injectMalus(){
       if(!gameRunning) return;
@@ -2171,6 +2436,99 @@ function showMenu(){
 }
 
 function showPuzzleSelect(levelIdx){ showModeSelect(levelIdx); } // compat
+
+// ═══════════════════════════════════════════════════════════════════
+//  CONFIG TOUCHES — showKeybinds / hideKeybinds / startRebind
+// ═══════════════════════════════════════════════════════════════════
+let _rebindTarget = null; // {pid, action} en attente d'une touche
+
+function _keyLabel(key){
+  if(key===' ') return 'Espace';
+  if(key==='ArrowLeft') return '←';
+  if(key==='ArrowRight') return '→';
+  if(key==='ArrowDown') return '↓';
+  if(key==='ArrowUp') return '↑';
+  if(key==='Enter') return 'Entrée';
+  if(key==='Backspace') return '⌫';
+  if(key==='Tab') return 'Tab';
+  if(key==='Shift') return 'Shift';
+  if(key==='Control') return 'Ctrl';
+  if(key==='Alt') return 'Alt';
+  return key.length===1 ? key.toUpperCase() : key;
+}
+
+function _refreshKeybindsUI(){
+  const kb = KS.getKeybinds();
+  ['p1','p2'].forEach(pid=>{
+    ['left','right','soft','hard'].forEach(action=>{
+      const el = document.getElementById(`kb-${pid}-${action}`);
+      if(el) el.textContent = _keyLabel(kb[pid][action]);
+    });
+  });
+}
+
+function showKeybinds(){
+  _refreshKeybindsUI();
+  document.getElementById('menu-overlay').classList.add('hidden');
+  document.getElementById('mode-overlay').classList.add('hidden');
+  document.getElementById('keybinds-overlay').classList.remove('hidden');
+}
+
+function hideKeybinds(){
+  if(_rebindTarget) cancelRebind();
+  document.getElementById('keybinds-overlay').classList.add('hidden');
+  // Retourner là d'où on venait
+  document.getElementById('menu-overlay').classList.remove('hidden');
+}
+
+function startRebind(pid, action){
+  if(_rebindTarget) cancelRebind();
+  _rebindTarget = {pid, action};
+  const el = document.getElementById(`kb-${pid}-${action}`);
+  if(el){ el.classList.add('waiting'); el.textContent='...'; }
+}
+
+function cancelRebind(){
+  if(!_rebindTarget) return;
+  const {pid, action} = _rebindTarget;
+  const el = document.getElementById(`kb-${pid}-${action}`);
+  if(el){ el.classList.remove('waiting'); }
+  _rebindTarget = null;
+  _refreshKeybindsUI();
+}
+
+function resetKeybinds(pid){
+  const defaults = {
+    p1:{left:'q',right:'d',soft:'x',hard:' '},
+    p2:{left:'ArrowLeft',right:'ArrowRight',soft:'ArrowDown',hard:'Enter'},
+  };
+  const kb = KS.getKeybinds();
+  kb[pid] = {...defaults[pid]};
+  KS.saveKeybinds(kb);
+  _refreshKeybindsUI();
+}
+
+// Listener global pour capturer la touche en mode rebind
+document.addEventListener('keydown', function(e){
+  if(!_rebindTarget) return;
+  // Ignorer les touches système
+  if(['F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12','Meta','OS'].includes(e.key)) return;
+  e.preventDefault();
+  const {pid, action} = _rebindTarget;
+  const kb = KS.getKeybinds();
+  kb[pid][action] = e.key;
+  KS.saveKeybinds(kb);
+  const el = document.getElementById(`kb-${pid}-${action}`);
+  if(el){
+    el.classList.remove('waiting');
+    el.classList.add('saved');
+    el.textContent = _keyLabel(e.key);
+    setTimeout(()=>el.classList.remove('saved'), 600);
+  }
+  _rebindTarget = null;
+}, true); // capture phase pour tout intercepter
+
+
 
 function startGame(levelIdx, isPuzzle=false){
   player1.startGame(levelIdx, isPuzzle);
@@ -2328,11 +2686,16 @@ function _battleTriggerCrossControl(senderId){
  */
 function _endCrossControl(targetId){
   if(!crossControlActive) return;
+  console.log(`[CrossControl] _endCrossControl(${targetId})`);
   crossControlActive = false;
   window._botPaused = false;
 
   // Annuler le timeout de sécurité si présent
   if(window._crossControlGuard){ clearTimeout(window._crossControlGuard); window._crossControlGuard=null; }
+
+  // Annuler le spawn différé si on sort avant qu'il ait eu lieu
+  if(window._p1) window._p1.cancelPendingCrossControlPoop?.();
+  if(window._p2) window._p2.cancelPendingCrossControlPoop?.();
 
   // Reprendre P1 (toujours — qu'il soit attaquant ou cible)
   if(window._p1 && window._p1.gameRunning) window._p1.resumeAfterCrossControl();
