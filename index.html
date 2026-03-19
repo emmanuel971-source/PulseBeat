@@ -402,6 +402,108 @@ body::before{
 }
 .menu-settings-btn:hover{transform:rotate(30deg) scale(1.1);box-shadow:0 4px 14px rgba(0,0,0,.12);}
 
+/* ═══ MENU TUTO BUTTON ═══ */
+.menu-tuto-btn{
+  margin-top:8px;
+  font-family:'Fredoka One',cursive;font-size:clamp(14px,3.8vw,17px);
+  background:linear-gradient(135deg,#ffe566,#ffcc00);
+  border:none;border-radius:50px;padding:9px 24px;cursor:pointer;
+  color:#1a3050;box-shadow:0 4px 14px rgba(255,200,0,.35);
+  transition:transform .15s,box-shadow .15s;
+}
+.menu-tuto-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(255,200,0,.45);}
+
+/* ═══ TUTO OVERLAY ═══ */
+#tuto-overlay{
+  position:fixed;inset:0;z-index:220;
+  background:linear-gradient(160deg,var(--bg-top) 0%,var(--bg-mid) 50%,var(--bg-bot) 100%);
+  display:flex;flex-direction:column;align-items:center;
+  max-width:480px;margin:0 auto;overflow:hidden;
+}
+#tuto-overlay.hidden{display:none !important;}
+
+#tuto-shell{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;
+  width:100%;flex:1;min-height:0;
+  isolation:isolate;
+}
+#tuto-middle{flex:1;display:flex;min-height:0;}
+#tuto-board-col{
+  flex:3;display:flex;flex-direction:column;min-height:0;position:relative;overflow:hidden;
+}
+#tuto-board{
+  flex:1;display:grid;grid-template-columns:repeat(8,1fr);
+  background:var(--board-bg);
+  border-left:2px solid rgba(100,200,220,.25);
+  border-right:2px solid rgba(100,200,220,.25);
+  border-top:2px solid rgba(100,200,220,.25);
+  overflow:hidden;
+}
+#tuto-side{
+  flex:1;display:flex;flex-direction:column;
+  background:var(--surface);
+  border-left:2px solid var(--border);border-right:3px solid var(--border);border-top:3px solid var(--border);
+  padding:10px 4px 8px;gap:12px;align-items:center;overflow:hidden;
+}
+#tuto-next{
+  width:88%;aspect-ratio:1;max-width:68px;border-radius:16px;
+  background:white;border:3px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(22px,7.5vw,36px);font-weight:900;font-family:'Noto Sans JP',sans-serif;color:var(--text-dark);
+}
+#tuto-score{font-family:'Fredoka One',cursive;font-size:clamp(18px,5.5vw,26px);color:var(--neon-violet);text-align:center;}
+#tuto-word-panel{
+  background:var(--surface);border-top:3px solid var(--border);
+  flex-shrink:0;padding:8px 8px 10px;display:flex;flex-direction:column;gap:6px;
+  max-height:30dvh;overflow-y:auto;
+}
+
+/* ── Bulle fixe au centre de l'écran, fond translucide ── */
+#tuto-bubble{
+  position:absolute;z-index:50;
+  left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  width:calc(100% - 48px);max-width:340px;
+  background:rgba(255,255,255,.75);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  color:#1a3050;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(15px,4.2vw,18px);
+  border-radius:24px;padding:22px 24px;
+  text-align:center;line-height:1.55;
+  box-shadow:0 6px 28px rgba(0,0,0,.1),0 1px 0 rgba(255,255,255,.9);
+  border:1.5px solid rgba(255,255,255,.55);
+  pointer-events:none;
+}
+#tuto-bubble.hidden{display:none !important;}
+@keyframes bubbleIn{from{opacity:0;transform:translate(-50%,-50%) scale(.85)}to{opacity:0.8;transform:translate(-50%,-50%) scale(1)}}
+
+/* Flèche directionnelle optionnelle */
+#tuto-bubble-arrow{
+  position:absolute;font-size:24px;font-weight:900;color:#00aaee;
+  animation:arrowPulse .8s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+@keyframes arrowPulse{from{opacity:.7;transform:scale(1)}to{opacity:1;transform:scale(1.35)}}
+#tuto-bubble-arrow.arrow-right{right:-36px;top:50%;transform:translateY(-50%);}
+#tuto-bubble-arrow.arrow-down{bottom:-38px;left:50%;transform:translateX(-50%);}
+#tuto-bubble-arrow.arrow-up{top:-38px;left:50%;transform:translateX(-50%);}
+#tuto-bubble-arrow.hidden{display:none !important;}
+
+/* Footer — caché, le bouton C'est parti est dans la bulle */
+#tuto-footer{display:none;}
+#tuto-start-btn{
+  display:block;margin:14px auto 0;
+  font-family:'Fredoka One',cursive;font-size:clamp(16px,4.5vw,20px);
+  background:linear-gradient(135deg,#00aaee,#2ed8a0);color:#fff;
+  border:none;border-radius:50px;padding:11px 28px;cursor:pointer;
+  box-shadow:0 5px 18px rgba(0,170,238,.4);
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:all;
+}
+#tuto-start-btn:hover{transform:scale(1.05);}
+#tuto-start-btn.hidden{display:none !important;}
+
 /* ═══ KEYBINDS OVERLAY ═══ */
 #keybinds-overlay{
   position:fixed;inset:0;z-index:250;
@@ -834,6 +936,7 @@ body.battle-mode .enc-toast-box{
 body.battle-mode .enc-toast-box .enc-jp{font-family:'Fredoka One',cursive;font-size:clamp(20px,3vw,32px);color:var(--neon-gold);text-shadow:0 0 12px rgba(232,160,0,.5);display:block;}
 body.battle-mode .enc-toast-box .enc-fr{font-size:clamp(10px,1.3vw,14px);color:var(--text-mid);display:block;margin-top:2px;}
 body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease forwards;}
+
 </style>
 </head>
 <body>
@@ -866,6 +969,7 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
       </div>
     </div>
     <div class="menu-sub"><span class="menu-wave">🌊</span> Apprends les kana en jouant !</div>
+    <button class="menu-tuto-btn" onclick="showTuto()">❓ Comment jouer ?</button>
   </div>
   <div class="menu-section-lbl">✨ Choisis ton clan</div>
   <div id="lvl-scroll"></div>
@@ -972,7 +1076,35 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
   </div>
 
   <button class="mode-back-btn" style="margin-top:14px" onclick="modeBack()">← Retour aux niveaux</button>
+  <button class="mode-back-btn" style="margin-top:0;border-color:#ffbe0b;color:#c8900a" onclick="showTuto()">❓ Comment jouer ?</button>
   <button class="mode-back-btn" style="margin-top:0;margin-bottom:16px;border-color:var(--lavender);color:var(--lavender)" onclick="showKeybinds()">⚙️ Config touches</button>
+</div>
+
+<!-- ═══ TUTO CINÉMATIQUE ═══ -->
+<div id="tuto-overlay" class="hidden">
+  <!-- Shell de jeu intégré dans le tuto (clone visuel) -->
+  <div id="tuto-shell">
+    <div id="tuto-middle">
+      <div id="tuto-board-col">
+        <div id="tuto-board"></div>
+      </div>
+      <div id="tuto-side">
+        <div class="side-block"><div class="side-label">NEXT</div><div id="tuto-next">？</div></div>
+        <div class="side-block"><div class="side-label">SCORE</div><div id="tuto-score">0</div></div>
+      </div>
+    </div>
+    <div id="tuto-word-panel"></div>
+  </div>
+
+  <!-- Bulle fixe centre écran, fond blanc translucide -->
+  <div id="tuto-bubble" class="hidden">
+    <div id="tuto-bubble-text"></div>
+    <div id="tuto-bubble-arrow" class="hidden"></div>
+    <button id="tuto-start-btn" class="hidden" onclick="startFromTuto()">C'est parti ! 🚀</button>
+  </div>
+
+  <!-- Footer vide — plus de bouton Passer -->
+  <div id="tuto-footer"></div>
 </div>
 
 <!-- ═══ JEU ═══ -->
@@ -1699,8 +1831,7 @@ function modeBack(){
   document.getElementById('menu-overlay').classList.remove('hidden');
 }
 
-// showTuto devient showModeSelect pour compatibilité avec exitBattleMode etc.
-window.showTuto = function(idx){ showModeSelect(idx); };
+// showTuto est maintenant la cinématique tuto — voir fonction showTuto() plus bas
 
 // Listeners existants qui référençaient tuto/puzzle-back-btn — nettoyés
 // (les éléments n'existent plus)
@@ -1739,17 +1870,84 @@ function createPlayer(id, dom) {
 
   // ── Calcul ROWS ──
 function calcRows(){
-    const panH = dom.wordPanelEl.offsetHeight || 0;
-    const avail = (window.innerHeight || document.documentElement.clientHeight) - panH;
+  // Détection du mode Battle
+  const isBattle = dom.boardColEl && dom.boardColEl.classList.contains('arena-board-col');
+  const panH = dom.wordPanelEl.offsetHeight || 0;
+  
+  let availH, availW, maxBoardH, maxBoardW;
 
-    // On restaure ton étalon max 480px, même en mode Battle sur grand écran !
-    // Cela sert juste de référence pour calculer un nombre de lignes cohérent.
-    const screenW = Math.min(window.innerWidth, 480);
-    const cellW = Math.floor(screenW * 0.75 / COLS);
-
-    // On calcule ROWS. Le min 8 évite de casser le jeu si la fenêtre est minuscule.
-    ROWS = Math.max(8, Math.floor(avail / cellW));
+  if (isBattle) {
+    // --- MODE BATTLE ---
+    const arenaEl = dom.boardColEl.closest('.player-arena');
+    availH = arenaEl.offsetHeight - panH;
+    availW = arenaEl.offsetWidth; // Largeur de la moitié d'écran
+    
+    // Espace max estimé au début du niveau
+    maxBoardH = arenaEl.offsetHeight - 50; 
+    maxBoardW = availW - 120; // On retire ~120px pour le panneau latéral (NEXT/SCORE)
+  } else {
+    // --- MODE SOLO ---
+    availH = (window.innerHeight || document.documentElement.clientHeight) - panH;
+    availW = window.innerWidth;
+    
+    maxBoardH = window.innerHeight - 80;
+    maxBoardW = availW * 0.75; 
   }
+
+  // 1. Taille de case FIXE : la plus petite entre la contrainte de hauteur (15 lignes) et de largeur
+  const idealCellWFor15Rows = maxBoardH / 15;
+  const maxCellWForScreenWidth = maxBoardW / COLS;
+  
+  // La taille de la case est scellée ici et NE CHANGERA PLUS quand la wordlist grandit
+  const cellW = Math.min(idealCellWFor15Rows, maxCellWForScreenWidth);
+
+  // 2. Mécanique de pression : ROWS diminue quand la wordlist grandit (availH diminue)
+  ROWS = Math.floor(availH / cellW);
+  ROWS = Math.min(15, Math.max(8, ROWS));
+
+  // 3. Application des dimensions au DOM
+  if (isBattle) {
+    // --- Appliquer au Battle ---
+    const boardW = Math.floor(cellW * COLS);
+    
+    if (dom.gameStackEl) {
+      dom.gameStackEl.style.width = boardW + 'px';
+      // On centre le jeu et on décolle les deux joueurs (fini les grilles collées !)
+      dom.gameStackEl.parentElement.style.justifyContent = 'center';
+      dom.gameStackEl.parentElement.style.gap = '15px';
+    } else {
+      dom.boardColEl.style.width = boardW + 'px';
+    }
+    
+    dom.boardColEl.style.flex = 'none';
+    dom.boardColEl.style.height = (ROWS * cellW) + 'px';
+    
+    // Taille de la police pour le mode battle (injectée dans la variable CSS)
+    const fs = Math.max(11, Math.floor(cellW * 0.55));
+    dom.boardEl.style.setProperty('--battle-cell-fs', fs + 'px');
+    
+  } else {
+    // --- Appliquer au Solo ---
+    const shellEl = document.getElementById('shell');
+    if (shellEl) {
+      const optimalShellWidth = Math.floor((cellW * COLS) / 0.75);
+      if (optimalShellWidth > 480) {
+        shellEl.style.maxWidth = optimalShellWidth + 'px';
+      } else {
+        shellEl.style.maxWidth = '480px';
+      }
+    }
+    dom.boardEl.style.fontSize = Math.floor(cellW * 0.55) + 'px';
+
+    const middleEl = document.getElementById('middle');
+    if (middleEl) {
+      middleEl.style.flex = 'none';
+      middleEl.style.height = (ROWS * cellW) + 'px';
+    }
+  }
+}
+
+
 
   function rebuildPool(){
     const introduced=LEVEL_WORDS_LOCAL.slice(0,wordIntroIdx);
@@ -1784,31 +1982,14 @@ function calcRows(){
     }
   }
 
+
 function _fitBattleBoard(){
-    if(!dom.boardColEl) return;
-    const arenaEl = dom.boardColEl.closest('.player-arena');
-    if(!arenaEl) return;
-    
-    const arenaH = arenaEl.offsetHeight || window.innerHeight;
-    const wpH = dom.wordPanelEl.offsetHeight || 0;
-    const boardH = arenaH - wpH;
-    
-    // La hauteur de la case dépend du ROWS dynamique fraîchement calculé
-    const cellH = Math.floor(boardH / ROWS);
-    const boardW = cellH * COLS;
-    
-    if(dom.gameStackEl){
-      dom.gameStackEl.style.width = boardW + 'px';
-    } else {
-      dom.boardColEl.style.width = boardW + 'px';
-    }
-    
-    dom.boardColEl.style.flex = 'none';
-    dom.boardColEl.style.height = (cellH * ROWS) + 'px';
-    
-    const fs = Math.max(11, Math.floor(cellH * 0.55));
-    dom.boardEl.style.setProperty('--battle-cell-fs', fs + 'px');
-  }
+  // Vider ! Toute la logique de redimensionnement du mode Battle 
+  // est maintenant gérée intelligemment par calcRows()
+}
+
+
+
 
   function rebuildDOMKeepContent(){
     const old=board.length;
@@ -2513,6 +2694,266 @@ function hideKeybinds(){
   document.getElementById('keybinds-overlay').classList.add('hidden');
   // Retourner là d'où on venait
   document.getElementById('menu-overlay').classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  TUTO CINÉMATIQUE
+// ═══════════════════════════════════════════════════════════════════
+const TUTO_COLS = 8;
+const TUTO_ROWS = 10;
+let _tutoTimers = [];
+let _tutoRunning = false;
+
+function showTuto(){
+  document.getElementById('menu-overlay').classList.add('hidden');
+  document.getElementById('mode-overlay').classList.add('hidden');
+  document.getElementById('tuto-overlay').classList.remove('hidden');
+  _startTutoCinematic();
+}
+function skipTuto(){
+  _stopTutoCinematic();
+  document.getElementById('tuto-overlay').classList.add('hidden');
+  document.getElementById('menu-overlay').classList.remove('hidden');
+}
+function startFromTuto(){
+  _stopTutoCinematic();
+  document.getElementById('tuto-overlay').classList.add('hidden');
+  gameMode='solo'; startGame(0);
+}
+function _tutoDelay(ms){ return new Promise(r=>{ const t=setTimeout(r,ms); _tutoTimers.push(t); }); }
+function _stopTutoCinematic(){ _tutoRunning=false; _tutoTimers.forEach(t=>clearTimeout(t)); _tutoTimers=[]; _hideTutoBubble(); }
+function _tutoCell(r,c){ return document.querySelector('#tuto-board [data-r="'+r+'"][data-c="'+c+'"]'); }
+function _tutoBuildBoard(){
+  // Calculer ROWS comme le vrai mode solo
+  const panH = document.getElementById('tuto-word-panel').offsetHeight || 80;
+  const footH = document.getElementById('tuto-footer').offsetHeight || 56;
+  const avail = (window.innerHeight||document.documentElement.clientHeight) - panH - footH;
+  
+  const screenW = Math.min(window.innerWidth, 480);
+  const cellW = Math.floor(screenW * 0.75 / TUTO_COLS);
+  
+  // Limite stricte : 15 lignes maximum
+  const rows = Math.min(15, Math.max(8, Math.floor(avail / cellW)));
+  window._tutoRows = rows;
+
+  // 🛠️ LA CORRECTION EST ICI :
+  // On empêche le conteneur central de s'étirer et on lui fixe sa hauteur
+  const tutoMiddle = document.getElementById('tuto-middle');
+  if(tutoMiddle) {
+    tutoMiddle.style.flex = 'none';
+    tutoMiddle.style.height = (rows * cellW) + 'px';
+  }
+
+  const board=document.getElementById('tuto-board');
+  board.innerHTML=''; 
+  board.style.gridTemplateRows='repeat('+rows+',1fr)';
+  
+  for(let r=0;r<rows;r++) {
+    for(let c=0;c<TUTO_COLS;c++){
+      const d=document.createElement('div'); 
+      d.className='cell empty'; 
+      d.dataset.r=r; 
+      d.dataset.c=c; 
+      board.appendChild(d);
+    }
+  }
+}
+function _tutoSetCell(r,c,char,cls){
+  const el=_tutoCell(r,c); if(!el) return;
+  el.className='cell '+(cls||'active'); el.textContent=char;
+  el.style.background=(cls==='filled'||cls==='active'||!cls)?kanaBg(char):'';
+}
+function _tutoClearCell(r,c){
+  const el=_tutoCell(r,c); if(!el) return;
+  el.className='cell empty'; el.textContent=''; el.style.background='';
+}
+
+// arrow: null | 'right' | 'down' | 'up'
+function _showTutoBubble(text, arrow){
+  const b=document.getElementById('tuto-bubble');
+  b.classList.remove('hidden');
+  document.getElementById('tuto-bubble-text').textContent=text;
+  // Flèche directionnelle
+  const arrowEl=document.getElementById('tuto-bubble-arrow');
+  arrowEl.className='hidden';
+  if(arrow){
+    arrowEl.classList.remove('hidden');
+    arrowEl.className='arrow-'+arrow;
+    arrowEl.id='tuto-bubble-arrow'; // keep id
+    if(arrow==='right') arrowEl.textContent='→';
+    else if(arrow==='down') arrowEl.textContent='↓';
+    else if(arrow==='up') arrowEl.textContent='↑';
+  }
+  // Re-trigger animation
+  b.style.animation='none'; void b.offsetWidth; b.style.animation='bubbleIn .35s cubic-bezier(.34,1.56,.64,1) forwards';
+}
+function _hideTutoBubble(){ document.getElementById('tuto-bubble').classList.add('hidden'); }
+
+function _tutoWordPanel(kana,romaji,meaning,emoji,replace){
+  const wp=document.getElementById('tuto-word-panel');
+  const row='<div class="word-row" id="tuto-wr-'+kana+'"><div class="wr-emoji">'+emoji+'</div><div class="wr-info"><span class="wr-kana">'+kana+'</span><span class="wr-romaji">'+romaji+'</span><span class="wr-meaning">'+meaning+'</span></div><div class="wr-mult">\xd71</div></div>';
+  if(replace) wp.innerHTML=row;
+  else wp.innerHTML+=row;
+}
+function _tutoValidateWord(kana){
+  const row=document.getElementById('tuto-wr-'+kana);
+  if(row) row.classList.add('validated');
+}
+
+async function _startTutoCinematic(){
+  _stopTutoCinematic(); _tutoRunning=true;
+  _tutoBuildBoard();
+  const R = window._tutoRows || 12;
+  document.getElementById('tuto-next').textContent='\uff1f'; document.getElementById('tuto-next').style.background='';
+  document.getElementById('tuto-score').textContent='0'; document.getElementById('tuto-word-panel').innerHTML='';
+  document.getElementById('tuto-start-btn').classList.add('hidden');
+  _hideTutoBubble();
+
+  // 1. Bienvenue — 3s
+  await _tutoDelay(500); if(!_tutoRunning) return;
+  _showTutoBubble('🌊 Bienvenue dans かなDROP !\nApprends le japonais en jouant !', null);
+  await _tutoDelay(3000); if(!_tutoRunning) return;
+
+  // 2. Barre droite — 3s
+  document.getElementById('tuto-next').textContent='か'; document.getElementById('tuto-next').style.background=kanaBg('か');
+  _showTutoBubble('👉 À droite : le prochain kana\nà faire tomber, et ton score', 'right');
+  await _tutoDelay(3000); if(!_tutoRunning) return;
+
+  // 3. Panel bas — 3s
+  _tutoWordPanel('かい','kai','coquillage','🐚', true);
+  _showTutoBubble('👇 En bas : les mots à former\npendant la partie !', 'down');
+  await _tutoDelay(3000); if(!_tutoRunning) return;
+
+  // 4. Déplacer — か descend col 5 pendant 3s puis glisse
+  _showTutoBubble('🎮 ← → pour déplacer le kana\nqui tombe !', null);
+  let col=5;
+  const midRow=Math.floor(R*0.32);
+  for(let r=0;r<midRow;r++){
+    if(!_tutoRunning) return;
+    if(r>0) _tutoClearCell(r-1,col);
+    _tutoSetCell(r,col,'か','active');
+    await _tutoDelay(Math.floor(3000/midRow));
+  }
+  if(!_tutoRunning) return;
+
+  // 5. Glisse gauche — 3s
+  _showTutoBubble('← Glisse à gauche vers\nla bonne colonne !', null);
+  for(let c=col-1;c>=3;c--){
+    if(!_tutoRunning) return;
+    _tutoClearCell(midRow-1,c+1); _tutoSetCell(midRow-1,c,'か','active');
+    await _tutoDelay(Math.floor(3000/(col-3)));
+  }
+  col=3; if(!_tutoRunning) return;
+
+  // 6. Soft drop — 3s
+  _showTutoBubble('↓ Maintenir bas =\nchute rapide !', null);
+  const startRow=midRow-1;
+  for(let r=startRow+1;r<R-1;r++){
+    if(!_tutoRunning) return;
+    _tutoClearCell(r-1,col); _tutoSetCell(r,col,'か','active');
+    await _tutoDelay(Math.floor(3000/(R-startRow)));
+  }
+  if(!_tutoRunning) return;
+  _tutoClearCell(R-2,col); _tutoSetCell(R-1,col,'か','filled'); soundDrop();
+  await _tutoDelay(600); if(!_tutoRunning) return;
+
+  // 7. い descend — 3s
+  document.getElementById('tuto-next').textContent='い'; document.getElementById('tuto-next').style.background=kanaBg('い');
+  _showTutoBubble('Maintenant pose い\njuste à côté de か !', null);
+  col=5;
+  const midRow2=Math.floor(R*0.32);
+  for(let r=0;r<midRow2;r++){
+    if(!_tutoRunning) return;
+    if(r>0) _tutoClearCell(r-1,col);
+    _tutoSetCell(r,col,'い','active');
+    await _tutoDelay(Math.floor(3000/midRow2));
+  }
+  if(!_tutoRunning) return;
+
+  // 8. Glisse droite + hard drop — 3s
+  _showTutoBubble('⬇ Drop ! Pose-le\nd\'un coup !', null);
+  _tutoClearCell(midRow2-1,col); _tutoSetCell(midRow2-1,4,'い','active');
+  await _tutoDelay(500); col=4; if(!_tutoRunning) return;
+  const startRow2=midRow2-1;
+  for(let r=startRow2+1;r<R-1;r++){
+    if(!_tutoRunning) return;
+    _tutoClearCell(r-1,col); _tutoSetCell(r,col,'い','active');
+    await _tutoDelay(60);
+  }
+  if(!_tutoRunning) return;
+  _tutoClearCell(R-2,col); _tutoSetCell(R-1,col,'い','filled'); soundDrop();
+  await _tutoDelay(600); if(!_tutoRunning) return;
+
+  // 9. Le mot se forme ! — 3s
+  _showTutoBubble('✨ かい ! Le mot est formé !\nTu gagnes des points !', null);
+  await _tutoDelay(800); if(!_tutoRunning) return;
+  soundCombo();
+  _tutoSetCell(R-1,3,'か','combo-flash'); _tutoSetCell(R-1,4,'い','combo-flash');
+  const br=document.getElementById('tuto-board').getBoundingClientRect();
+  burst(br.left+br.width*.45, br.top+br.height*.92, 22, 'combo');
+  await _tutoDelay(600); if(!_tutoRunning) return;
+  document.getElementById('tuto-score').textContent='200';
+  document.getElementById('tuto-score').classList.add('bump');
+  setTimeout(()=>document.getElementById('tuto-score').classList.remove('bump'),400);
+  await _tutoDelay(1600); if(!_tutoRunning) return;
+  _tutoClearCell(R-1,3); _tutoClearCell(R-1,4);
+  // かい validé en vert
+  _tutoValidateWord('かい');
+
+  // ── DÉMO VERTICALE : かめ (tortue) ──
+
+  // かめ s'ajoute à la liste (かい reste)
+  await _tutoDelay(600); if(!_tutoRunning) return;
+  _tutoWordPanel('かめ','kame','tortue','🐢', false);
+  document.getElementById('tuto-next').textContent='め'; document.getElementById('tuto-next').style.background=kanaBg('め');
+  _showTutoBubble('🐢 Nouveau mot : かめ !\nLes mots peuvent aussi\nse former verticalement !', null);
+  await _tutoDelay(3000); if(!_tutoRunning) return;
+
+  // め descend col 4 jusqu'en bas — 3s
+  _showTutoBubble('め descend en premier\net se pose en bas !', null);
+  let vcol = 4;
+  for(let r=0;r<R-1;r++){
+    if(!_tutoRunning) return;
+    if(r>0) _tutoClearCell(r-1,vcol);
+    _tutoSetCell(r,vcol,'め','active');
+    await _tutoDelay(Math.floor(3000/(R-1)));
+  }
+  if(!_tutoRunning) return;
+  _tutoClearCell(R-2,vcol); _tutoSetCell(R-1,vcol,'め','filled'); soundDrop();
+  await _tutoDelay(700); if(!_tutoRunning) return;
+
+  // か descend col 4 — s'arrête juste au-dessus de め — 3s
+  document.getElementById('tuto-next').textContent='か'; document.getElementById('tuto-next').style.background=kanaBg('か');
+  _showTutoBubble('か descend dans la\nmême colonne, par-dessus め !', null);
+  for(let r=0;r<R-2;r++){
+    if(!_tutoRunning) return;
+    if(r>0) _tutoClearCell(r-1,vcol);
+    _tutoSetCell(r,vcol,'か','active');
+    await _tutoDelay(Math.floor(3000/(R-2)));
+  }
+  if(!_tutoRunning) return;
+  _tutoClearCell(R-3,vcol); _tutoSetCell(R-2,vcol,'か','filled'); soundDrop();
+  await _tutoDelay(700); if(!_tutoRunning) return;
+
+  // Le mot vertical se forme !
+  _showTutoBubble('✨ かめ ! Vertical aussi !\nC\'est la même logique !', null);
+  await _tutoDelay(800); if(!_tutoRunning) return;
+  soundCombo();
+  _tutoSetCell(R-2,vcol,'か','combo-flash'); _tutoSetCell(R-1,vcol,'め','combo-flash');
+  const br2=document.getElementById('tuto-board').getBoundingClientRect();
+  burst(br2.left+br2.width*.55, br2.top+br2.height*.88, 22, 'combo');
+  await _tutoDelay(600); if(!_tutoRunning) return;
+  document.getElementById('tuto-score').textContent='600';
+  document.getElementById('tuto-score').classList.add('bump');
+  setTimeout(()=>document.getElementById('tuto-score').classList.remove('bump'),400);
+  await _tutoDelay(1400); if(!_tutoRunning) return;
+  _tutoValidateWord('かめ');
+  _tutoClearCell(R-2,vcol); _tutoClearCell(R-1,vcol);
+
+  // 10. Fin — bouton C'est parti dans la bulle
+  _showTutoBubble('🎉 Tu as tout compris !\nHorizontal, vertical…\nÀ toi de jouer !', null);
+  await _tutoDelay(800); if(!_tutoRunning) return;
+  document.getElementById('tuto-start-btn').classList.remove('hidden');
 }
 
 function startRebind(pid, action){
