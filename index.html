@@ -72,7 +72,7 @@ body::before{
   animation:blobDrift 8s ease-in-out infinite alternate;
 }
 @keyframes blobDrift{from{opacity:.7}to{opacity:1}}
-#confetti{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;}
 .cdot{position:absolute;border-radius:50%;opacity:0;animation:cdotFloat var(--cd) ease-in-out var(--cdelay) infinite;}
 @keyframes cdotFloat{0%{opacity:0;transform:translateY(0) scale(.5)}30%{opacity:var(--cop)}70%{opacity:var(--cop)}100%{opacity:0;transform:translateY(-40px) scale(1)}}
 
@@ -444,6 +444,7 @@ body::before{
   overflow: hidden;
   /* SUPPRESSION DE : max-width: 480px; margin: 0 auto; */
 }
+
 
 /* 2. On limite la largeur du contenu interne pour garder l'aspect colonne au centre */
 .menu-header, 
@@ -1148,13 +1149,75 @@ body.battle-mode .enc-toast-box .enc-jp{font-family:'Fredoka One',cursive;font-s
 body.battle-mode .enc-toast-box .enc-fr{font-size:clamp(10px,1.3vw,14px);color:var(--text-mid);display:block;margin-top:2px;}
 body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease forwards;}
 
+
+/* ═══ WALL OF FAME ═══ */
+#wof-overlay{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;background:linear-gradient(160deg,var(--bg-top) 0%,var(--bg-mid) 50%,var(--bg-bot) 100%);overflow-y:auto;overflow-x:hidden;}
+#wof-overlay.hidden{display:none!important;}
+#wof-overlay::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 55% 40% at 10% 20%,rgba(0,170,238,.22) 0%,transparent 60%),radial-gradient(ellipse 50% 35% at 90% 80%,rgba(46,216,160,.22) 0%,transparent 60%);pointer-events:none;z-index:0;animation:blobDrift 8s ease-in-out infinite alternate;}
+.wof-inner{position:relative;z-index:1;width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;padding:0 0 24px;}
+.wof-header-block{text-align:center;padding:clamp(14px,3dvh,22px) 16px 6px;width:100%;}
+.wof-title-main{font-family:'Fredoka One',cursive;font-size:clamp(26px,7vw,34px);color:var(--text-dark);line-height:1.1;}
+.wof-title-sub{font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(12px,3vw,14px);color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+.wof-podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;padding:8px 16px 2px;width:100%;}
+.wof-pod{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.wof-pod-info{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.wof-pod-name{font-family:'Fredoka One',cursive;font-size:clamp(13px,3.5vw,16px);color:var(--text-dark);text-align:center;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wof-pod-score{font-family:'Fredoka One',cursive;font-size:clamp(12px,3vw,14px);color:var(--sky);}
+.wof-pod-lvl{font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;color:var(--text-dim);}
+.wof-pod-block{width:92px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:10px;border-radius:14px 14px 0 0;box-shadow:0 -3px 0 rgba(0,0,0,.06);}
+.wof-pod-medal{font-size:26px;line-height:1;margin-bottom:3px;animation:medalPulseWof 2.2s ease-in-out infinite alternate;}
+@keyframes medalPulseWof{from{transform:scale(1) rotate(-4deg)}to{transform:scale(1.12) rotate(4deg)}}
+.wof-pod-rank{font-family:'Fredoka One',cursive;font-size:22px;line-height:1;}
+.wof-pod-1st .wof-pod-block{background:linear-gradient(160deg,#fffbe8,#ffe88a);border:2px solid #f9d000;height:96px;}
+.wof-pod-1st .wof-pod-rank{color:#b8860b;}
+.wof-pod-2nd .wof-pod-block{background:linear-gradient(160deg,#f4f4f4,#d8d8d8);border:2px solid #bbb;height:76px;}
+.wof-pod-2nd .wof-pod-rank{color:#888;}
+.wof-pod-3rd .wof-pod-block{background:linear-gradient(160deg,#fdf0e6,#e8c09a);border:2px solid #d09060;height:60px;}
+.wof-pod-3rd .wof-pod-rank{color:#a06030;}
+.wof-divider{font-family:'Fredoka One',cursive;font-size:12px;color:var(--sky);letter-spacing:2.5px;text-transform:uppercase;padding:6px 0 4px;width:100%;text-align:center;}
+.wof-list{width:calc(100% - 24px);display:flex;flex-direction:column;gap:5px;}
+.wof-row{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.6);border:1px solid rgba(154,232,255,.45);border-radius:14px;padding:8px 12px;position:relative;overflow:hidden;}
+.wof-row.wof-mine{background:rgba(249,208,0,.18);border:1.5px solid #f9d000;}
+.wof-row::after{content:'';position:absolute;inset:0;opacity:0;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:wofShimmer 4s ease-in-out var(--ws,0s) infinite;}
+.wof-row.wof-mine::after{animation-duration:2.2s;}
+@keyframes wofShimmer{0%{opacity:0;transform:translateX(-120%)}35%{opacity:1}100%{opacity:0;transform:translateX(120%)}}
+.wof-row-rank{font-family:'Fredoka One',cursive;font-size:17px;color:var(--text-dim);min-width:26px;text-align:center;}
+.wof-row.wof-mine .wof-row-rank{color:#b8860b;}
+.wof-row-emoji{font-size:17px;line-height:1;flex-shrink:0;}
+.wof-row-name{font-family:'Fredoka One',cursive;font-size:15px;color:var(--text-dark);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wof-row-lvl{font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;color:var(--sky);background:rgba(0,170,238,.1);border-radius:50px;padding:2px 7px;flex-shrink:0;}
+.wof-row-score{font-family:'Fredoka One',cursive;font-size:14px;color:var(--sky);flex-shrink:0;min-width:70px;text-align:right;}
+.wof-row.wof-mine .wof-row-score{color:#b8860b;}
+.wof-row-date{font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;color:#a0c8d8;flex-shrink:0;min-width:46px;text-align:right;}
+.wof-empty{font-family:'Fredoka One',cursive;font-size:18px;color:var(--text-dim);text-align:center;padding:32px 0;}
+.wof-back-btn{margin-top:14px;font-family:'Fredoka One',cursive;font-size:clamp(16px,4.5vw,20px);padding:13px 36px;border:none;border-radius:50px;background:linear-gradient(135deg,#00aaee,#2ed8a0);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,170,238,.38);transition:transform .18s cubic-bezier(.34,1.56,.64,1);}
+.wof-back-btn:hover{transform:translateY(-2px) scale(1.04);}.wof-back-btn:active{transform:scale(.97);}
+#wof-entry-overlay{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;background:rgba(20,40,80,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+#wof-entry-overlay.hidden{display:none!important;}
+.wof-entry-card{background:white;border-radius:28px;padding:28px 24px 22px;width:calc(100% - 48px);max-width:340px;box-shadow:0 12px 40px rgba(0,0,0,.18);display:flex;flex-direction:column;align-items:center;gap:12px;animation:entryPop .38s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes entryPop{from{opacity:0;transform:scale(.8) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.wof-entry-trophy{font-size:52px;line-height:1;animation:trophySpin 1.6s ease-in-out infinite alternate;}
+@keyframes trophySpin{from{transform:scale(1) rotate(-6deg)}to{transform:scale(1.1) rotate(6deg)}}
+.wof-entry-congrats{font-family:'Fredoka One',cursive;font-size:clamp(20px,6vw,26px);color:var(--text-dark);text-align:center;line-height:1.15;}
+.wof-entry-score-line{font-family:'Fredoka One',cursive;font-size:clamp(24px,7vw,32px);color:var(--sky);text-align:center;}
+.wof-entry-rank-line{font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:var(--text-mid);text-align:center;}
+.wof-entry-input{width:100%;padding:13px 16px;border:2.5px solid var(--cell-bdr);border-radius:16px;font-family:'Fredoka One',cursive;font-size:22px;color:var(--text-dark);background:var(--cell-bg);text-align:center;outline:none;transition:border-color .18s;box-sizing:border-box;}
+.wof-entry-input:focus{border-color:var(--sky);}
+.wof-entry-hint{font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;color:var(--text-dim);}
+.wof-entry-ok{width:100%;padding:14px;border:none;border-radius:16px;background:linear-gradient(135deg,#f9d000,#ff8c42);font-family:'Fredoka One',cursive;font-size:20px;color:#fff;cursor:pointer;box-shadow:0 5px 18px rgba(249,208,0,.4);transition:transform .18s cubic-bezier(.34,1.56,.64,1);}
+.wof-entry-ok:hover{transform:scale(1.04);}.wof-entry-ok:active{transform:scale(.97);}
+.wof-entry-skip{background:none;border:none;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:var(--text-dim);cursor:pointer;padding:4px;}
+.menu-wof-btn{display:block;width:calc(100% - 32px);max-width:480px;margin:0 auto 6px;font-family:'Fredoka One',cursive;font-size:clamp(17px,4.8vw,21px);color:#fff;border:none;border-radius:20px;padding:14px 20px;cursor:pointer;background:linear-gradient(135deg,#f9d000,#ff8c42,#ff5fa0);box-shadow:0 6px 20px rgba(249,208,0,.38);transition:transform .18s cubic-bezier(.34,1.56,.64,1);letter-spacing:.5px;}
+.menu-wof-btn:hover{transform:translateY(-2px) scale(1.02);}.menu-wof-btn:active{transform:scale(.97);}
 </style>
 </head>
 <body>
+
 <div id="confetti"></div>
 
 <!-- ═══ MENU ═══ -->
 <div id="menu-overlay">
+  <div id="confetti-menu" style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;"></div>
   <div class="menu-header" style="position:relative;">
     <button class="menu-settings-btn" onclick="showKeybinds()" title="Config touches">⚙️</button>
     <div class="logo-wrap">
@@ -1183,6 +1246,7 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
     <button class="menu-tuto-btn" onclick="showTuto()">❓ Comment jouer ?</button>
   </div>
   <div class="menu-section-lbl">✨ Choisis ton clan</div>
+  <button class="menu-wof-btn" onclick="showWallOfFame()">🏆 Wall of Fame · Top 25</button>
   <div id="lvl-scroll"></div>
   <div class="menu-scroll-hint">↕ Fais défiler pour voir tous les niveaux</div>
 </div>
@@ -1219,6 +1283,7 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
 
 <!-- ═══ MODE SELECT ═══ -->
 <div id="mode-overlay" class="hidden">
+  <div id="confetti-mode" style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;"></div>
 
   <!-- Logo identique à la page d'accueil -->
   <div class="mode-logo-header">
@@ -1318,6 +1383,34 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
   <div id="tuto-footer"></div>
 </div>
 
+
+<!-- ═══ WALL OF FAME ═══ -->
+<div id="wof-overlay" class="hidden">
+  <div id="confetti-wof" style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;"></div>
+  <div class="wof-inner">
+    <div class="wof-header-block">
+      <div class="wof-title-main">🏆 Wall of Fame</div>
+      <div class="wof-title-sub">かなDROP · Classement global · Top 25</div>
+    </div>
+    <div class="wof-podium" id="wof-podium"></div>
+    <div class="wof-divider">— classement général —</div>
+    <div class="wof-list" id="wof-list"></div>
+    <button class="wof-back-btn" onclick="hideWallOfFame()">← Retour au menu</button>
+  </div>
+</div>
+<!-- ═══ NAME ENTRY ═══ -->
+<div id="wof-entry-overlay" class="hidden">
+  <div class="wof-entry-card">
+    <div class="wof-entry-trophy">🏆</div>
+    <div class="wof-entry-congrats">Tu entres dans le<br>Wall of Fame !</div>
+    <div class="wof-entry-score-line" id="wof-entry-score"></div>
+    <div class="wof-entry-rank-line" id="wof-entry-rank"></div>
+    <input class="wof-entry-input" id="wof-entry-name" maxlength="10" placeholder="Ton nom…" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div class="wof-entry-hint">10 caractères max</div>
+    <button class="wof-entry-ok" id="wof-entry-ok">✓ Valider</button>
+    <button class="wof-entry-skip" id="wof-entry-skip">Passer sans enregistrer</button>
+  </div>
+</div>
 <!-- ═══ JEU ═══ -->
 <div id="shell">
   <div id="middle">
@@ -1523,6 +1616,7 @@ const KS = {
     BATTLE_HISTORY:  'kanadrop_battle_history',
     KEYBINDS:        'kanadrop_keybinds',
     PLAYERS:         'kanadrop_players',
+    HIGHSCORES:      'kanadrop_highscores',
   },
   BATTLE_MAX: 25,
 
@@ -1570,6 +1664,22 @@ const KS = {
   },
   saveKeybinds(binds){ this._set(this.KEYS.KEYBINDS,binds); },
 
+
+  // ── Wall of Fame ──
+  WOF_MAX: 25,
+  getHighscores(){ return this._get(this.KEYS.HIGHSCORES)||[]; },
+  isHighscore(score){
+    const hs=this.getHighscores();
+    return hs.length<this.WOF_MAX||score>(hs[hs.length-1]?.score||0);
+  },
+  addHighscore({name,score,levelId,levelEmoji,levelTheme}){
+    const hs=this.getHighscores();
+    const entry={name:(name||'Anonyme').slice(0,10),score,levelId,levelEmoji,levelTheme,date:new Date().toISOString()};
+    hs.push(entry);hs.sort((a,b)=>b.score-a.score);
+    if(hs.length>this.WOF_MAX)hs.length=this.WOF_MAX;
+    this._set(this.KEYS.HIGHSCORES,hs);
+    return hs.findIndex(e=>e.date===entry.date&&e.name===entry.name&&e.score===entry.score);
+  },
   // ── Noms des joueurs ──
   getPlayers(){ return this._get(this.KEYS.PLAYERS)||{p1:'Joueur 1',p2:'Joueur 2'}; },
   savePlayers(players){ this._set(this.KEYS.PLAYERS,players); },
@@ -1614,14 +1724,19 @@ let ROWS=12;
 //  CONFETTI
 // ═══════════════════════════════════════════════════════════════════
 (()=>{
-  const c=document.getElementById('confetti');
   const cols=['#00c8e8','#5cb85c','#e8833a','#c4a8ff','#72e8b8','#ffaa7a'];
-  for(let i=0;i<40;i++){
-    const d=document.createElement('div');d.className='cdot';
-    const sz=Math.random()*18+9; // 3× plus grandes (était 6+3)
-    d.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;background:${cols[i%cols.length]};--cd:${(Math.random()*5+3).toFixed(1)}s;--cdelay:${(Math.random()*4).toFixed(1)}s;--cop:.28;`;
-    c.appendChild(d);
+  function fillConfetti(c){
+    for(let i=0;i<40;i++){
+      const d=document.createElement('div');d.className='cdot';
+      const sz=Math.random()*18+9;
+      d.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;background:${cols[i%cols.length]};--cd:${(Math.random()*5+3).toFixed(1)}s;--cdelay:${(Math.random()*4).toFixed(1)}s;--cop:.28;`;
+      c.appendChild(d);
+    }
   }
+  fillConfetti(document.getElementById('confetti'));
+  fillConfetti(document.getElementById('confetti-menu'));
+  fillConfetti(document.getElementById('confetti-mode'));
+  fillConfetti(document.getElementById('confetti-wof'));
 })();
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2859,6 +2974,8 @@ function showMenu(){
   document.getElementById('board-overlay').classList.add('hidden');
   document.getElementById('mode-overlay').classList.add('hidden');
   document.getElementById('menu-overlay').classList.remove('hidden');
+  document.getElementById('wof-overlay').classList.add('hidden');
+  document.getElementById('wof-entry-overlay').classList.add('hidden');
 }
 
 function showPuzzleSelect(levelIdx){ showModeSelect(levelIdx); } // compat
@@ -3921,6 +4038,105 @@ const BOT={
   document.getElementById('bot-stop-btn').addEventListener('click',()=>BOT.stop());
   document.getElementById('bot-csv-btn').addEventListener('click',()=>{if(!BOT_LOG.entries.length){alert('Aucune donnée à exporter — laisse le bot jouer d\'abord !');return;}BOT_LOG.exportCSV();});
 })();
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  WALL OF FAME
+// ═══════════════════════════════════════════════════════════════════
+function _wofFmtDate(iso){
+  try{
+    const d=new Date(iso),now=new Date(),diff=Math.floor((now-d)/864e5);
+    if(diff===0)return"Aujourd'hui";
+    if(diff===1)return'Hier';
+    if(diff<7)return'Cette sem.';
+    return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  }catch(e){return'';}
+}
+function _wofPodSlot(e,cls,num,medal){
+  if(!e)return'<div class="wof-pod '+cls+'"><div class="wof-pod-info"><div class="wof-pod-name" style="opacity:.3">—</div></div><div class="wof-pod-block"><div class="wof-pod-medal">'+medal+'</div><div class="wof-pod-rank">'+num+'</div></div></div>';
+  const lv=ALL_LEVELS.find(l=>l.id===e.levelId),em=e.levelEmoji||(lv?lv.emoji:'🎮');
+  return'<div class="wof-pod '+cls+'"><div class="wof-pod-info"><div class="wof-pod-name">'+(e.name||'Anonyme')+'</div><div class="wof-pod-score">'+((e.score||0).toLocaleString('fr-FR'))+'</div><div class="wof-pod-lvl">'+em+' Lv.'+(e.levelId||'?')+'</div></div><div class="wof-pod-block"><div class="wof-pod-medal">'+medal+'</div><div class="wof-pod-rank">'+num+'</div></div></div>';
+}
+function _wofRender(hiIdx){
+  const hs=KS.getHighscores();
+  document.getElementById('wof-podium').innerHTML=_wofPodSlot(hs[1],'wof-pod-2nd',2,'🥈')+_wofPodSlot(hs[0],'wof-pod-1st',1,'🥇')+_wofPodSlot(hs[2],'wof-pod-3rd',3,'🥉');
+  const listEl=document.getElementById('wof-list');
+  listEl.innerHTML='';
+  if(!hs.length){
+    listEl.innerHTML='<div class="wof-empty">Pas encore de scores !<br>Joue pour être le premier 🚀</div>';
+    return;
+  }
+  hs.slice(3).forEach((e,i)=>{
+    const rank=i+4,mine=hiIdx!==undefined&&rank-1===hiIdx;
+    const lv=ALL_LEVELS.find(l=>l.id===e.levelId),em=e.levelEmoji||(lv?lv.emoji:'🎮');
+    const row=document.createElement('div');
+    row.className='wof-row'+(mine?' wof-mine':'');
+    row.style.setProperty('--ws',(i*.15).toFixed(2)+'s');
+    row.innerHTML='<div class="wof-row-rank">'+(mine?rank+' ★':rank)+'</div>'
+      +'<div class="wof-row-emoji">'+em+'</div>'
+      +'<div class="wof-row-name">'+(e.name||'Anonyme')+'</div>'
+      +'<div class="wof-row-lvl">Lv.'+(e.levelId||'?')+'</div>'
+      +'<div class="wof-row-score">'+((e.score||0).toLocaleString('fr-FR'))+' pts</div>'
+      +'<div class="wof-row-date">'+_wofFmtDate(e.date)+'</div>';
+    listEl.appendChild(row);
+  });
+}
+function showWallOfFame(hiIdx){
+  _wofRender(hiIdx);
+  document.getElementById('menu-overlay').classList.add('hidden');
+  document.getElementById('wof-overlay').classList.remove('hidden');
+}
+function hideWallOfFame(){
+  document.getElementById('wof-overlay').classList.add('hidden');
+  document.getElementById('menu-overlay').classList.remove('hidden');
+}
+let _wofPending=null;
+function showWofEntry({score,levelId,levelEmoji,levelTheme,onDone}){
+  const hs=KS.getHighscores();
+  const rank=[...hs,{score}].sort((a,b)=>b.score-a.score).findIndex(e=>e.score===score)+1;
+  _wofPending={score,levelId,levelEmoji,levelTheme,onDone};
+  document.getElementById('wof-entry-score').textContent=score.toLocaleString('fr-FR')+' pts';
+  document.getElementById('wof-entry-rank').textContent=
+    rank===1?'🥇 N°1 mondial !':rank<=3?'🥈 Dans le podium !':'Position #'+rank+' !';
+  const sn=KS.getPlayerName('p1');
+  document.getElementById('wof-entry-name').value=sn==='Joueur 1'?'':sn;
+  document.getElementById('wof-entry-overlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('wof-entry-name').focus(),350);
+}
+function _wofConfirm(){
+  if(!_wofPending)return;
+  const name=(document.getElementById('wof-entry-name').value.trim()||'Anonyme').slice(0,10);
+  const {score,levelId,levelEmoji,levelTheme,onDone}=_wofPending;
+  const rank=KS.addHighscore({name,score,levelId,levelEmoji,levelTheme});
+  const p=KS.getPlayers();p.p1=name;KS.savePlayers(p);
+  document.getElementById('wof-entry-overlay').classList.add('hidden');
+  _wofPending=null;
+  if(onDone)onDone(rank);
+}
+function _wofSkip(){
+  document.getElementById('wof-entry-overlay').classList.add('hidden');
+  _wofPending=null;
+}
+document.getElementById('wof-entry-ok').addEventListener('click',_wofConfirm);
+document.getElementById('wof-entry-skip').addEventListener('click',_wofSkip);
+document.getElementById('wof-entry-name').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();_wofConfirm();}
+});
+// Patch KS.saveSoloBest pour déclencher la WoF après chaque fin de partie
+const _origSSB=KS.saveSoloBest.bind(KS);
+KS.saveSoloBest=function(levelId,score,name){
+  const r=_origSSB(levelId,score,name);
+  if(KS.isHighscore(score)){
+    const lv=ALL_LEVELS.find(l=>l.id===levelId);
+    setTimeout(()=>showWofEntry({
+      score,levelId,
+      levelEmoji:lv?lv.emoji:'🎮',
+      levelTheme:lv?lv.theme:'',
+      onDone:()=>{}
+    }),800);
+  }
+  return r;
+};
 
 // Init initial calcRows
 calcRows();
