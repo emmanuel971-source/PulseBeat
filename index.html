@@ -813,6 +813,11 @@ body::before{
   box-shadow:0 7px 24px rgba(255,160,0,.4),0 2px 6px rgba(0,0,0,.08);
   color:#1a3050;
 }
+.mode-btn-botvsbot{
+  background:linear-gradient(135deg,#00f5d4,#00bbf9,#9b5de5);
+  box-shadow:0 7px 24px rgba(0,187,249,.4),0 2px 6px rgba(0,0,0,.08);
+  color:#fff;
+}
 /* Contenu centré avec emojis de chaque côté */
 .mode-btn-inner{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -999,19 +1004,21 @@ body.battle-mode #shell{
 .player-arena{
   flex:1;display:flex;flex-direction:column;
   min-width:0;min-height:0;overflow:hidden;position:relative;
+  background:transparent;
 }
 .p1-arena{
-  background:linear-gradient(160deg,var(--bg-top) 0%,var(--bg-mid) 50%,var(--bg-bot) 100%);
+  background:transparent;
   border-right:2px solid rgba(100,200,220,.35);
 }
 .p2-arena{
-  background:linear-gradient(160deg,#fff3d4 0%,#ffe0c0 50%,#fff8d4 100%);
+  background:transparent;
 }
 
 /* Wrapper interne centré */
 body.battle-mode .arena-inner{
   flex:1;display:flex;flex-direction:column;
   align-items:center;min-height:0;overflow:hidden;
+  background:transparent;
 }
 
 /* Middle : board-game-stack + side côte à côte */
@@ -1253,6 +1260,7 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
 
 <!-- ═══ CONFIG TOUCHES ═══ -->
 <div id="keybinds-overlay" class="hidden">
+  <div id="confetti-kb" style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;"></div>
 
   <div class="kb-header">
     <div class="kb-header-emoji">⌨️</div>
@@ -1343,6 +1351,16 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
       </div>
       <span class="mode-btn-emoji-right">🕹️</span>
     </button>
+
+    <!-- Bot vs Bot : deux robots -->
+    <button class="mode-btn mode-btn-botvsbot" onclick="modeStart('botVsBot')">
+      <span class="mode-btn-emoji">🤖</span>
+      <div class="mode-btn-inner">
+        <div class="mode-btn-label">Bot vs Bot</div>
+        <div class="mode-btn-sub">Démo IA · 2 bots s'affrontent</div>
+      </div>
+      <span class="mode-btn-emoji-right">🤖</span>
+    </button>
   </div>
 
   <!-- Panel Puzzle : choix difficulté SN -->
@@ -1358,6 +1376,7 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
 
 <!-- ═══ TUTO CINÉMATIQUE ═══ -->
 <div id="tuto-overlay" class="hidden">
+  <div id="confetti-tuto" style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;"></div>
   <!-- Shell de jeu intégré dans le tuto (clone visuel) -->
   <div id="tuto-shell">
     <div id="tuto-middle">
@@ -1603,7 +1622,7 @@ let currentLevelIdx = 0;
 let LEVEL_WORDS = ALL_LEVELS[0].words;
 let pendingLevelIdx = 0;
 
-// gameMode : 'solo' | 'vsBot' | 'vs2p'
+// gameMode : 'solo' | 'vsBot' | 'vs2p' | 'botVsBot'
 let gameMode = 'solo';
 
 
@@ -1733,10 +1752,10 @@ let ROWS=12;
       c.appendChild(d);
     }
   }
-  fillConfetti(document.getElementById('confetti'));
-  fillConfetti(document.getElementById('confetti-menu'));
-  fillConfetti(document.getElementById('confetti-mode'));
-  fillConfetti(document.getElementById('confetti-wof'));
+  [
+    'confetti','confetti-menu','confetti-mode',
+    'confetti-wof','confetti-tuto','confetti-kb'
+  ].forEach(id=>{ const el=document.getElementById(id); if(el) fillConfetti(el); });
 })();
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2700,17 +2719,19 @@ function renderPanel(){
   function endGame(){
     clearInterval(dropTimer);gameRunning=false;resolvingWords=false;
     // En mode battle : notifier le coordinateur global
-    if((gameMode==='vsBot'||gameMode==='vs2p') && typeof _battleEndGame==='function'){
+    if((gameMode==='vsBot'||gameMode==='vs2p'||gameMode==='botVsBot') && typeof _battleEndGame==='function'){
       _battleEndGame(id); return;
     }
     soundGameOver();
     const lvlData=ALL_LEVELS[currentLevelIdx];
+    // Sauvegarder le score même en cas de game over (déclenche WoF si top 25)
+    if(typeof KS!=='undefined') KS.saveSoloBest(ALL_LEVELS[currentLevelIdx].id, score, KS.getPlayerName('p1'));
     showOverlay({title:'💔 Partie terminée !',sub:`${lvlData.emoji} ${lvlData.theme}<br>Score : <strong style="color:var(--neon-violet)">${score.toLocaleString()}</strong>`,btn1:'Réessayer 🔄',act1:()=>startGame(currentLevelIdx),btn2:currentLevelIdx>0?'← Niveau précédent':null,act2:currentLevelIdx>0?()=>startGame(currentLevelIdx-1):null});
   }
   function levelDone(){
     clearInterval(dropTimer);gameRunning=false;resolvingWords=false;
     // En mode battle : le joueur qui finit tous ses mots gagne
-    if((gameMode==='vsBot'||gameMode==='vs2p') && typeof _battleEndGame==='function'){
+    if((gameMode==='vsBot'||gameMode==='vs2p'||gameMode==='botVsBot') && typeof _battleEndGame==='function'){
       soundLevelUp();
       _battleEndGame(id==='p1'?'p2':'p1'); // l'adversaire perd
       return;
@@ -3354,7 +3375,7 @@ let player2 = null; // sera créé à l'entrée en mode battle
  * avec des IDs préfixés par `pid` ('p1' ou 'p2')
  */
 function buildArenaHTML(pid, label){
-  const icon = pid==='p1' ? '🎮' : (gameMode==='vsBot'?'🤖':'🕹️');
+  const icon = gameMode==='botVsBot' ? '🤖' : (pid==='p1' ? '🎮' : (gameMode==='vsBot'?'🤖':'🕹️'));
   return `
   <div class="player-arena ${pid}-arena" id="arena-${pid}">
     <div class="arena-inner">
@@ -3444,6 +3465,11 @@ function _battleTriggerCrossControl(senderId){
   if(gameMode === 'vsBot' && senderId === 'p1'){
     window._botPaused = true;
   }
+  // En botVsBot : on met le bot cible en pause aussi
+  if(gameMode === 'botVsBot'){
+    window._botPaused = true;   // pause le bot de la cible
+    window._botP1Paused = true; // pause les deux (senderId inconnu depuis ici)
+  }
 
   // 3. Spawner un 💩 sur la grille cible contrôlé par l'attaquant
   target.spawnCrossControlPoop();
@@ -3453,8 +3479,8 @@ function _battleTriggerCrossControl(senderId){
   const attackerLabel = senderId === 'p1' ? 'Joueur 1' : (gameMode==='vsBot'?'CPU':'Joueur 2');
   _showCrossControlBanner(targetPid, attackerLabel);
 
-  // 5. Si c'est le bot qui attaque (senderId==='p2' en vsBot), auto-drop sur la colonne la plus remplie
-  if(gameMode === 'vsBot' && senderId === 'p2'){
+  // 5. Si c'est le bot qui attaque (senderId==='p2' en vsBot ou botVsBot), auto-drop sur la colonne la plus remplie
+  if((gameMode === 'vsBot' && senderId === 'p2') || (gameMode === 'botVsBot')){
     setTimeout(()=>{
       if(!crossControlActive || !target.gameRunning) return;
       // Trouver la colonne la plus haute (plus de kanas = plus dangereuse pour P1)
@@ -3492,6 +3518,7 @@ function _endCrossControl(targetId){
   console.log(`[CrossControl] _endCrossControl(${targetId})`);
   crossControlActive = false;
   window._botPaused = false;
+  window._botP1Paused = false;
 
   // Annuler le timeout de sécurité si présent
   if(window._crossControlGuard){ clearTimeout(window._crossControlGuard); window._crossControlGuard=null; }
@@ -3500,10 +3527,10 @@ function _endCrossControl(targetId){
   if(window._p1) window._p1.cancelPendingCrossControlPoop?.();
   if(window._p2) window._p2.cancelPendingCrossControlPoop?.();
 
-  // Reprendre P1 (toujours — qu'il soit attaquant ou cible)
+  // Reprendre P1 toujours — en botVsBot les bots reprennent via les flags
   if(window._p1 && window._p1.gameRunning) window._p1.resumeAfterCrossControl();
   // Reprendre P2 humain si besoin (vsBot : le bot reprend via _botPaused=false)
-  if(window._p2 && window._p2.gameRunning && gameMode==='vs2p') window._p2.resumeAfterCrossControl();
+  if(window._p2 && window._p2.gameRunning && (gameMode==='vs2p'||gameMode==='botVsBot')) window._p2.resumeAfterCrossControl();
 
   // Masquer la bannière
   _hideCrossControlBanner(targetId);
@@ -3550,8 +3577,12 @@ function _showBattleEndOverlay(winnerId){
   if(window._p1) window._p1.stopGame();
   if(window._p2) window._p2.stopGame();
   _destroyBotWorker();
+  _destroyBotWorkerP1();
   crossControlActive = false;
   window._botPaused = false;
+  window._botP1Paused = false;
+  const _dc = document.getElementById('demo-controls');
+  if(_dc) _dc.remove();
 
   const p1Score = window._p1 ? window._p1.score : 0;
   const p2Score = window._p2 ? window._p2.score : 0;
@@ -3564,12 +3595,27 @@ function _showBattleEndOverlay(winnerId){
       mode: gameMode,
       levelId: ALL_LEVELS[currentLevelIdx].id,
     });
+    // Déclencher la WoF pour le VAINQUEUR uniquement s'il mérite le top 25
+    // vsBot → le vainqueur doit être P1 (seul humain)
+    // vs2p  → le vainqueur peut être P1 ou P2
+    const lv = ALL_LEVELS[currentLevelIdx];
+    const winnerScore   = winnerId === 'p1' ? p1Score : p2Score;
+    const winnerIsHuman = gameMode === 'vs2p' || (gameMode === 'vsBot' && winnerId === 'p1');
+    if(winnerIsHuman && KS.isHighscore(winnerScore)){
+      setTimeout(()=>showWofEntry({
+        score: winnerScore,
+        levelId: lv.id,
+        levelEmoji: lv.emoji,
+        levelTheme: lv.theme,
+        onDone: ()=>{}
+      }), 1200);
+    }
   }
 
   const players = typeof KS !== 'undefined' ? KS.getPlayers() : {p1:'Joueur 1', p2:'Joueur 2'};
   const labels = {
-    p1: players.p1 || 'Joueur 1',
-    p2: gameMode === 'vsBot' ? 'CPU' : (players.p2 || 'Joueur 2'),
+    p1: gameMode === 'botVsBot' ? 'Bot Alpha' : (players.p1 || 'Joueur 1'),
+    p2: gameMode === 'vsBot' ? 'CPU' : (gameMode === 'botVsBot' ? 'Bot Beta' : (players.p2 || 'Joueur 2')),
   };
 
   ['p1','p2'].forEach(pid => {
@@ -3650,11 +3696,19 @@ function enterBattleMode(levelIdx){
   // ── Vider et reconstruire le #shell en layout battle ──
   const shell = document.getElementById('shell');
   shell.innerHTML = '';
-  shell.style.cssText = 'position:relative;z-index:1;display:flex;flex-direction:row;height:100dvh;max-width:100vw;overflow:hidden;';
+  shell.style.cssText = 'position:relative;z-index:1;display:flex;flex-direction:row;height:100dvh;max-width:100vw;overflow:hidden;background:transparent;';
 
-  const p2Label = gameMode === 'vsBot' ? 'CPU' : 'Joueur 2';
+  const p1Label = gameMode === 'botVsBot' ? 'Bot Alpha' : 'Joueur 1';
+  const p2Label = gameMode === 'vsBot' ? 'CPU' : (gameMode === 'botVsBot' ? 'Bot Beta' : 'Joueur 2');
 
-  shell.innerHTML = buildArenaHTML('p1','Joueur 1') + buildArenaHTML('p2', p2Label);
+  shell.innerHTML = buildArenaHTML('p1', p1Label) + buildArenaHTML('p2', p2Label);
+  // Bulles de fond pour le mode battle — position:absolute dans #shell
+  // (fixed ne fonctionne pas car shell crée un stacking context avec overflow:hidden)
+  const _cBattle = document.createElement('div');
+  _cBattle.id = 'confetti-battle';
+  _cBattle.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;';
+  document.body.insertBefore(_cBattle, document.body.firstChild);
+  if(typeof fillConfetti === 'function') fillConfetti(_cBattle);
 
   // ── Câbler player1 sur les nouveaux éléments DOM battle ──
   // On recrée player1 avec les nouveaux IDs battle
@@ -3680,6 +3734,14 @@ function enterBattleMode(levelIdx){
   // ── Si vsBot, lancer le bot sur P2 ──
   if(gameMode === 'vsBot'){
     setTimeout(()=>_startBotOnP2(), 600);
+  }
+  // ── Si botVsBot, lancer le bot sur P1 ET P2 ──
+  if(gameMode === 'botVsBot'){
+    setTimeout(()=>{
+      _startBotOnP2();        // Bot Worker sur P2 (inchangé)
+      _startBotOnP1();        // Bot Worker sur P1 (nouveau)
+      _showDemoControls();    // Panneau de contrôle démo
+    }, 600);
   }
 }
 
@@ -3737,6 +3799,9 @@ function _battleKeyHandler(e){
   }
 
   // ── MODE NORMAL ──
+  // En botVsBot : le clavier ne contrôle aucun joueur (tout est géré par les bots)
+  if(gameMode === 'botVsBot') return;
+
   const p1 = window._p1;
   if(p1 && p1.gameRunning && !p1.resolvingWords && p1.active){
     const b=kb.p1;
@@ -3883,7 +3948,8 @@ function _startBotOnP2(){
     setTimeout(()=>{
       if(!p2.gameRunning || !p2.active) return;
       p2.hardDrop();
-      setTimeout(botLoop, BOT_BATTLE_SPEED);
+      const spd = (gameMode==='botVsBot' && window._demoBotSpeed) ? window._demoBotSpeed : BOT_BATTLE_SPEED;
+      setTimeout(botLoop, spd);
     }, 100);
   };
 
@@ -3897,10 +3963,140 @@ function _startBotOnP2(){
   setTimeout(botLoop, 800);
 }
 
+// ═══════════════════════════════════════════════════════════════════
+//  BOT WORKER P1 — second worker pour le mode Bot vs Bot
+// ═══════════════════════════════════════════════════════════════════
+let _botWorkerP1 = null;
+
+function _createBotWorkerP1(){
+  if(_botWorkerP1) return _botWorkerP1;
+  const blob = new Blob([_BOT_WORKER_CODE], {type:'application/javascript'});
+  _botWorkerP1 = new Worker(URL.createObjectURL(blob));
+  return _botWorkerP1;
+}
+
+function _destroyBotWorkerP1(){
+  if(_botWorkerP1){ _botWorkerP1.terminate(); _botWorkerP1 = null; }
+}
+
+/**
+ * Lance le bot IA sur P1 en mode botVsBot.
+ * Vitesse légèrement différente de P2 pour désynchroniser les drops.
+ */
+function _startBotOnP1(){
+  const p1 = window._p1;
+  if(!p1) return;
+  const BOT_P1_SPEED = 870; // légèrement décalé vs P2 (800ms) pour éviter les drops simultanés
+  const BOT_P1_DEPTH = 2;
+  const worker = _createBotWorkerP1();
+  let _workerPending = false;
+
+  function botLoop(){
+    if(!p1.gameRunning){ _workerPending = false; return; }
+    if(window._botP1Paused){ setTimeout(botLoop, 200); return; }
+    if(p1.resolvingWords || !p1.active){ setTimeout(botLoop, 150); return; }
+
+    const payload = {
+      kana:        p1.active.char,
+      boardSnap:   p1.getBoardSnapshot(),
+      activeWords: p1.activeWords.map(w=>({kana:w.kana,romaji:w.romaji,meaning:w.meaning,emoji:w.emoji,boss:!!w.boss})),
+      nextKana:    p1.nextChar,
+      maxDepth:    BOT_P1_DEPTH,
+    };
+    _workerPending = true;
+    worker.postMessage(payload);
+  }
+
+  worker.onmessage = function(e){
+    _workerPending = false;
+    if(!p1.gameRunning || !p1.active) return;
+    const {col} = e.data;
+    p1.setPos(col);
+    p1.render();
+    setTimeout(()=>{
+      if(!p1.gameRunning || !p1.active) return;
+      p1.hardDrop();
+      const spd = window._demoBotSpeed || BOT_P1_SPEED;
+      setTimeout(botLoop, spd);
+    }, 100);
+  };
+
+  worker.onerror = function(err){
+    console.warn('[BotWorkerP1] erreur :', err.message);
+    _workerPending = false;
+    setTimeout(botLoop, BOT_P1_SPEED);
+  };
+
+  setTimeout(botLoop, 950); // délai de démarrage légèrement différent de P2
+}
+
+/**
+ * Affiche le panneau de contrôle démo en mode botVsBot.
+ * Permet de mettre en pause les deux bots et de quitter.
+ */
+function _showDemoControls(){
+  const existing = document.getElementById('demo-controls');
+  if(existing) existing.remove();
+
+  const panel = document.createElement('div');
+  panel.id = 'demo-controls';
+  panel.style.cssText = [
+    'position:fixed',
+    'bottom:16px',
+    'left:50%',
+    'transform:translateX(-50%)',
+    'z-index:600',
+    'background:rgba(20,10,50,.93)',
+    'border:2px solid #00bbf9',
+    'border-radius:20px',
+    'padding:9px 16px',
+    'display:flex',
+    'align-items:center',
+    'gap:10px',
+    'color:#fff',
+    'font-family:Nunito,sans-serif',
+    'font-size:13px',
+    'box-shadow:0 4px 24px rgba(0,187,249,.4)',
+    'white-space:nowrap',
+  ].join(';');
+
+  panel.innerHTML = `
+    <span style="font-weight:900;color:#00bbf9;font-size:14px;">🤖 Bot vs Bot</span>
+    <button id="demo-pause-btn" style="background:rgba(255,255,255,.15);border:1px solid #00bbf9;border-radius:10px;color:#fff;padding:5px 12px;font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:800;">⏸ Pause</button>
+    <span id="demo-speed-label" style="color:#72e8b8;font-size:11px;min-width:55px;">⚡ 800ms</span>
+    <input id="demo-speed-range" type="range" min="300" max="1500" value="800" style="width:70px;accent-color:#00bbf9;" title="Vitesse des bots">
+    <button id="demo-exit-btn" style="background:rgba(255,0,102,.2);border:1px solid #ff0066;border-radius:10px;color:#ff6699;padding:5px 12px;font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;font-weight:800;">✖ Quitter</button>
+  `;
+  document.body.appendChild(panel);
+
+  // Pause / Reprise
+  let paused = false;
+  document.getElementById('demo-pause-btn').addEventListener('click', ()=>{
+    paused = !paused;
+    window._botPaused   = paused;
+    window._botP1Paused = paused;
+    document.getElementById('demo-pause-btn').textContent = paused ? '▶ Reprendre' : '⏸ Pause';
+    document.getElementById('demo-pause-btn').style.borderColor = paused ? '#ffbe0b' : '#00bbf9';
+  });
+
+  // Vitesse dynamique (modifie les constantes via closure partagée)
+  // On stocke la valeur dans window pour que les boucles bot la lisent
+  window._demoBotSpeed = 800;
+  document.getElementById('demo-speed-range').addEventListener('input', e=>{
+    window._demoBotSpeed = +e.target.value;
+    document.getElementById('demo-speed-label').textContent = '⚡ ' + e.target.value + 'ms';
+  });
+
+  // Quitter
+  document.getElementById('demo-exit-btn').addEventListener('click', ()=>exitBattleMode());
+}
+
 /**
  * Quitter le mode battle et retourner au menu
  */
 function exitBattleMode(){
+  const _cb = document.getElementById('confetti-battle');
+  if(_cb) _cb.remove();
   _teardownBattleKeyboard();
   _destroyBotWorker();
   crossControlActive = false;
