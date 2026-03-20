@@ -526,20 +526,25 @@ body::before{
 #tuto-overlay {
   position: fixed; inset: 0; z-index: 220;
   background: linear-gradient(160deg, var(--bg-top) 0%, var(--bg-mid) 50%, var(--bg-bot) 100%);
-  display: flex; flex-direction: column; align-items: center;
+  display: flex; flex-direction: column; align-items: stretch;
   overflow: hidden;
-  /* SUPPRESSION du max-width ici */
 }
 #tuto-overlay.hidden{display:none !important;}
 
 #tuto-shell {
   position: relative; z-index: 1;
   display: flex; flex-direction: column;
-  width: 100%; max-width: 480px; /* Ajout du max-width ici */
-  flex: 1; min-height: 0;
+  width: 100%; max-width: 480px;
+  margin: 0 auto;
+  flex: 1;
+  min-height: 0;
   isolation: isolate;
 }
-#tuto-middle{flex:1;display:flex;min-height:0;}
+#tuto-middle {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
 #tuto-board-col{
   flex:3;display:flex;flex-direction:column;min-height:0;position:relative;overflow:hidden;
 }
@@ -564,10 +569,16 @@ body::before{
   font-size:clamp(22px,7.5vw,36px);font-weight:900;font-family:'Noto Sans JP',sans-serif;color:var(--text-dark);
 }
 #tuto-score{font-family:'Fredoka One',cursive;font-size:clamp(18px,5.5vw,26px);color:var(--neon-violet);text-align:center;}
-#tuto-word-panel{
-  background:var(--surface);border-top:3px solid var(--border);
-  flex-shrink:0;padding:8px 8px 10px;display:flex;flex-direction:column;gap:6px;
-  max-height:30dvh;overflow-y:auto;
+#tuto-word-panel {
+  background: var(--surface);
+  border-top: 3px solid var(--border);
+  flex: 0 0 30%;
+  padding: 8px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  position: relative;
 }
 
 /* ── Bulle fixe au centre de l'écran, fond translucide ── */
@@ -3073,24 +3084,30 @@ function _tutoDelay(ms){ return new Promise(r=>{ const t=setTimeout(r,ms); _tuto
 function _stopTutoCinematic(){ _tutoRunning=false; _tutoTimers.forEach(t=>clearTimeout(t)); _tutoTimers=[]; _hideTutoBubble(); }
 function _tutoCell(r,c){ return document.querySelector('#tuto-board [data-r="'+r+'"][data-c="'+c+'"]'); }
 function _tutoBuildBoard(){
-  // Calculer ROWS comme le vrai mode solo
-  const panH = document.getElementById('tuto-word-panel').offsetHeight || 80;
-  const footH = document.getElementById('tuto-footer').offsetHeight || 56;
-  const avail = (window.innerHeight||document.documentElement.clientHeight) - panH - footH;
-  
+  const totalH = window.innerHeight || document.documentElement.clientHeight;
   const screenW = Math.min(window.innerWidth, 480);
   const cellW = Math.floor(screenW * 0.75 / TUTO_COLS);
-  
-  // Limite stricte : 15 lignes maximum
+
+  // Hauteur fixe du word-panel (comme le vrai jeu ~22% de l'écran)
+  const panH = Math.round(totalH * 0.22);
+
+  // Calculer les lignes avec l'espace restant
+  const avail = totalH - panH;
   const rows = Math.min(15, Math.max(8, Math.floor(avail / cellW)));
   window._tutoRows = rows;
 
-  // 🛠️ LA CORRECTION EST ICI :
-  // On empêche le conteneur central de s'étirer et on lui fixe sa hauteur
+  // Fixer tuto-middle à exactement la hauteur de la grille
+  const middleH = rows * cellW;
   const tutoMiddle = document.getElementById('tuto-middle');
   if(tutoMiddle) {
     tutoMiddle.style.flex = 'none';
-    tutoMiddle.style.height = (rows * cellW) + 'px';
+    tutoMiddle.style.height = middleH + 'px';
+  }
+  // Word-panel prend tout le reste
+  const wordPanel = document.getElementById('tuto-word-panel');
+  if(wordPanel) {
+    wordPanel.style.flex = 'none';
+    wordPanel.style.height = (totalH - middleH) + 'px';
   }
 
   const board=document.getElementById('tuto-board');
