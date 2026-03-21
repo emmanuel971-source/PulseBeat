@@ -319,10 +319,10 @@ body::before{
 }
 .word-row{
   display:flex;align-items:center;gap:8px;
-  background:white;border:2px solid var(--border);border-radius:16px;padding:7px 10px;
+  background:#edfaf3;border:2px solid var(--border);border-radius:16px;padding:7px 10px;
   animation:rowSlideIn .45s cubic-bezier(.34,1.56,.64,1) forwards;
   position:relative;overflow:hidden;
-  box-shadow:0 3px 10px rgba(0,150,255,.1);
+  box-shadow:0 3px 10px rgba(0,150,100,.1);
   transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }
 @keyframes rowSlideIn{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
@@ -500,7 +500,60 @@ body::before{
 .tuto-sub{font-family:'Nunito',sans-serif;font-size:clamp(15px,4vw,18px);color:var(--text-mid);text-align:center;margin-bottom:18px;font-weight:700;}
 .tuto-steps{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;}
 .tuto-step{background:white;border-radius:20px;border:2px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 16px rgba(0,0,0,.07);animation:tutoStepIn .5s cubic-bezier(.34,1.56,.64,1) both;}
-/* ═══ MENU SETTINGS BUTTON ═══ */
+/* ═══ TUTO INFO BANNER ═══ */
+#tuto-info-banner {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 230;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 16px 12px;
+  background: linear-gradient(135deg, #ff8c42, #ffb347);
+  box-shadow: 0 -4px 20px rgba(255,120,30,.35), 0 -1px 0 rgba(255,255,255,.3);
+  pointer-events: none;
+}
+#tuto-info-banner .tib-icon {
+  font-size: clamp(20px, 5vw, 26px);
+  animation: tibBounce 1.4s ease-in-out infinite alternate;
+  flex-shrink: 0;
+}
+@keyframes tibBounce { from{transform:scale(1) rotate(-8deg)} to{transform:scale(1.2) rotate(8deg)} }
+#tuto-info-banner .tib-text {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(14px, 3.8vw, 18px);
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,.2);
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+  text-align: center;
+}
+#tuto-info-banner .tib-text span {
+  display: inline-block;
+  background: rgba(255,255,255,.25);
+  border-radius: 8px;
+  padding: 1px 8px;
+  margin-left: 4px;
+  font-size: clamp(12px, 3.2vw, 15px);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+#tuto-info-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.15) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: bannerShimmer 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes bannerShimmer {
+  0%  { background-position: -100% 0; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100%{ background-position: 200% 0; opacity: 0; }
+}
 .menu-settings-btn{
   position:absolute;top:12px;right:12px;
   background:rgba(255,255,255,.7);border:2px solid var(--border);
@@ -525,9 +578,18 @@ body::before{
 /* ═══ TUTO OVERLAY ═══ */
 #tuto-overlay {
   position: fixed; inset: 0; z-index: 220;
-  background: linear-gradient(160deg, var(--bg-top) 0%, var(--bg-mid) 50%, var(--bg-bot) 100%);
+  background: linear-gradient(160deg, #fff4e0 0%, #ffe8c0 45%, #ffd49a 100%);
   display: flex; flex-direction: column; align-items: stretch;
   overflow: hidden;
+}
+#tuto-overlay::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 55% 40% at 10% 20%, rgba(255,140,60,.25) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 90% 80%, rgba(255,180,60,.22) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 50% 55%, rgba(255,100,30,.12) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+  animation: blobDrift 8s ease-in-out infinite alternate;
 }
 #tuto-overlay.hidden{display:none !important;}
 
@@ -538,6 +600,7 @@ body::before{
   margin: 0 auto;
   flex: 1;
   min-height: 0;
+  padding-bottom: 52px;
   isolation: isolate;
 }
 #tuto-middle {
@@ -550,16 +613,16 @@ body::before{
 }
 #tuto-board{
   flex:1;display:grid;grid-template-columns:repeat(8,1fr);
-  background:var(--board-bg);
-  border-left:2px solid rgba(100,200,220,.25);
-  border-right:2px solid rgba(100,200,220,.25);
-  border-top:2px solid rgba(100,200,220,.25);
+  background:rgba(255,248,232,.9);
+  border-left:2px solid rgba(255,160,60,.3);
+  border-right:2px solid rgba(255,160,60,.3);
+  border-top:2px solid rgba(255,160,60,.3);
   overflow:hidden;
 }
 #tuto-side{
   flex:1;display:flex;flex-direction:column;
-  background:var(--surface);
-  border-left:2px solid var(--border);border-right:3px solid var(--border);border-top:3px solid var(--border);
+  background:rgba(255,240,210,.85);
+  border-left:2px solid rgba(255,160,60,.35);border-right:3px solid rgba(255,160,60,.35);border-top:3px solid rgba(255,160,60,.35);
   padding:10px 4px 8px;gap:12px;align-items:center;overflow:hidden;
 }
 #tuto-next{
@@ -570,9 +633,9 @@ body::before{
 }
 #tuto-score{font-family:'Fredoka One',cursive;font-size:clamp(18px,5.5vw,26px);color:var(--neon-violet);text-align:center;}
 #tuto-word-panel {
-  background: var(--surface);
-  border-top: 3px solid var(--border);
-  flex: 0 0 30%;
+  background: rgba(255,244,224,.95);
+  border-top: 3px solid rgba(255,160,60,.4);
+  flex: 0 0 42%;
   padding: 8px 8px 10px;
   display: flex;
   flex-direction: column;
@@ -1072,7 +1135,7 @@ body.battle-mode .arena-side{
   flex-shrink:0;width:clamp(82px,10vw,112px);
   display:flex;flex-direction:column;
   background:var(--surface);
-  border-left:2px solid var(--border);border-top:2px solid var(--border);
+  border-left:0px solid var(--border);border-top:0px solid var(--border);
   padding:10px 6px 8px;gap:10px;align-items:center;overflow:hidden;
 }
 body.battle-mode .arena-side .side-label{
@@ -1397,6 +1460,12 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
       <div id="tuto-side">
         <div class="side-block"><div class="side-label">NEXT</div><div id="tuto-next">？</div></div>
         <div class="side-block"><div class="side-label">SCORE</div><div id="tuto-score">0</div></div>
+<div class="side-block">
+  <div id="tuto-level-badge" style="font-family:'Fredoka One',sans-serif;font-size:clamp(12px,3.2vw,15px);text-align:center;line-height:1.3;">
+    <span style="font-size:clamp(30px,9vw,44px);display:block;line-height:1.1;">🌊</span>
+    <span style="display:block;">Niveau 1</span>
+  </div>
+</div>
       </div>
     </div>
     <div id="tuto-word-panel"></div>
@@ -1411,6 +1480,13 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
 
   <!-- Footer vide — plus de bouton Passer -->
   <div id="tuto-footer"></div>
+
+  <!-- Bandeau d'info "Comment jouer" -->
+  <div id="tuto-info-banner">
+    <div class="tib-icon">📖</div>
+    <div class="tib-text">Tu es dans la section<span>Comment jouer</span></div>
+    <div class="tib-icon">🎮</div>
+  </div>
 </div>
 
 
@@ -2270,7 +2346,7 @@ function calcRows(){
       dom.gameStackEl.style.width = boardW + 'px';
       // On centre le jeu et on décolle les deux joueurs (fini les grilles collées !)
       dom.gameStackEl.parentElement.style.justifyContent = 'center';
-      dom.gameStackEl.parentElement.style.gap = '15px';
+       
     } else {
       dom.boardColEl.style.width = boardW + 'px';
     }
@@ -4270,9 +4346,83 @@ function _wofPodSlot(e,cls,num,medal){
   const lv=ALL_LEVELS.find(l=>l.id===e.levelId),em=e.levelEmoji||(lv?lv.emoji:'🎮');
   return'<div class="wof-pod '+cls+'"><div class="wof-pod-info"><div class="wof-pod-name">'+(e.name||'Anonyme')+'</div><div class="wof-pod-score">'+((e.score||0).toLocaleString('fr-FR'))+'</div><div class="wof-pod-lvl">'+em+' Lv.'+(e.levelId||'?')+'</div></div><div class="wof-pod-block"><div class="wof-pod-medal">'+medal+'</div><div class="wof-pod-rank">'+num+'</div></div></div>';
 }
+// ── Scores génériques pré-remplis au premier lancement ──
+(function _seedDefaultScores(){
+  const existing=KS._get(KS.KEYS.HIGHSCORES);
+  if(existing&&existing.length)return; // déjà des scores → on ne touche pas
+  const seeds=[
+    {name:'Sakura🌸',  score:18420, levelId:10, levelEmoji:'🌸', levelTheme:'Ciel & Saisons',    date:new Date(Date.now()-1*864e5).toISOString()},
+    {name:'TaroSan',   score:15800, levelId:7,  levelEmoji:'🍚', levelTheme:'Le Riz & les Bases', date:new Date(Date.now()-2*864e5).toISOString()},
+    {name:'KanaKing',  score:14250, levelId:3,  levelEmoji:'🌿', levelTheme:'La Forêt',           date:new Date(Date.now()-3*864e5).toISOString()},
+    {name:'HiroBot',   score:12900, levelId:1,  levelEmoji:'🌊', levelTheme:'La Mer',             date:new Date(Date.now()-4*864e5).toISOString()},
+    {name:'YukiChan',  score:11500, levelId:5,  levelEmoji:'🌸', levelTheme:'Ciel & Jardin',      date:new Date(Date.now()-5*864e5).toISOString()},
+    {name:'DragonZ',   score:10200, levelId:4,  levelEmoji:'🌍', levelTheme:'La Savane',          date:new Date(Date.now()-6*864e5).toISOString()},
+    {name:'RinRin',    score:9400,  levelId:9,  levelEmoji:'🍑', levelTheme:'Les Fruits sucrés',  date:new Date(Date.now()-7*864e5).toISOString()},
+    {name:'Momiji🍁',  score:8750,  levelId:11, levelEmoji:'🌿', levelTheme:'Terre & Végétation', date:new Date(Date.now()-8*864e5).toISOString()},
+    {name:'KenPachi',  score:7900,  levelId:21, levelEmoji:'⚔️', levelTheme:'Japon trad. B',      date:new Date(Date.now()-9*864e5).toISOString()},
+    {name:'AoiHoshi',  score:7100,  levelId:10, levelEmoji:'🌸', levelTheme:'Ciel & Saisons',    date:new Date(Date.now()-10*864e5).toISOString()},
+    {name:'NekoChan',  score:6500,  levelId:2,  levelEmoji:'🐾', levelTheme:'Les Domestiques',    date:new Date(Date.now()-11*864e5).toISOString()},
+    {name:'MiruSan',   score:5800,  levelId:6,  levelEmoji:'🦀', levelTheme:'Fruits de mer',      date:new Date(Date.now()-12*864e5).toISOString()},
+    {name:'TokyoAce',  score:5200,  levelId:15, levelEmoji:'📝', levelTheme:'Le Bureau',          date:new Date(Date.now()-13*864e5).toISOString()},
+    {name:'SakiPro',   score:4700,  levelId:16, levelEmoji:'🌈', levelTheme:'Couleurs A',         date:new Date(Date.now()-14*864e5).toISOString()},
+    {name:'KamiKaze',  score:4100,  levelId:20, levelEmoji:'🏯', levelTheme:'Japon trad. A',      date:new Date(Date.now()-15*864e5).toISOString()},
+  ];
+  KS._set(KS.KEYS.HIGHSCORES, seeds);
+})();
+
+// ── Animation CSS pour le highlight du nouveau score ──
+(function _injectWofStyles(){
+  const s=document.createElement('style');
+  s.textContent=`
+    @keyframes wofNewEntry{
+      0%{transform:scaleX(.6) scaleY(.6);opacity:0;box-shadow:0 0 0 0 rgba(249,208,0,0);}
+      40%{transform:scaleX(1.06) scaleY(1.1);opacity:1;box-shadow:0 0 0 8px rgba(249,208,0,.5);}
+      65%{transform:scaleX(.98) scaleY(.97);}
+      100%{transform:scale(1);box-shadow:0 0 0 3px rgba(249,208,0,.35);}
+    }
+    @keyframes wofPodNewEntry{
+      0%{transform:scale(.5);opacity:0;filter:brightness(2);}
+      50%{transform:scale(1.12);opacity:1;filter:brightness(1.4);}
+      75%{transform:scale(.96);}
+      100%{transform:scale(1);filter:brightness(1);}
+    }
+    @keyframes wofNewEntryPulse{
+      0%,100%{box-shadow:0 0 0 3px rgba(249,208,0,.35),0 4px 18px rgba(249,208,0,.2);}
+      50%{box-shadow:0 0 0 6px rgba(249,208,0,.6),0 4px 28px rgba(249,208,0,.4);}
+    }
+    .wof-row.wof-new-entry{
+      animation:wofNewEntry .55s cubic-bezier(.34,1.56,.64,1) forwards,
+                wofNewEntryPulse 1.8s ease-in-out 0.6s infinite;
+      background:rgba(249,208,0,.28)!important;
+      border:2px solid #f9d000!important;
+      z-index:2;position:relative;
+    }
+    .wof-pod.wof-pod-new-entry{
+      animation:wofPodNewEntry .6s cubic-bezier(.34,1.56,.64,1) forwards;
+    }
+    .wof-new-entry .wof-row-rank{color:#b8860b!important;font-size:20px;}
+    .wof-new-entry .wof-row-name::after{content:' 🆕';font-size:12px;}
+  `;
+  document.head.appendChild(s);
+})();
+
 function _wofRender(hiIdx){
   const hs=KS.getHighscores();
-  document.getElementById('wof-podium').innerHTML=_wofPodSlot(hs[1],'wof-pod-2nd',2,'🥈')+_wofPodSlot(hs[0],'wof-pod-1st',1,'🥇')+_wofPodSlot(hs[2],'wof-pod-3rd',3,'🥉');
+  // Podium
+  const pod1El=document.createElement('div');
+  const pod2El=document.createElement('div');
+  const pod3El=document.createElement('div');
+  document.getElementById('wof-podium').innerHTML=
+    _wofPodSlot(hs[1],'wof-pod-2nd',2,'🥈')+
+    _wofPodSlot(hs[0],'wof-pod-1st',1,'🥇')+
+    _wofPodSlot(hs[2],'wof-pod-3rd',3,'🥉');
+  // Highlight podium si le nouveau score est top 3
+  if(hiIdx!==undefined&&hiIdx<=2){
+    const podSlots=document.getElementById('wof-podium').querySelectorAll('.wof-pod');
+    // podium order: 2nd(idx0), 1st(idx1), 3rd(idx2) → map index
+    const podOrder=[1,0,2]; // slot positions → real rank indices
+    podSlots.forEach((slot,si)=>{if(podOrder[si]===hiIdx)slot.classList.add('wof-pod-new-entry');});
+  }
   const listEl=document.getElementById('wof-list');
   listEl.innerHTML='';
   if(!hs.length){
@@ -4283,7 +4433,7 @@ function _wofRender(hiIdx){
     const rank=i+4,mine=hiIdx!==undefined&&rank-1===hiIdx;
     const lv=ALL_LEVELS.find(l=>l.id===e.levelId),em=e.levelEmoji||(lv?lv.emoji:'🎮');
     const row=document.createElement('div');
-    row.className='wof-row'+(mine?' wof-mine':'');
+    row.className='wof-row'+(mine?' wof-mine wof-new-entry':'');
     row.style.setProperty('--ws',(i*.15).toFixed(2)+'s');
     row.innerHTML='<div class="wof-row-rank">'+(mine?rank+' ★':rank)+'</div>'
       +'<div class="wof-row-emoji">'+em+'</div>'
@@ -4298,16 +4448,54 @@ function showWallOfFame(hiIdx){
   _wofRender(hiIdx);
   document.getElementById('menu-overlay').classList.add('hidden');
   document.getElementById('wof-overlay').classList.remove('hidden');
+  // Scroll vers le nouveau score après un court délai
+  if(hiIdx!==undefined&&hiIdx>2){
+    setTimeout(()=>{
+      const inner=document.querySelector('.wof-inner');
+      const newRow=document.querySelector('.wof-row.wof-new-entry');
+      if(inner&&newRow){
+        const rowTop=newRow.offsetTop;
+        inner.scrollTo({top:rowTop-60,behavior:'smooth'});
+      }
+    },350);
+  }
+  // Salve de particules si podium (top 3)
+  if(hiIdx!==undefined&&hiIdx<3){
+    _wofPodiumBurst();
+  }
 }
 function hideWallOfFame(){
   document.getElementById('wof-overlay').classList.add('hidden');
   document.getElementById('menu-overlay').classList.remove('hidden');
 }
+
+// Lance plusieurs explosions de particules pour le podium
+function _wofPodiumBurst(){
+  const positions=[
+    {x:window.innerWidth*.25,y:window.innerHeight*.3},
+    {x:window.innerWidth*.75,y:window.innerHeight*.3},
+    {x:window.innerWidth*.5, y:window.innerHeight*.2},
+    {x:window.innerWidth*.15,y:window.innerHeight*.5},
+    {x:window.innerWidth*.85,y:window.innerHeight*.5},
+    {x:window.innerWidth*.5, y:window.innerHeight*.45},
+  ];
+  const delays=[0,120,250,380,500,650];
+  positions.forEach((pos,i)=>{
+    setTimeout(()=>burst(pos.x,pos.y,26,'logo'),delays[i]);
+  });
+  // Une vague supplémentaire
+  setTimeout(()=>{
+    positions.forEach((pos,i)=>{
+      setTimeout(()=>burst(pos.x,pos.y,18,'boss'),i*110);
+    });
+  },800);
+}
+
 let _wofPending=null;
 function showWofEntry({score,levelId,levelEmoji,levelTheme,onDone}){
   const hs=KS.getHighscores();
   const rank=[...hs,{score}].sort((a,b)=>b.score-a.score).findIndex(e=>e.score===score)+1;
-  _wofPending={score,levelId,levelEmoji,levelTheme,onDone};
+  _wofPending={score,levelId,levelEmoji,levelTheme,onDone,rank};
   document.getElementById('wof-entry-score').textContent=score.toLocaleString('fr-FR')+' pts';
   document.getElementById('wof-entry-rank').textContent=
     rank===1?'🥇 N°1 mondial !':rank<=3?'🥈 Dans le podium !':'Position #'+rank+' !';
@@ -4325,6 +4513,8 @@ function _wofConfirm(){
   document.getElementById('wof-entry-overlay').classList.add('hidden');
   _wofPending=null;
   if(onDone)onDone(rank);
+  // ── Redirection automatique vers le Wall of Fame ──
+  showWallOfFame(rank);
 }
 function _wofSkip(){
   document.getElementById('wof-entry-overlay').classList.add('hidden');
