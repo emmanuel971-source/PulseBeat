@@ -164,12 +164,12 @@ body::before{
   align-items: center;
   justify-content: flex-start;
   padding: 14px 6px 10px;
-  background: rgba(20, 10, 50, 0.93);
+  background: linear-gradient(180deg, #5b21b6 0%, #4c1d95 40%, #3b0764 100%);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-left: 2px solid #a855f7;
   border-right: 2px solid #a855f7;
-  box-shadow: 0 0 32px rgba(168,85,247,.25) inset, 0 0 18px rgba(168,85,247,.18);
+  box-shadow: 0 0 32px rgba(168,85,247,.35) inset, 0 0 18px rgba(168,85,247,.2);
   gap: 10px;
   z-index: 2;
   overflow: hidden;
@@ -180,7 +180,7 @@ body::before{
   position: absolute;
   width: 120%;
   aspect-ratio: 1;
-  background: radial-gradient(circle, rgba(168,85,247,.18) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(168,85,247,.25) 0%, transparent 70%);
   animation: blobDrift 8s ease-in-out infinite alternate;
   pointer-events: none;
 }
@@ -197,7 +197,7 @@ body::before{
   line-height: 1;
   text-align: center;
   letter-spacing: -1px;
-  filter: drop-shadow(0 0 6px rgba(168,85,247,.5));
+  filter: drop-shadow(0 0 6px rgba(255,255,255,.3));
 }
 #battle-center .bc-logo-drop {
   font-family: 'Black Han Sans', sans-serif;
@@ -214,33 +214,32 @@ body::before{
 #battle-center .bc-vs {
   font-family: 'Fredoka One', cursive;
   font-size: clamp(22px, 3.2vw, 32px);
-  color: #c77dff;
-  text-shadow: -1px -1px 0 #1a0050, 1px -1px 0 #1a0050, -1px 1px 0 #1a0050, 1px 1px 0 #1a0050, 0 0 18px rgba(168,85,247,.8);
+  color: #fff;
+  text-shadow: -1px -1px 0 rgba(0,0,0,.5), 1px -1px 0 rgba(0,0,0,.5), -1px 1px 0 rgba(0,0,0,.5), 1px 1px 0 rgba(0,0,0,.5), 0 0 18px rgba(255,255,255,.6);
   animation: vsPulse 1.2s ease-in-out infinite alternate;
   margin: 4px 0;
 }
-@keyframes vsPulse { from{transform:scale(1);opacity:.8} to{transform:scale(1.18);opacity:1} }
+@keyframes vsPulse { from{transform:scale(1);opacity:.85} to{transform:scale(1.18);opacity:1} }
 #battle-center .bc-level-emoji {
   font-size: clamp(28px, 4.5vw, 46px);
   line-height: 1;
-  filter: drop-shadow(0 2px 8px rgba(168,85,247,.5));
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));
   animation: dropBounce 2.4s ease-in-out infinite;
 }
 #battle-center .bc-level-name {
   font-family: 'Fredoka One', cursive;
   font-size: clamp(9px, 1.3vw, 14px);
-  color: #c77dff;
+  color: #fff;
   text-align: center;
   letter-spacing: .5px;
   line-height: 1.2;
-  text-shadow: 0 0 8px rgba(168,85,247,.5);
+  text-shadow: 0 1px 4px rgba(0,0,0,.5);
 }
 #battle-center .bc-divider {
   width: 75%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #a855f7, transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
   margin: 2px 0;
-  box-shadow: 0 0 6px rgba(168,85,247,.4);
 }
 /* Petit robot arbitre en bas */
 #battle-center .bc-robot {
@@ -3879,7 +3878,7 @@ function _showBattleEndOverlay(winnerId){
         levelEmoji: lv.emoji,
         levelTheme: lv.theme,
         onDone: ()=>{}
-      }), 1200);
+      }), 2400);
     }
   }
 
