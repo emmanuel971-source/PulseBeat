@@ -644,28 +644,61 @@ body::before{
   position: relative;
 }
 
-/* ── Bulle fixe au centre de l'écran, fond translucide ── */
+/* ── Bulle manga du robot — parole de Kana-kun ── */
 #tuto-bubble{
   position:absolute;z-index:50;
   left:50%;top:50%;
   transform:translate(-50%,-50%);
   width:calc(100% - 48px);max-width:340px;
-  background:rgba(255,255,255,.75);
+  background:rgba(255,255,255,.96);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  color:#1a3050;
-  font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(15px,4.2vw,18px);
-  border-radius:24px;padding:22px 24px;
-  text-align:center;line-height:1.55;
-  box-shadow:0 6px 28px rgba(0,0,0,.1),0 1px 0 rgba(255,255,255,.9);
-  border:1.5px solid rgba(255,255,255,.55);
+  color:#1a1040;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(14px,4vw,17px);
+  border-radius:22px 22px 22px 6px;
+  padding:14px 18px 16px 18px;
+  text-align:left;line-height:1.55;
+  box-shadow:0 8px 32px rgba(168,85,247,.22),0 2px 0 rgba(168,85,247,.12),0 1px 0 rgba(255,255,255,.9);
+  border:2.5px solid #a855f7;
   pointer-events:none;
 }
+/* Encart robot en bas à gauche de la bulle */
+#tuto-bubble::before{
+  content:'🤖';
+  position:absolute;
+  left:-4px;bottom:-38px;
+  font-size:32px;
+  line-height:1;
+  filter:drop-shadow(0 2px 6px rgba(168,85,247,.5));
+  animation:robotBobble 1.6s ease-in-out infinite alternate;
+}
+@keyframes robotBobble{from{transform:translateY(0) rotate(-4deg)}to{transform:translateY(-4px) rotate(4deg)}}
+/* Petite queue de bulle en bas à gauche (style manga) */
+#tuto-bubble::after{
+  content:'';
+  position:absolute;
+  bottom:-16px;left:18px;
+  width:0;height:0;
+  border-left:14px solid transparent;
+  border-right:6px solid transparent;
+  border-top:16px solid #a855f7;
+  filter:drop-shadow(0 2px 3px rgba(168,85,247,.2));
+}
 #tuto-bubble.hidden{display:none !important;}
-@keyframes bubbleIn{from{opacity:0;transform:translate(-50%,-50%) scale(.85)}to{opacity:0.8;transform:translate(-50%,-50%) scale(1)}}
+/* Ligne colorée violette en haut + nom du bot */
+#tuto-bubble-header{
+  font-family:'Fredoka One',cursive;font-size:12px;
+  color:#a855f7;letter-spacing:1.5px;text-transform:uppercase;
+  margin-bottom:6px;display:flex;align-items:center;gap:5px;
+}
+#tuto-bubble-header::before{content:'';display:inline-block;width:18px;height:2px;background:#a855f7;border-radius:2px;vertical-align:middle;}
+@keyframes bubbleIn{
+  from{opacity:0;transform:translate(-50%,-50%) scale(.82) translateY(10px)}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1) translateY(0)}
+}
 
 /* Flèche directionnelle optionnelle */
 #tuto-bubble-arrow{
-  position:absolute;font-size:24px;font-weight:900;color:#00aaee;
+  position:absolute;font-size:24px;font-weight:900;color:#a855f7;
   animation:arrowPulse .8s ease-in-out infinite alternate;
   pointer-events:none;
 }
@@ -680,9 +713,9 @@ body::before{
 #tuto-start-btn{
   display:block;margin:14px auto 0;
   font-family:'Fredoka One',cursive;font-size:clamp(16px,4.5vw,20px);
-  background:linear-gradient(135deg,#00aaee,#2ed8a0);color:#fff;
+  background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;
   border:none;border-radius:50px;padding:11px 28px;cursor:pointer;
-  box-shadow:0 5px 18px rgba(0,170,238,.4);
+  box-shadow:0 5px 18px rgba(168,85,247,.4);
   transition:transform .18s cubic-bezier(.34,1.56,.64,1);
   pointer-events:all;
 }
@@ -1324,10 +1357,8 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
       </div>
     </div>
     <div class="menu-sub"><span class="menu-wave">🌊</span> Apprends les kana en jouant !</div>
-    <button class="menu-tuto-btn" onclick="showTuto()">❓ Comment jouer ?</button>
   </div>
   <div class="menu-section-lbl">✨ Choisis ton clan</div>
-  <button class="menu-wof-btn" onclick="showWallOfFame()">🏆 Wall of Fame · Top 25</button>
   <div id="lvl-scroll"></div>
   <div class="menu-scroll-hint">↕ Fais défiler pour voir tous les niveaux</div>
 </div>
@@ -1444,8 +1475,6 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
   </div>
 
   <button class="mode-back-btn" style="margin-top:14px" onclick="modeBack()">← Retour aux niveaux</button>
-  <button class="mode-back-btn" style="margin-top:0;border-color:#ffbe0b;color:#c8900a" onclick="showTuto()">❓ Comment jouer ?</button>
-  <button class="mode-back-btn" style="margin-top:0;margin-bottom:16px;border-color:var(--lavender);color:var(--lavender)" onclick="showKeybinds()">⚙️ Config touches</button>
 </div>
 
 <!-- ═══ TUTO CINÉMATIQUE ═══ -->
@@ -3084,6 +3113,11 @@ function showMenu(){
   document.getElementById('menu-overlay').classList.remove('hidden');
   document.getElementById('wof-overlay').classList.add('hidden');
   document.getElementById('wof-entry-overlay').classList.add('hidden');
+  // Couleur de fond aléatoire à chaque retour au menu
+  const PALETTES=[['#d4f4ff','#c8f7ef','#d4fff0'],['#fff3d4','#ffe8c0','#fdffd4'],['#d8ffd4','#e8ffd0','#fdffd4'],['#fff0d4','#ffe8cc','#fff8d4'],['#ffd4f0','#f0d4ff','#fff9d4'],['#d4eeff','#c8f4ff','#d4fff8'],['#fffbd4','#fff5c0','#fdffd4'],['#d8ffd4','#e8ffd0','#fdffd4'],['#ffd4e8','#ffe8d0','#fff9d4'],['#d4ffe8','#d4fff7','#f0ffd4'],['#d4eeff','#e8f4ff','#fff8d4'],['#d4ffd8','#f0ffd4','#fff7d4'],['#ffe8d4','#fff0e0','#fffbd4'],['#ead4ff','#ffd4f0','#fff4ff'],['#d4eeff','#d4f8ff','#f0f8ff'],['#ffd4d4','#ffe0d4','#fff4d4'],['#ead4ff','#ffd4f8','#fff9ff'],['#ffe8d4','#fff0e0','#fffbd4'],['#d4ffe8','#d4fff7','#f0fff8'],['#ffe8d0','#ffd4b0','#fff8e8'],['#d4eeff','#c8f4ff','#e8f8ff']];
+  const p=PALETTES[Math.floor(Math.random()*PALETTES.length)];
+  const r=document.documentElement.style;
+  r.setProperty('--bg-top',p[0]);r.setProperty('--bg-mid',p[1]);r.setProperty('--bg-bot',p[2]);
 }
 
 function showPuzzleSelect(levelIdx){ showModeSelect(levelIdx); } // compat
@@ -3214,6 +3248,14 @@ function _tutoClearCell(r,c){
 function _showTutoBubble(text, arrow){
   const b=document.getElementById('tuto-bubble');
   b.classList.remove('hidden');
+  // Ajouter l'en-tête Kana-kun si pas encore présent
+  let header=document.getElementById('tuto-bubble-header');
+  if(!header){
+    header=document.createElement('div');
+    header.id='tuto-bubble-header';
+    header.textContent='Kana-kun dit…';
+    b.insertBefore(header, document.getElementById('tuto-bubble-text'));
+  }
   document.getElementById('tuto-bubble-text').textContent=text;
   // Flèche directionnelle
   const arrowEl=document.getElementById('tuto-bubble-arrow');
@@ -4292,40 +4334,58 @@ const BOT={
   _updateSummary(){const el=document.getElementById('bot-summary');if(el)el.textContent=BOT_LOG.summary();}
 };
 
-// ── UI Bot ──
+// ── UI Bot → panneau navigation robot ──
 (()=>{
   const ui=document.createElement('div');
   ui.id='bot-ui';
   ui.style.cssText='position:fixed;bottom:80px;right:12px;z-index:500;display:flex;flex-direction:column;align-items:flex-end;gap:6px;';
   ui.innerHTML=`
-    <div id="bot-panel" style="background:rgba(20,10,50,.93);border:2px solid #a855f7;border-radius:18px;padding:12px 14px;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;min-width:170px;display:none;flex-direction:column;gap:5px;box-shadow:0 4px 24px rgba(168,85,247,.4);">
-      <div style="font-weight:900;color:#c77dff;font-size:15px;">🤖 Bot IA</div>
-      <div id="bot-status" style="color:#a0d8ff;">En attente…</div>
-      <div id="bot-stats" style="color:#72e8b8;font-size:11px;min-height:14px;"></div>
-      <div id="bot-summary" style="color:#ffbe0b;font-size:10px;min-height:12px;line-height:1.4;"></div>
-      <div style="display:flex;gap:6px;margin-top:2px;">
-        <button id="bot-start-btn" style="background:linear-gradient(135deg,#a855f7,#6366f1);border:none;border-radius:10px;color:#fff;padding:6px 10px;font-size:12px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;flex:1;">▶ Start</button>
-        <button id="bot-stop-btn" style="background:rgba(255,255,255,.1);border:1px solid #a855f7;border-radius:10px;color:#c77dff;padding:6px 10px;font-size:12px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;flex:1;">■ Stop</button>
+    <div id="bot-panel" style="background:rgba(20,10,50,.95);border:2px solid #a855f7;border-radius:20px;padding:14px 16px 10px;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;min-width:190px;display:none;flex-direction:column;gap:10px;box-shadow:0 4px 28px rgba(168,85,247,.5);">
+      <div style="display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(168,85,247,.35);padding-bottom:8px;">
+        <span style="font-size:26px;line-height:1;filter:drop-shadow(0 0 8px rgba(168,85,247,.8));">🤖</span>
+        <div>
+          <div style="font-weight:900;color:#c77dff;font-size:14px;line-height:1.1;">Bonjour, je suis Kana-kun !</div>
+          <div style="color:#a0d8ff;font-size:11px;margin-top:1px;">Que puis-je faire pour toi ?</div>
+        </div>
       </div>
-      <button id="bot-csv-btn" style="background:rgba(255,190,11,.15);border:1px solid #ffbe0b;border-radius:10px;color:#ffbe0b;padding:5px 10px;font-size:11px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:2px;">📥 Exporter CSV</button>
-      <div style="margin-top:4px;">
-        <div style="display:flex;justify-content:space-between;"><label style="color:#a0d8ff;font-size:11px;">Vitesse</label><span id="bot-speed-lbl" style="color:#c77dff;font-size:11px;">350ms</span></div>
-        <input id="bot-speed" type="range" min="80" max="1200" value="350" style="width:100%;accent-color:#a855f7;">
-      </div>
-      <div>
-        <div style="display:flex;justify-content:space-between;"><label style="color:#a0d8ff;font-size:11px;">Profondeur</label><span id="bot-depth-lbl" style="color:#c77dff;font-size:11px;">2 niveaux</span></div>
-        <input id="bot-depth" type="range" min="1" max="3" value="2" style="width:100%;accent-color:#a855f7;">
-      </div>
+      <button id="bot-nav-tuto" style="background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;border-radius:14px;color:#fff;padding:10px 14px;font-size:13px;font-family:'Nunito',sans-serif;font-weight:900;cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:9px;transition:transform .15s,box-shadow .15s;box-shadow:0 3px 12px rgba(168,85,247,.4);">
+        <span style="font-size:20px;">❓</span>
+        <div><div style="font-size:13px;">Comment jouer ?</div><div style="font-size:10px;opacity:.75;font-weight:700;">Je t'explique tout !</div></div>
+      </button>
+      <button id="bot-nav-wof" style="background:linear-gradient(135deg,#6d28d9,#9333ea);border:none;border-radius:14px;color:#fff;padding:10px 14px;font-size:13px;font-family:'Nunito',sans-serif;font-weight:900;cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:9px;transition:transform .15s,box-shadow .15s;box-shadow:0 3px 12px rgba(109,40,217,.4);">
+        <span style="font-size:20px;">🏆</span>
+        <div><div style="font-size:13px;">Wall of Fame</div><div style="font-size:10px;opacity:.75;font-weight:700;">Voir le classement Top 25</div></div>
+      </button>
+      <button id="bot-nav-keys" style="background:linear-gradient(135deg,#4c1d95,#7c3aed);border:none;border-radius:14px;color:#fff;padding:10px 14px;font-size:13px;font-family:'Nunito',sans-serif;font-weight:900;cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:9px;transition:transform .15s,box-shadow .15s;box-shadow:0 3px 12px rgba(76,29,149,.4);">
+        <span style="font-size:20px;">⚙️</span>
+        <div><div style="font-size:13px;">Config touches</div><div style="font-size:10px;opacity:.75;font-weight:700;">Personnaliser les contrôles</div></div>
+      </button>
+      <div style="text-align:center;color:#7c6a9a;font-size:10px;padding-top:2px;">🌸 かなDROP · Kana-kun</div>
     </div>
-    <button id="bot-toggle" style="background:linear-gradient(135deg,#a855f7,#4d96ff);border:none;border-radius:50%;width:46px;height:46px;font-size:22px;cursor:pointer;box-shadow:0 3px 14px rgba(168,85,247,.5);display:flex;align-items:center;justify-content:center;" title="Bot IA">🤖</button>
+    <button id="bot-toggle" style="background:linear-gradient(135deg,#a855f7,#4d96ff);border:none;border-radius:50%;width:46px;height:46px;font-size:22px;cursor:pointer;box-shadow:0 3px 14px rgba(168,85,247,.5);display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;" title="Menu Kana-kun">🤖</button>
   `;
   document.body.appendChild(ui);
-  document.getElementById('bot-toggle').addEventListener('click',()=>{const p=document.getElementById('bot-panel');p.style.display=p.style.display==='none'?'flex':'none';});
-  document.getElementById('bot-speed').addEventListener('input',e=>{document.getElementById('bot-speed-lbl').textContent=e.target.value+'ms';BOT.speed=+e.target.value;});
-  document.getElementById('bot-depth').addEventListener('input',e=>{const v=+e.target.value;document.getElementById('bot-depth-lbl').textContent=v+' niveau'+(v>1?'x':'');BOT.maxDepth=v;});
-  document.getElementById('bot-start-btn').addEventListener('click',()=>BOT.start());
-  document.getElementById('bot-stop-btn').addEventListener('click',()=>BOT.stop());
-  document.getElementById('bot-csv-btn').addEventListener('click',()=>{if(!BOT_LOG.entries.length){alert('Aucune donnée à exporter — laisse le bot jouer d\'abord !');return;}BOT_LOG.exportCSV();});
+
+  const panel=document.getElementById('bot-panel');
+  const toggle=document.getElementById('bot-toggle');
+
+  toggle.addEventListener('click',()=>{
+    const open=panel.style.display==='flex';
+    panel.style.display=open?'none':'flex';
+    toggle.style.transform=open?'':'rotate(15deg) scale(1.08)';
+    toggle.style.boxShadow=open?'0 3px 14px rgba(168,85,247,.5)':'0 4px 20px rgba(168,85,247,.75), 0 0 0 3px rgba(168,85,247,.25)';
+  });
+
+  // Hover effect on nav buttons
+  ['bot-nav-tuto','bot-nav-wof','bot-nav-keys'].forEach(id=>{
+    const btn=document.getElementById(id);
+    btn.addEventListener('mouseenter',()=>{btn.style.transform='translateX(-3px) scale(1.02)';});
+    btn.addEventListener('mouseleave',()=>{btn.style.transform='';});
+  });
+
+  document.getElementById('bot-nav-tuto').addEventListener('click',()=>{panel.style.display='none';toggle.style.transform='';toggle.style.boxShadow='0 3px 14px rgba(168,85,247,.5)';showTuto();});
+  document.getElementById('bot-nav-wof').addEventListener('click',()=>{panel.style.display='none';toggle.style.transform='';toggle.style.boxShadow='0 3px 14px rgba(168,85,247,.5)';showWallOfFame();});
+  document.getElementById('bot-nav-keys').addEventListener('click',()=>{panel.style.display='none';toggle.style.transform='';toggle.style.boxShadow='0 3px 14px rgba(168,85,247,.5)';showKeybinds();});
 })();
 
 
@@ -4543,6 +4603,38 @@ KS.saveSoloBest=function(levelId,score,name){
 
 // Init initial calcRows
 calcRows();
+
+// ── Couleur de fond aléatoire au démarrage ──
+(function _randomInitBg(){
+  const PALETTES = [
+    ['#d4f4ff','#c8f7ef','#d4fff0'], // lv1
+    ['#fff3d4','#ffe8c0','#fdffd4'], // lv2
+    ['#d8ffd4','#e8ffd0','#fdffd4'], // lv3
+    ['#fff0d4','#ffe8cc','#fff8d4'], // lv4
+    ['#ffd4f0','#f0d4ff','#fff9d4'], // lv5
+    ['#d4eeff','#c8f4ff','#d4fff8'], // lv6
+    ['#fffbd4','#fff5c0','#fdffd4'], // lv7
+    ['#d8ffd4','#e8ffd0','#fdffd4'], // lv8
+    ['#ffd4e8','#ffe8d0','#fff9d4'], // lv9
+    ['#d4ffe8','#d4fff7','#f0ffd4'], // lv10
+    ['#d4eeff','#e8f4ff','#fff8d4'], // lv11
+    ['#d4ffd8','#f0ffd4','#fff7d4'], // lv12
+    ['#ffe8d4','#fff0e0','#fffbd4'], // lv13
+    ['#ead4ff','#ffd4f0','#fff4ff'], // lv14
+    ['#d4eeff','#d4f8ff','#f0f8ff'], // lv15
+    ['#ffd4d4','#ffe0d4','#fff4d4'], // lv16
+    ['#ead4ff','#ffd4f8','#fff9ff'], // lv17
+    ['#ffe8d4','#fff0e0','#fffbd4'], // lv18
+    ['#d4ffe8','#d4fff7','#f0fff8'], // lv19
+    ['#ffe8d0','#ffd4b0','#fff8e8'], // lv20
+    ['#d4eeff','#c8f4ff','#e8f8ff'], // lv21
+  ];
+  const p = PALETTES[Math.floor(Math.random() * PALETTES.length)];
+  const root = document.documentElement.style;
+  root.setProperty('--bg-top', p[0]);
+  root.setProperty('--bg-mid', p[1]);
+  root.setProperty('--bg-bot', p[2]);
+})();
 
 </script>
 </body>
