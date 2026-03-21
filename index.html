@@ -155,7 +155,129 @@ body::before{
 @keyframes battleEndLose{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:scale(1)}}
 @keyframes trophyBounce{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.18) rotate(3deg)}}
 
-/* ═══ BATTLE END OVERLAY (VERSION FINALE GLASS & CONTRASTE) ═══ */
+/* ═══ BATTLE CENTER COLUMN ═══ */
+#battle-center {
+  width: clamp(72px, 9vw, 108px);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 14px 6px 10px;
+  background: rgba(20, 10, 50, 0.93);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-left: 2px solid #a855f7;
+  border-right: 2px solid #a855f7;
+  box-shadow: 0 0 32px rgba(168,85,247,.25) inset, 0 0 18px rgba(168,85,247,.18);
+  gap: 10px;
+  z-index: 2;
+  overflow: hidden;
+}
+/* Halo violet animé en fond */
+#battle-center::before {
+  content: '';
+  position: absolute;
+  width: 120%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(168,85,247,.18) 0%, transparent 70%);
+  animation: blobDrift 8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+#battle-center .bc-logo-kana {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 900;
+  font-size: clamp(18px, 2.8vw, 28px);
+  background: linear-gradient(135deg,#ff6b35,#ffbe0b,#6bcb77,#4d96ff,#c77dff);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: kanaRainbow 3s linear infinite;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: -1px;
+  filter: drop-shadow(0 0 6px rgba(168,85,247,.5));
+}
+#battle-center .bc-logo-drop {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: clamp(13px, 2vw, 19px);
+  background: linear-gradient(180deg,#fff700,#ffb300,#ff6b6b,#cc0000);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: 2px;
+  animation: shimmerDrop 2.2s ease-in-out infinite;
+}
+#battle-center .bc-vs {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(22px, 3.2vw, 32px);
+  color: #c77dff;
+  text-shadow: -1px -1px 0 #1a0050, 1px -1px 0 #1a0050, -1px 1px 0 #1a0050, 1px 1px 0 #1a0050, 0 0 18px rgba(168,85,247,.8);
+  animation: vsPulse 1.2s ease-in-out infinite alternate;
+  margin: 4px 0;
+}
+@keyframes vsPulse { from{transform:scale(1);opacity:.8} to{transform:scale(1.18);opacity:1} }
+#battle-center .bc-level-emoji {
+  font-size: clamp(28px, 4.5vw, 46px);
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px rgba(168,85,247,.5));
+  animation: dropBounce 2.4s ease-in-out infinite;
+}
+#battle-center .bc-level-name {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(9px, 1.3vw, 14px);
+  color: #c77dff;
+  text-align: center;
+  letter-spacing: .5px;
+  line-height: 1.2;
+  text-shadow: 0 0 8px rgba(168,85,247,.5);
+}
+#battle-center .bc-divider {
+  width: 75%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #a855f7, transparent);
+  margin: 2px 0;
+  box-shadow: 0 0 6px rgba(168,85,247,.4);
+}
+/* Petit robot arbitre en bas */
+#battle-center .bc-robot {
+  font-size: clamp(20px, 3vw, 30px);
+  line-height: 1;
+  margin-top: auto;
+  padding-bottom: 6px;
+  filter: drop-shadow(0 0 8px rgba(168,85,247,.7));
+  animation: robotBobble 1.6s ease-in-out infinite alternate;
+}
+
+/* ═══ PLAYER BADGE (grosse icône) ═══ */
+.player-name-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 12px;
+  width: 94%;
+  text-align: center;
+}
+.player-name-badge .pnb-icon {
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.2));
+  animation: floatPulse 3s ease-in-out infinite;
+}
+.player-name-badge .pnb-label {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(11px, 1.5vw, 15px);
+  line-height: 1.2;
+}
+.p1-arena .pnb-label { color: var(--sky); }
+.p2-arena .pnb-label { color: #c77dff; }
+
+/* ═══ BATTLE END OVERLAY (WINNER TAKES ALL) ═══ */
 
 .battle-end-overlay {
   position: absolute;
@@ -165,109 +287,120 @@ body::before{
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 15px;
-  padding: 20px;
+  gap: 10px;
+  padding: 16px 12px;
   pointer-events: all;
-  
-  /* Effet de verre commun */
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   transition: all 0.4s ease;
 }
 
-/* --- ÉTAT VICTOIRE --- */
+/* --- VICTOIRE --- */
 .battle-end-overlay.win {
-  box-shadow: inset 0 0 80px rgba(46, 216, 160, 0.3); /* Halo menthe doux */
+  box-shadow: inset 0 0 80px rgba(46, 216, 160, 0.35), inset 0 0 160px rgba(249,208,0,.15);
   animation: battleEndWin .5s cubic-bezier(.34,1.56,.64,1) forwards;
 }
-
 .battle-end-overlay.win .beo-title {
-  color: #00ff88; /* Vert néon pétant */
-  text-shadow: 
-    -2px -2px 0 #000,  
-     2px -2px 0 #000,
-    -2px  2px 0 #000,
-     2px  2px 0 #000,
-     0px  4px 10px rgba(0,0,0,0.5);
+  color: #00ff88;
+  text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 4px 10px rgba(0,0,0,.5);
 }
-
 .battle-end-overlay.win .beo-btn {
-  background: #00ff88;
-  color: #000;
-  font-weight: 900;
+  background: #00ff88; color: #000; font-weight: 900;
   box-shadow: 0 6px 20px rgba(46, 216, 160, 0.5);
 }
 
-/* --- ÉTAT DÉFAITE --- */
+/* --- DÉFAITE --- */
 .battle-end-overlay.lose {
-  box-shadow: inset 0 0 80px rgba(185, 28, 28, 0.2); /* Halo rouge doux */
-  animation: battleEndLose .4s ease forwards;
+  box-shadow: inset 0 0 80px rgba(185, 28, 28, 0.25);
+  animation: battleEndLose .4s ease forwards, loserShake .6s ease .5s;
 }
-
+@keyframes loserShake {
+  0%,100%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-3px)}90%{transform:translateX(3px)}
+}
 .battle-end-overlay.lose .beo-title {
-  color: #ff3333; /* Rouge vif / pétant */
-  text-shadow: 
-    -2px -2px 0 #000,  
-     2px -2px 0 #000,
-    -2px  2px 0 #000,
-     2px  2px 0 #000,
-     0px  4px 10px rgba(0,0,0,0.5);
+  color: #ff3333;
+  text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 4px 10px rgba(0,0,0,.5);
 }
-
 .battle-end-overlay.lose .beo-btn {
-  background: #b91c1c; /* Rouge sombre */
-  color: #ffffff;
+  background: #b91c1c; color: #ffffff;
   box-shadow: 0 6px 20px rgba(185, 28, 28, 0.4);
 }
 
 /* --- ÉLÉMENTS INTERNES --- */
-
 .beo-icon {
-  font-size: clamp(40px, 10vw, 65px);
+  font-size: clamp(36px, 8vw, 56px);
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
   animation: trophyBounce .7s ease infinite alternate;
 }
-
 .beo-title {
   font-family: 'Fredoka One', cursive;
-  font-size: clamp(28px, 6vw, 42px);
+  font-size: clamp(20px, 4.5vw, 32px);
   text-align: center;
   line-height: 1.1;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-
 .beo-score {
   font-family: 'Fredoka One', cursive;
-  font-size: clamp(18px, 4vw, 26px);
+  font-size: clamp(15px, 3vw, 21px);
   color: #fff;
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
   text-align: center;
-  margin-bottom: 5px;
 }
+
+/* Winner takes all — lignes comptables */
+.beo-wta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 92%;
+  background: rgba(0,0,0,.18);
+  border-radius: 14px;
+  padding: 8px 12px;
+}
+.beo-wta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(12px, 2vw, 16px);
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+.beo-wta-row.loot  { color: #f9d000; }
+.beo-wta-row.lost  { color: #ff6666; }
+.beo-wta-row.total {
+  color: #fff;
+  font-size: clamp(13px, 2.2vw, 18px);
+  border-top: 1px solid rgba(255,255,255,.25);
+  padding-top: 4px;
+  margin-top: 2px;
+}
+.beo-wta-row.total .beo-wta-val { color: #00ff88; }
+.battle-end-overlay.lose .beo-wta-row.total .beo-wta-val { color: #ff6666; }
+
+/* Compteur animé */
+@keyframes countUp {
+  from { opacity: 0; transform: scale(.7) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.beo-wta-val { animation: countUp .45s cubic-bezier(.34,1.56,.64,1) both; }
 
 .beo-btn {
   font-family: 'Fredoka One', sans-serif;
-  font-size: clamp(16px, 2.5vw, 20px);
+  font-size: clamp(14px, 2vw, 18px);
   border: none;
   border-radius: 50px;
-  padding: 12px 30px;
+  padding: 10px 24px;
   cursor: pointer;
-  width: 85%;
-  max-width: 250px;
+  width: 88%;
+  max-width: 220px;
   transition: all .2s cubic-bezier(.34, 1.56, .64, 1);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-
-.beo-btn:hover {
-  transform: scale(1.06) translateY(-2px);
-}
-
-.beo-btn:active {
-  transform: scale(0.95);
-}
+.beo-btn:hover { transform: scale(1.06) translateY(-2px); }
+.beo-btn:active { transform: scale(0.95); }
 
 /* On garde tes animations d'origine */
 @keyframes trophyBounce {
@@ -3544,7 +3677,10 @@ function buildArenaHTML(pid, label){
             <div class="side-label">SCORE</div>
             <div class="score-val-box" id="score-val-${pid}">0</div>
           </div>
-          <div class="player-name-badge">${icon} ${label}</div>
+          <div class="player-name-badge">
+            <div class="pnb-icon">${icon}</div>
+            <div class="pnb-label">${label}</div>
+          </div>
           <div class="side-block">
             <div class="level-badge-box" id="level-badge-${pid}"></div>
           </div>
@@ -3758,6 +3894,7 @@ function _showBattleEndOverlay(winnerId){
     if(!boardCol) return;
     const isWinner = pid === winnerId;
     const score = pid === 'p1' ? p1Score : p2Score;
+    const loserScore = pid === 'p1' ? p2Score : p1Score;
 
     const ov = document.createElement('div');
     ov.className = `battle-end-overlay ${isWinner ? 'win' : 'lose'}`;
@@ -3767,23 +3904,94 @@ function _showBattleEndOverlay(winnerId){
       ? `${labels[pid]} gagne !`
       : `${labels[pid]} est éliminé !`;
 
-    ov.innerHTML = `
-      <div class="beo-icon">${icon}</div>
-      <div class="beo-title">${title}</div>
-      <div class="beo-score">Score : ${score.toLocaleString()}</div>
-      ${isWinner ? `<button class="beo-btn" id="beo-replay">Rejouer 🔄</button><button class="beo-btn" style="background:rgba(255,255,255,.25);margin-top:2px" id="beo-menu">📋 Menu</button>` : ''}
-    `;
+    if(isWinner){
+      const totalScore = score + loserScore;
+      ov.innerHTML = `
+        <div class="beo-icon">${icon}</div>
+        <div class="beo-title">${title}</div>
+        <div class="beo-score">Score : ${score.toLocaleString('fr-FR')}</div>
+        <div class="beo-wta">
+          <div class="beo-wta-row loot">
+            <span>💰 Loot</span>
+            <span class="beo-wta-val" style="animation-delay:.3s">+${loserScore.toLocaleString('fr-FR')}</span>
+          </div>
+          <div class="beo-wta-row total">
+            <span>🏆 Total</span>
+            <span class="beo-wta-val" style="animation-delay:.55s">${totalScore.toLocaleString('fr-FR')}</span>
+          </div>
+        </div>
+        <button class="beo-btn" id="beo-replay">Rejouer 🔄</button>
+        <button class="beo-btn" style="background:rgba(255,255,255,.25);margin-top:2px" id="beo-menu">📋 Menu</button>
+      `;
+    } else {
+      ov.innerHTML = `
+        <div class="beo-icon">${icon}</div>
+        <div class="beo-title">${title}</div>
+        <div class="beo-score">Score : ${score.toLocaleString('fr-FR')}</div>
+        <div class="beo-wta">
+          <div class="beo-wta-row lost">
+            <span>💸 Lost</span>
+            <span class="beo-wta-val" style="animation-delay:.3s">−${score.toLocaleString('fr-FR')}</span>
+          </div>
+          <div class="beo-wta-row total">
+            <span>💀 Total</span>
+            <span class="beo-wta-val" style="animation-delay:.55s;color:#ff6666">0</span>
+          </div>
+        </div>
+      `;
+    }
     boardCol.appendChild(ov);
   });
 
   // Sons
   if(winnerId) { soundLevelUp(); } else { soundGameOver(); }
 
-  // Burst de confettis côté gagnant
+  // ── Animations juicy côté gagnant : vagues de bursts ──
   const winBoardCol = document.getElementById(`board-col-${winnerId}`);
+  const loseBoardCol = document.getElementById(`board-col-${winnerId === 'p1' ? 'p2' : 'p1'}`);
+
   if(winBoardCol){
     const r = winBoardCol.getBoundingClientRect();
-    burst(r.left + r.width/2, r.top + r.height/2, 40, 'combo');
+    const cx = r.left + r.width/2;
+    const cy = r.top + r.height/2;
+    // Vague 1 — explosion centrale
+    burst(cx, cy, 45, 'combo');
+    // Vague 2 — coins
+    setTimeout(()=>{
+      burst(r.left + 20, r.top + 30, 22, 'logo');
+      burst(r.right - 20, r.top + 30, 22, 'logo');
+    }, 180);
+    // Vague 3 — bas
+    setTimeout(()=>{
+      burst(cx, r.bottom - 30, 28, 'boss');
+      burst(r.left + 20, r.bottom - 30, 18, 'combo');
+      burst(r.right - 20, r.bottom - 30, 18, 'combo');
+    }, 380);
+    // Vague 4 — grand final
+    setTimeout(()=>{
+      burst(cx, cy, 50, 'logo');
+      burst(r.left + r.width * .25, cy, 20, 'boss');
+      burst(r.left + r.width * .75, cy, 20, 'boss');
+    }, 650);
+    // Vague 5 — pluie finale
+    setTimeout(()=>{
+      for(let i=0; i<5; i++){
+        setTimeout(()=>burst(r.left + Math.random()*r.width, r.top + Math.random()*r.height*0.6, 15, 'combo'), i*90);
+      }
+    }, 950);
+  }
+
+  // ── Tremblement grille loser ──
+  if(loseBoardCol){
+    loseBoardCol.classList.add('arena-skull-shake');
+    setTimeout(()=>{
+      loseBoardCol.classList.remove('arena-skull-shake');
+      // 2e secousse après un délai
+      setTimeout(()=>{
+        loseBoardCol.classList.add('arena-skull-shake');
+        setTimeout(()=>loseBoardCol.classList.remove('arena-skull-shake'), 560);
+      }, 400);
+    }, 560);
   }
 
   // Boutons
@@ -3836,7 +4044,18 @@ function enterBattleMode(levelIdx){
   const p1Label = gameMode === 'botVsBot' ? 'Bot Alpha' : 'Joueur 1';
   const p2Label = gameMode === 'vsBot' ? 'CPU' : (gameMode === 'botVsBot' ? 'Bot Beta' : 'Joueur 2');
 
-  shell.innerHTML = buildArenaHTML('p1', p1Label) + buildArenaHTML('p2', p2Label);
+  const lv = ALL_LEVELS[currentLevelIdx];
+  const centerCol = `<div id="battle-center">
+    <div class="bc-logo-kana">かな</div>
+    <div class="bc-logo-drop">DROP!</div>
+    <div class="bc-divider"></div>
+    <div class="bc-vs">VS</div>
+    <div class="bc-divider"></div>
+    <div class="bc-level-emoji">${lv.emoji}</div>
+    <div class="bc-level-name">${lv.theme}</div>
+    <div class="bc-robot">🤖</div>
+  </div>`;
+  shell.innerHTML = buildArenaHTML('p1', p1Label) + centerCol + buildArenaHTML('p2', p2Label);
   // Bulles de fond pour le mode battle — position:absolute dans #shell
   // (fixed ne fonctionne pas car shell crée un stacking context avec overflow:hidden)
   const _cBattle = document.createElement('div');
