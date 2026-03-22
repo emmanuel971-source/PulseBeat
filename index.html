@@ -632,7 +632,318 @@ body::before{
 .tuto-sub{font-family:'Nunito',sans-serif;font-size:clamp(15px,4vw,18px);color:var(--text-mid);text-align:center;margin-bottom:18px;font-weight:700;}
 .tuto-steps{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;}
 .tuto-step{background:white;border-radius:20px;border:2px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 16px rgba(0,0,0,.07);animation:tutoStepIn .5s cubic-bezier(.34,1.56,.64,1) both;}
-/* ═══ TUTO INFO BANNER ═══ */
+/* ═══ BOUTON QUIZ MENU ═══ */
+.menu-quiz-btn {
+  display: block;
+  width: calc(100% - 32px);
+  max-width: 480px;
+  margin: 0 auto 10px;
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(17px, 4.8vw, 21px);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 14px 20px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #a855f7, #6366f1, #00bbf9);
+  box-shadow: 0 6px 20px rgba(168,85,247,.4);
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1);
+  letter-spacing: .5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.menu-quiz-btn:hover { transform: translateY(-2px) scale(1.02); }
+.menu-quiz-btn:active { transform: scale(.97); }
+
+/* ═══ QUIZ OVERLAY ═══ */
+#quiz-overlay {
+  position: fixed; inset: 0; z-index: 280;
+  display: flex; flex-direction: column; align-items: center;
+  background: linear-gradient(160deg, var(--bg-top) 0%, var(--bg-mid) 50%, var(--bg-bot) 100%);
+  overflow: hidden;
+}
+#quiz-overlay::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 55% 40% at 10% 20%, rgba(0,170,238,.22) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 90% 80%, rgba(46,216,160,.22) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 50% 55%, rgba(249,208,0,.14) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+  animation: blobDrift 8s ease-in-out infinite alternate;
+}
+#quiz-overlay.hidden { display: none !important; }
+
+#quiz-shell {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 480px;
+  height: 100dvh;
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 0 16px 20px;
+}
+
+/* Header quiz */
+#quiz-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(10px,2.5dvh,18px) 0 8px;
+  flex-shrink: 0;
+}
+#quiz-progress-text {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(13px, 3vw, 16px);
+  color: var(--text-dim);
+}
+#quiz-score-display {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(16px, 4vw, 20px);
+  color: #a855f7;
+  text-shadow: 0 0 8px rgba(168,85,247,.3);
+}
+#quiz-streak-display {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(13px, 3vw, 16px);
+  color: var(--neon-gold);
+  min-width: 60px;
+  text-align: right;
+}
+
+/* Mode selector */
+#quiz-mode-selector {
+  display: flex; gap: 8px; width: 100%;
+  background: rgba(255,255,255,.45);
+  border-radius: 20px; padding: 5px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.8);
+  flex-shrink: 0; margin-bottom: 10px;
+}
+.quiz-mode-tab {
+  flex: 1; font-family: 'Fredoka One', cursive;
+  font-size: clamp(14px, 3.8vw, 17px);
+  border: none; border-radius: 15px; padding: 10px 8px;
+  cursor: pointer; background: transparent; color: var(--text-dim);
+  transition: all .22s;
+}
+.quiz-mode-tab.active {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(168,85,247,.4);
+  transform: scale(1.02);
+}
+
+/* Zone kana principal */
+#quiz-kana-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 0;
+}
+
+/* La grande carte kana — carrée avec bordure arrondie UNIQUEMENT quand c'est un kana */
+#quiz-kana-card {
+  width: clamp(130px, 38vw, 190px);
+  aspect-ratio: 1;
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 900;
+  font-size: clamp(68px, 19vw, 108px);
+  color: #1a1040;
+  box-shadow: 0 10px 0 rgba(0,0,0,.16), 0 18px 36px rgba(0,0,0,.13), inset 0 2px 0 rgba(255,255,255,.85);
+  border: 3px solid rgba(255,255,255,.6);
+  position: relative;
+  line-height: 1;
+  overflow: hidden;
+}
+/* Digraphes (2 kana) : taille réduite pour tenir dans le bloc */
+#quiz-kana-card.digraph {
+  font-size: clamp(40px, 11vw, 64px);
+  line-height: 1.05;
+  letter-spacing: -2px;
+}
+/* Mode emoji : pas de fond ni bordure */
+#quiz-kana-card.emoji-mode {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: clamp(90px, 26vw, 140px);
+}
+#quiz-kana-card.drop-in {
+  animation: quizKanaDrop .5s cubic-bezier(.36,.07,.19,.97) forwards;
+}
+@keyframes quizKanaDrop {
+  0%   { transform: translateY(-160px) scale(.5); opacity: 0; }
+  55%  { transform: translateY(14px) scaleY(.82) scaleX(1.12); opacity: 1; }
+  72%  { transform: translateY(-8px) scaleY(1.06) scaleX(.95); }
+  88%  { transform: translateY(4px) scaleY(.97) scaleX(1.02); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+#quiz-kana-card.explode {
+  animation: quizKanaExplode .35s ease forwards;
+}
+@keyframes quizKanaExplode {
+  0%  { transform: scale(1); opacity: 1; }
+  35% { transform: scale(1.3); opacity: .7; filter: brightness(1.6); }
+  100%{ transform: scale(0); opacity: 0; }
+}
+#quiz-kana-card.emoji-in {
+  animation: quizEmojiIn .42s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes quizEmojiIn {
+  from { opacity:0; transform: scale(.3) rotate(-12deg); }
+  to   { opacity:1; transform: scale(1) rotate(0deg); }
+}
+
+/* Jauge timer */
+#quiz-timer-bar {
+  width: 100%; height: 8px;
+  background: rgba(0,0,0,.08);
+  border-radius: 50px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+#quiz-timer-fill {
+  height: 100%;
+  border-radius: 50px;
+  background: linear-gradient(90deg, #a855f7, #6366f1, #00bbf9);
+  transform-origin: left;
+  transition: none;
+}
+#quiz-timer-bar.hidden { display: none; }
+
+/* Révélation épurée */
+#quiz-reveal {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+#quiz-reveal.hidden { display: none !important; }
+
+/* Mot en hiragana avec kana ciblé en couleur */
+#quiz-reveal-word-kana {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 900;
+  font-size: clamp(26px, 7.5vw, 38px);
+  line-height: 1.1;
+  color: var(--text-dark);
+}
+#quiz-reveal-word-kana .kana-highlight {
+  color: #a855f7;
+  text-shadow: 0 0 12px rgba(168,85,247,.4);
+}
+#quiz-reveal-word-meaning {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: clamp(16px, 4.2vw, 20px);
+  color: var(--text-mid);
+}
+/* Résultat correct/incorrect — petit et discret */
+#quiz-reveal-result {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(13px, 3.2vw, 16px);
+  line-height: 1;
+  opacity: .85;
+}
+#quiz-reveal-result.correct { color: #00cc66; }
+#quiz-reveal-result.wrong   { color: #ff3333; }
+/* Romaji — caché, on n'en a plus besoin */
+#quiz-reveal-romaji { display: none; }
+#quiz-reveal-emoji  { display: none; }
+#quiz-reveal-word   { display: none; }
+
+/* Boutons QCM */
+#quiz-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+/* Back btn — bien espacé des boutons */
+#quiz-back-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(14px, 3.5vw, 17px);
+  padding: 8px 22px;
+  border: 2px solid rgba(168,85,247,.35);
+  border-radius: 50px;
+  background: rgba(255,255,255,.6);
+  color: #a855f7;
+  cursor: pointer;
+  transition: transform .15s;
+  flex-shrink: 0;
+  margin-top: 18px;
+}
+.quiz-choice-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(18px, 5vw, 24px);
+  border: 3px solid transparent;
+  border-radius: 18px;
+  padding: 16px 10px;
+  cursor: pointer;
+  background: rgba(255,255,255,.85);
+  color: var(--text-dark);
+  box-shadow: 0 4px 0 rgba(0,0,0,.1), 0 6px 16px rgba(0,0,0,.07);
+  transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s;
+  text-align: center;
+  letter-spacing: 1px;
+}
+.quiz-choice-btn:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 7px 0 rgba(0,0,0,.1), 0 10px 20px rgba(0,0,0,.1);
+}
+.quiz-choice-btn:active:not(:disabled) { transform: scale(.97); }
+.quiz-choice-btn:disabled { cursor: default; }
+.quiz-choice-btn.correct {
+  background: #00cc66; color: #fff;
+  border-color: #009944;
+  box-shadow: 0 4px 0 #007733, 0 6px 20px rgba(0,204,102,.4);
+  animation: correctPop .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes correctPop { from{transform:scale(.9)} to{transform:scale(1)} }
+.quiz-choice-btn.wrong {
+  background: #ff3333; color: #fff;
+  border-color: #cc0000;
+  box-shadow: 0 4px 0 #990000;
+  animation: wrongShake .35s ease;
+}
+@keyframes wrongShake {
+  0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+}
+
+/* Bouton suivant — caché (auto-advance) */
+#quiz-next-btn { display: none !important; }
+
+/* Back btn */
+#quiz-back-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(14px, 3.5vw, 17px);
+  padding: 8px 22px;
+  border: 2px solid rgba(168,85,247,.35);
+  border-radius: 50px;
+  background: rgba(255,255,255,.6);
+  color: #a855f7;
+  cursor: pointer;
+  transition: transform .15s;
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+#quiz-back-btn:hover { transform: translateY(-1px); }
 #tuto-info-banner {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -1545,6 +1856,11 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
     <div class="menu-sub"><span class="menu-wave">🌊</span> Apprends les kana en jouant !</div>
   </div>
   <div class="menu-section-lbl">✨ Choisis ton clan</div>
+  <button class="menu-quiz-btn" onclick="showQuiz()">
+    <span style="font-size:24px">🎌</span>
+    <span>Mode Quiz · Apprends les kana</span>
+    <span style="font-size:18px;opacity:.8">🧠</span>
+  </button>
   <div id="lvl-scroll"></div>
   <div class="menu-scroll-hint">↕ Fais défiler pour voir tous les niveaux</div>
 </div>
@@ -1671,6 +1987,64 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
   </div>
 
   <button class="mode-back-btn" style="margin-top:14px" onclick="modeBack()">← Retour aux niveaux</button>
+</div>
+
+<!-- ═══ QUIZ OVERLAY ═══ -->
+<div id="quiz-overlay" class="hidden">
+  <div id="confetti-quiz" style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;"></div>
+  <div id="quiz-shell">
+    <!-- Header -->
+    <div id="quiz-header">
+      <div id="quiz-progress-text">Kana 1/53</div>
+      <div id="quiz-score-display">0 pts</div>
+      <div id="quiz-streak-display"></div>
+    </div>
+
+    <!-- Mode tabs -->
+    <div id="quiz-mode-selector">
+      <button class="quiz-mode-tab active" id="quiz-tab-learn" onclick="quizSetMode('learn')">🌸 Apprentissage</button>
+      <button class="quiz-mode-tab" id="quiz-tab-speed" onclick="quizSetMode('speed')">⚡ Vitesse</button>
+    </div>
+
+    <!-- Stage kana -->
+    <div id="quiz-kana-stage">
+      <!-- Timer bar (mode vitesse) -->
+      <div id="quiz-timer-bar" class="hidden">
+        <div id="quiz-timer-fill"></div>
+      </div>
+
+      <!-- Grande carte kana / emoji -->
+      <div id="quiz-kana-card">あ</div>
+
+      <!-- Révélation épurée -->
+      <div id="quiz-reveal" class="hidden">
+        <!-- Mot en hiragana avec kana ciblé coloré -->
+        <div id="quiz-reveal-word-kana">かい</div>
+        <!-- Traduction -->
+        <div id="quiz-reveal-word-meaning">coquillage</div>
+        <!-- Résultat (petit, discret) -->
+        <div id="quiz-reveal-result"></div>
+        <!-- Éléments cachés conservés pour compatibilité JS -->
+        <span id="quiz-reveal-emoji" style="display:none"></span>
+        <span id="quiz-reveal-romaji" style="display:none"></span>
+        <div id="quiz-reveal-word" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Choix QCM -->
+    <div id="quiz-choices">
+      <button class="quiz-choice-btn" id="qc0" onclick="quizAnswer(0)">a</button>
+      <button class="quiz-choice-btn" id="qc1" onclick="quizAnswer(1)">i</button>
+      <button class="quiz-choice-btn" id="qc2" onclick="quizAnswer(2)">u</button>
+      <button class="quiz-choice-btn" id="qc3" onclick="quizAnswer(3)">e</button>
+    </div>
+
+    <!-- Bouton suivant (auto-advance, caché) -->
+    <button id="quiz-next-btn" class="hidden" onclick="quizNext()">Suivant →</button>
+
+    <!-- Retour -->
+    <button id="quiz-back-btn" onclick="hideQuiz()">← Retour au menu</button>
+  </div>
 </div>
 
 <!-- ═══ SURVIE TRANSITION ═══ -->
@@ -2075,7 +2449,7 @@ let ROWS=12;
   }
   [
     'confetti','confetti-menu','confetti-mode',
-    'confetti-wof','confetti-tuto','confetti-kb'
+    'confetti-wof','confetti-tuto','confetti-kb','confetti-quiz'
   ].forEach(id=>{ const el=document.getElementById(id); if(el) fillConfetti(el); });
 })();
 
@@ -5152,6 +5526,365 @@ KS.saveSoloBest=function(levelId,score,name){
   }
   return r;
 };
+
+// ═══════════════════════════════════════════════════════════════════
+//  MODE QUIZ
+// ═══════════════════════════════════════════════════════════════════
+
+// Table romaji complète incluant les digraphes présents dans ALL_LEVELS
+const KANA_TO_ROMAJI = {
+  'あ':'a','い':'i','う':'u','え':'e','お':'o',
+  'か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko',
+  'さ':'sa','し':'shi','す':'su','せ':'se','そ':'so',
+  'た':'ta','ち':'chi','つ':'tsu','て':'te','と':'to',
+  'な':'na','に':'ni','ぬ':'nu','ね':'ne','の':'no',
+  'は':'ha','ひ':'hi','ふ':'fu','へ':'he','ほ':'ho',
+  'ま':'ma','み':'mi','む':'mu','め':'me','も':'mo',
+  'や':'ya','ゆ':'yu','よ':'yo',
+  'ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro',
+  'わ':'wa','を':'wo','ん':'n',
+  'が':'ga','ぎ':'gi','ぐ':'gu','げ':'ge','ご':'go',
+  'ざ':'za','じ':'ji','ず':'zu','ぜ':'ze','ぞ':'zo',
+  'だ':'da','ぢ':'di','づ':'du','で':'de','ど':'do',
+  'ば':'ba','び':'bi','ぶ':'bu','べ':'be','ぼ':'bo',
+  'ぱ':'pa','ぴ':'pi','ぷ':'pu','ぺ':'pe','ぽ':'po',
+  // Digraphes présents dans les niveaux
+  'ちゃ':'cha','ちゅ':'chu','ちょ':'cho',
+  'しゃ':'sha','しゅ':'shu','しょ':'sho',
+  'きゃ':'kya','きゅ':'kyu','きょ':'kyo',
+  'にゃ':'nya','にゅ':'nyu','にょ':'nyo',
+  'みゃ':'mya','みゅ':'myu','みょ':'myo',
+  'りゃ':'rya','りゅ':'ryu','りょ':'ryo',
+  'ひゃ':'hya','ひゅ':'hyu','ひょ':'hyo',
+  'じゃ':'ja','じゅ':'ju','じょ':'jo',
+  'ぎゃ':'gya','ぎゅ':'gyu','ぎょ':'gyo',
+  'びゃ':'bya','びゅ':'byu','びょ':'byo',
+  'ぴゃ':'pya','ぴゅ':'pyu','ぴょ':'pyo',
+};
+
+// Liste pédagogique : kana uniques dans l'ordre des niveaux
+// On exclut les petits kana isolés (ゃゅょっ) qui n'existent pas seuls
+const QUIZ_KANA_LIST = (()=>{
+  const seen = new Set();
+  const list = [];
+  const smallKana = new Set(['ゃ','ゅ','ょ','っ','ぁ','ぃ','ぅ','ぇ','ぉ']);
+  ALL_LEVELS.forEach(lv=>{
+    lv.words.forEach(w=>{
+      // D'abord chercher les digraphes dans le mot (2 kana : grand + petit)
+      const chars = [...w.kana];
+      let i = 0;
+      while(i < chars.length){
+        let token = chars[i];
+        // Si le suivant est un petit kana → c'est un digraphe
+        if(i+1 < chars.length && smallKana.has(chars[i+1])){
+          token = chars[i] + chars[i+1];
+          i += 2;
+        } else {
+          i++;
+        }
+        if(!smallKana.has(token) && !seen.has(token) && KANA_TO_ROMAJI[token]){
+          seen.add(token);
+          // Collecter tous les mots de tous les niveaux contenant ce token
+          const candidates = [];
+          ALL_LEVELS.forEach(lv2=>{
+            lv2.words.forEach(ww=>{ if(ww.kana.includes(token)) candidates.push(ww); });
+          });
+          list.push({ kana: token, exWord: candidates[0]||w, candidates: candidates.length?candidates:[w] });
+        }
+      }
+    });
+  });
+  return list;
+})();
+
+let _quizMode = 'learn';
+let _quizQueue = [];        // file d'attente : kana à tester (inclut les ratés remis en file)
+let _quizDone = new Set();  // kana maîtrisés (bonne réponse du 1er coup)
+let _quizErrors = new Set();// kana ratés au moins une fois
+let _quizScore = 0;
+let _quizStreak = 0;
+let _quizCorrectIdx = 0;
+let _quizAnswered = false;
+let _quizTimerTimeout = null;
+let _quizAutoTimeout = null;
+let _quizLastExWord = null; // anti-répétition du mot exemple
+const QUIZ_TIMER_MS = 5000;
+const QUIZ_AUTO_ADVANCE_MS = 1800; // délai avant passage auto à la question suivante
+
+function showQuiz(){
+  document.getElementById('menu-overlay').classList.add('hidden');
+  document.getElementById('quiz-overlay').classList.remove('hidden');
+  // Initialiser les confettis quiz
+  const cq = document.getElementById('confetti-quiz');
+  if(cq && !cq.children.length && typeof fillConfetti === 'function') fillConfetti(cq);
+  _quizScore = 0;
+  _quizStreak = 0;
+  _quizDone = new Set();
+  _quizErrors = new Set();
+  _quizQueue = QUIZ_KANA_LIST.map((_,i)=>i);
+  // Couleur de fond initiale aléatoire
+  _quizChangeBg();
+  _quizRender();
+}
+
+function hideQuiz(){
+  _quizStopTimer();
+  if(_quizAutoTimeout){ clearTimeout(_quizAutoTimeout); _quizAutoTimeout=null; }
+  document.getElementById('quiz-overlay').classList.add('hidden');
+  document.getElementById('menu-overlay').classList.remove('hidden');
+}
+
+function quizSetMode(mode){
+  _quizMode = mode;
+  document.getElementById('quiz-tab-learn').classList.toggle('active', mode==='learn');
+  document.getElementById('quiz-tab-speed').classList.toggle('active', mode==='speed');
+  _quizRender();
+}
+
+function _quizCurrentItem(){
+  if(!_quizQueue.length) return null;
+  return QUIZ_KANA_LIST[_quizQueue[0]];
+}
+
+const _QUIZ_PALETTES=[['#d4f4ff','#c8f7ef','#d4fff0'],['#fff3d4','#ffe8c0','#fdffd4'],['#d8ffd4','#e8ffd0','#fdffd4'],['#fff0d4','#ffe8cc','#fff8d4'],['#ffd4f0','#f0d4ff','#fff9d4'],['#d4eeff','#c8f4ff','#d4fff8'],['#fffbd4','#fff5c0','#fdffd4'],['#ffd4e8','#ffe8d0','#fff9d4'],['#d4ffe8','#d4fff7','#f0ffd4'],['#ead4ff','#ffd4f0','#fff4ff'],['#ffd4d4','#ffe0d4','#fff4d4'],['#d4ffe8','#d4fff7','#f0fff8'],['#ffe8d0','#ffd4b0','#fff8e8']];
+let _quizBgIdx = 0;
+function _quizChangeBg(){
+  _quizBgIdx = Math.floor(Math.random()*_QUIZ_PALETTES.length);
+  const p = _QUIZ_PALETTES[_quizBgIdx];
+  const r = document.documentElement.style;
+  r.setProperty('--bg-top',p[0]); r.setProperty('--bg-mid',p[1]); r.setProperty('--bg-bot',p[2]);
+}
+
+function _quizRender(){
+  if(_quizAutoTimeout){ clearTimeout(_quizAutoTimeout); _quizAutoTimeout=null; }
+  if(!_quizQueue.length){ _quizVictory(); return; }
+
+  // Changer de couleur toutes les 10 questions répondues
+  if(_quizDone.size > 0 && _quizDone.size % 10 === 0 && !_quizAnswered){
+    _quizChangeBg();
+  }
+
+  _quizAnswered = false;
+  _quizStopTimer();
+
+  const item = _quizCurrentItem();
+  const kana = item.kana;
+  const correctRomaji = KANA_TO_ROMAJI[kana] || kana;
+  const total = QUIZ_KANA_LIST.length;
+  const qNum = total - _quizQueue.length + 1;
+
+  // Header : "Kana X/53" | score | 🔥streak 💀erreurs
+  document.getElementById('quiz-progress-text').textContent = `Kana ${qNum}/${total}`;
+  document.getElementById('quiz-score-display').textContent = _quizScore.toLocaleString('fr-FR') + ' pts';
+  const streakTxt = _quizStreak >= 3 ? `🔥×${_quizStreak}` : '';
+  const errTxt = _quizErrors.size > 0 ? `💀${_quizErrors.size}` : '';
+  document.getElementById('quiz-streak-display').textContent = [streakTxt, errTxt].filter(Boolean).join(' ');
+
+  // Carte kana — digraphe = classe spéciale pour réduire la taille
+  const card = document.getElementById('quiz-kana-card');
+  card.textContent = kana;
+  card.style.background = kanaBg(kana[0]);
+  card.style.fontSize = '';
+  card.className = kana.length > 1 ? 'digraph' : '';
+  setTimeout(()=>soundDrop(), 10);
+  void card.offsetWidth;
+  card.classList.add('drop-in');
+
+  // Cacher révélation
+  document.getElementById('quiz-reveal').classList.add('hidden');
+
+  // Réafficher les boutons
+  for(let i=0;i<4;i++){
+    const btn = document.getElementById('qc'+i);
+    btn.style.display = '';
+    btn.style.visibility = '';
+  }
+
+  // Générer 4 choix
+  const allRomajis = Object.values(KANA_TO_ROMAJI).filter(r=>r!==correctRomaji);
+  const distractors = shuffle(allRomajis).slice(0,3);
+  const choices = shuffle([correctRomaji, ...distractors]);
+  _quizCorrectIdx = choices.indexOf(correctRomaji);
+
+  choices.forEach((r,i)=>{
+    const btn = document.getElementById('qc'+i);
+    btn.textContent = r;
+    btn.className = 'quiz-choice-btn';
+    btn.disabled = false;
+  });
+
+  // Timer mode vitesse
+  const timerBar = document.getElementById('quiz-timer-bar');
+  if(_quizMode === 'speed'){
+    timerBar.classList.remove('hidden');
+    _quizStartTimer();
+  } else {
+    timerBar.classList.add('hidden');
+  }
+}
+
+function _quizStartTimer(){
+  const fill = document.getElementById('quiz-timer-fill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  void fill.offsetWidth;
+  fill.style.transition = `width ${QUIZ_TIMER_MS}ms linear`;
+  fill.style.width = '0%';
+  _quizTimerTimeout = setTimeout(()=>{
+    if(!_quizAnswered) _quizReveal(-1);
+  }, QUIZ_TIMER_MS);
+}
+
+function _quizStopTimer(){
+  if(_quizTimerTimeout){ clearTimeout(_quizTimerTimeout); _quizTimerTimeout=null; }
+  const fill = document.getElementById('quiz-timer-fill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+}
+
+function quizAnswer(choiceIdx){
+  if(_quizAnswered) return;
+  _quizStopTimer();
+  _quizReveal(choiceIdx);
+}
+
+function _quizReveal(choiceIdx){
+  _quizAnswered = true;
+  const item = _quizCurrentItem();
+  const kana = item.kana;
+  const correct = choiceIdx === _quizCorrectIdx;
+
+  // Colorer boutons
+  for(let i=0;i<4;i++){
+    const btn = document.getElementById('qc'+i);
+    btn.disabled = true;
+    if(i === _quizCorrectIdx) btn.classList.add('correct');
+    else if(i === choiceIdx && !correct) btn.classList.add('wrong');
+  }
+
+  // Gérer la file
+  _quizQueue.shift();
+  if(correct){
+    _quizStreak++;
+    _quizDone.add(kana);
+    _quizScore += 100 * (_quizStreak >= 5 ? 2 : 1);
+    soundWord();
+    const card = document.getElementById('quiz-kana-card');
+    const r = card.getBoundingClientRect();
+    burst(r.left+r.width/2, r.top+r.height/2, _quizStreak>=5?28:16, _quizStreak>=5?'boss':'combo');
+    if(_quizStreak % 5 === 0){
+      setTimeout(()=>{
+        burst(window.innerWidth/2, window.innerHeight*.4, 40, 'logo');
+        burst(window.innerWidth/2, window.innerHeight*.4, 25, 'combo');
+      }, 200);
+      soundLevelUp();
+    }
+    // Changer la couleur de fond toutes les 10 bonnes réponses
+    if(_quizDone.size % 10 === 0) setTimeout(_quizChangeBg, 400);
+  } else {
+    _quizStreak = 0;
+    _quizErrors.add(kana);
+    _quizDone.delete(kana);
+    soundGameOver();
+    const reinsertPos = Math.min(2 + Math.floor(Math.random()*3), _quizQueue.length);
+    const failIdx = QUIZ_KANA_LIST.findIndex(it=>it.kana===kana);
+    _quizQueue.splice(reinsertPos, 0, failIdx);
+  }
+
+  document.getElementById('quiz-score-display').textContent = _quizScore.toLocaleString('fr-FR') + ' pts';
+  document.getElementById('quiz-streak-display').textContent = _quizStreak >= 3 ? `🔥×${_quizStreak}` : '';
+  document.getElementById('quiz-progress-text').textContent =
+    `${_quizDone.size}/${QUIZ_KANA_LIST.length} maîtrisés${_quizErrors.size ? ' · '+_quizErrors.size+' ⚠️':''}`;
+
+  // Choisir le mot exemple en évitant la répétition
+  const candidates = item.candidates || [item.exWord];
+  let exWord = candidates.length > 1
+    ? candidates.filter(c=>c!==_quizLastExWord)[Math.floor(Math.random()*(candidates.length-1))]
+    : candidates[0];
+  if(!exWord) exWord = candidates[0];
+  _quizLastExWord = exWord;
+
+  // Exploser la carte puis afficher le grand emoji SANS cadre
+  const card = document.getElementById('quiz-kana-card');
+  card.classList.remove('drop-in');
+  card.classList.add('explode');
+
+  setTimeout(()=>{
+    card.className = 'emoji-mode';
+    card.textContent = exWord.emoji;
+    card.style.fontSize = '';
+    card.style.background = 'transparent';
+    void card.offsetWidth;
+    card.classList.add('emoji-in');
+    soundDrop();
+  }, 330);
+
+  // Révélation épurée : mot avec kana ciblé coloré + traduction
+  const wordKana = exWord.kana;
+  const highlighted = wordKana.replace(kana, `<span class="kana-highlight">${kana}</span>`);
+  document.getElementById('quiz-reveal-word-kana').innerHTML = highlighted;
+  document.getElementById('quiz-reveal-word-meaning').textContent = exWord.meaning;
+
+  const resultEl = document.getElementById('quiz-reveal-result');
+  resultEl.textContent = correct ? (choiceIdx>=0 ? '✅' : '') : '❌';
+  resultEl.className = correct ? 'correct' : 'wrong';
+
+  const reveal = document.getElementById('quiz-reveal');
+  reveal.style.animation = 'none'; void reveal.offsetWidth;
+  reveal.style.animation = 'quizRevealIn .4s cubic-bezier(.34,1.56,.64,1) both';
+  reveal.classList.remove('hidden');
+
+  // Son kana puis mot exemple
+  setTimeout(()=>speakWord(kana, false), 300);
+  setTimeout(()=>speakWord(exWord.kana, false), 1400);
+
+  // Auto-avance
+  _quizAutoTimeout = setTimeout(()=>_quizRender(), QUIZ_AUTO_ADVANCE_MS + (correct ? 0 : 500));
+}
+
+function _quizVictory(){
+  _quizStopTimer();
+  soundLevelUp();
+  burst(window.innerWidth/2, window.innerHeight/2, 55, 'logo');
+  setTimeout(()=>{
+    burst(window.innerWidth*.25, window.innerHeight*.3, 30, 'boss');
+    burst(window.innerWidth*.75, window.innerHeight*.3, 30, 'combo');
+  }, 300);
+
+  const card = document.getElementById('quiz-kana-card');
+  card.textContent = '🏆';
+  card.style.background = 'linear-gradient(135deg,#f9d000,#ff8c42)';
+  card.style.fontSize = 'clamp(64px,18vw,100px)';
+  card.classList.remove('explode','drop-in');
+
+  // Cacher les choix
+  for(let i=0;i<4;i++) document.getElementById('qc'+i).style.display='none';
+  document.getElementById('quiz-next-btn').classList.add('hidden');
+  document.getElementById('quiz-timer-bar').classList.add('hidden');
+
+  const reveal = document.getElementById('quiz-reveal');
+  reveal.classList.remove('hidden');
+  document.getElementById('quiz-reveal-result').textContent = '🏯 Tous les kana maîtrisés !';
+  document.getElementById('quiz-reveal-result').className = 'correct';
+  document.getElementById('quiz-reveal-romaji').textContent = `${_quizScore.toLocaleString('fr-FR')} pts`;
+
+  // Afficher les kana ratés s'il y en a
+  const errList = [..._quizErrors];
+  if(errList.length){
+    document.getElementById('quiz-reveal-word-kana').textContent = `À revoir : ${errList.join(' ')}`;
+    document.getElementById('quiz-reveal-word-meaning').textContent = `${errList.length} kana ratés`;
+    document.getElementById('quiz-reveal-emoji').textContent = '📝';
+  } else {
+    document.getElementById('quiz-reveal-emoji').textContent = '🌟';
+    document.getElementById('quiz-reveal-word-kana').textContent = 'Sans faute !';
+    document.getElementById('quiz-reveal-word-meaning').textContent = 'Performance parfaite !';
+    // Sans faute → feu d'artifice bonus
+    setTimeout(()=>{
+      [.2,.4,.6,.8].forEach((x,i)=>setTimeout(()=>
+        burst(window.innerWidth*x+window.innerWidth*.1, window.innerHeight*.4, 25,'logo'), i*150));
+    }, 500);
+  }
+}
 
 // Init initial calcRows
 calcRows();
