@@ -1057,6 +1057,60 @@ body::before{
   box-shadow:0 7px 24px rgba(0,187,249,.4),0 2px 6px rgba(0,0,0,.08);
   color:#fff;
 }
+.mode-btn-survie{
+  background:linear-gradient(135deg,#ff0066,#ff6b35,#f9d000);
+  box-shadow:0 7px 24px rgba(255,0,102,.45),0 2px 6px rgba(0,0,0,.08);
+  color:#fff;
+  animation:survivePulse 2s ease-in-out infinite alternate;
+}
+@keyframes survivePulse{
+  from{box-shadow:0 7px 24px rgba(255,0,102,.4),0 2px 6px rgba(0,0,0,.08);}
+  to{box-shadow:0 7px 32px rgba(255,0,102,.7),0 0 20px rgba(249,208,0,.4),0 2px 6px rgba(0,0,0,.08);}
+}
+
+/* ── Overlay transition survie ── */
+#survie-transition{
+  position:fixed;inset:0;z-index:500;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;
+  background:rgba(10,5,30,.88);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  pointer-events:none;
+}
+#survie-transition.hidden{display:none!important;}
+#survie-transition .st-label{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(14px,3.5vw,18px);
+  color:#a855f7;letter-spacing:3px;text-transform:uppercase;
+}
+#survie-transition .st-emoji{
+  font-size:clamp(64px,18vw,100px);
+  line-height:1;
+  animation:stEmojiBounce .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes stEmojiBounce{from{opacity:0;transform:scale(.4) rotate(-15deg)}to{opacity:1;transform:scale(1) rotate(0deg)}}
+#survie-transition .st-name{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(22px,6vw,34px);
+  color:#fff;
+  text-shadow:-2px -2px 0 #1a0050,2px -2px 0 #1a0050,-2px 2px 0 #1a0050,2px 2px 0 #1a0050;
+}
+#survie-transition .st-score{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(16px,4vw,22px);
+  color:#f9d000;
+  text-shadow:0 0 12px rgba(249,208,0,.6);
+}
+#survie-transition .st-bar{
+  width:160px;height:6px;border-radius:50px;
+  background:rgba(255,255,255,.15);overflow:hidden;margin-top:4px;
+}
+#survie-transition .st-bar-fill{
+  height:100%;border-radius:50px;
+  background:linear-gradient(90deg,#a855f7,#4d96ff);
+  animation:stBarFill var(--stDur,1.8s) linear forwards;
+}
+@keyframes stBarFill{from{width:0%}to{width:100%}}
 /* Contenu centré avec emojis de chaque côté */
 .mode-btn-inner{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -1598,6 +1652,16 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
       </div>
       <span class="mode-btn-emoji-right">🤖</span>
     </button>
+
+    <!-- Survie : enchaînement de tous les niveaux -->
+    <button class="mode-btn mode-btn-survie" onclick="modeStart('survie')">
+      <span class="mode-btn-emoji">🔥</span>
+      <div class="mode-btn-inner">
+        <div class="mode-btn-label">Mode Survie</div>
+        <div class="mode-btn-sub">21 niveaux · Un seul game over</div>
+      </div>
+      <span class="mode-btn-emoji-right">💀</span>
+    </button>
   </div>
 
   <!-- Panel Puzzle : choix difficulté SN -->
@@ -1607,6 +1671,15 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
   </div>
 
   <button class="mode-back-btn" style="margin-top:14px" onclick="modeBack()">← Retour aux niveaux</button>
+</div>
+
+<!-- ═══ SURVIE TRANSITION ═══ -->
+<div id="survie-transition" class="hidden">
+  <div class="st-label">Niveau suivant !</div>
+  <div class="st-emoji" id="st-emoji">🌊</div>
+  <div class="st-name" id="st-name">La Mer</div>
+  <div class="st-score" id="st-score">Score : 0</div>
+  <div class="st-bar"><div class="st-bar-fill" id="st-bar-fill"></div></div>
 </div>
 
 <!-- ═══ TUTO CINÉMATIQUE ═══ -->
@@ -2413,9 +2486,119 @@ function modeStart(mode){
   gameMode=mode;
   if(mode==='solo'){
     startGame(pendingLevelIdx);
+  } else if(mode==='survie'){
+    _survieStart(pendingLevelIdx);
   } else {
     enterBattleMode(pendingLevelIdx);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MODE SURVIE
+// ═══════════════════════════════════════════════════════════════════
+let _survieScore = 0;       // score cumulé cross-niveaux
+let _survieLevelIdx = 0;    // niveau courant dans la run
+let _survieActive = false;  // run en cours
+// Tous les mots connus durant la run (pour scorer les anciens mots hors panel)
+let _survieAllWords = [];
+
+function _survieStart(fromLevelIdx){
+  _survieActive = true;
+  _survieScore = 0;
+  _survieLevelIdx = fromLevelIdx || 0;
+  _survieAllWords = [];
+  gameMode = 'survie';
+  _survieLaunchLevel();
+}
+
+function _survieLaunchLevel(){
+  player1.startGame(_survieLevelIdx);
+}
+
+/**
+ * Glissement vers le niveau suivant — SANS nettoyer la grille.
+ * Appelé depuis levelDone() quand gameMode==='survie'.
+ * score = score du niveau qui vient de se terminer.
+ */
+function _survieSlideToNextLevel(currentScore, slideFn){
+  _survieScore += currentScore;
+  const nextIdx = _survieLevelIdx + 1;
+
+  if(nextIdx >= ALL_LEVELS.length){
+    _survieVictory();
+    return;
+  }
+
+  _survieLevelIdx = nextIdx;
+  const nextLv = ALL_LEVELS[nextIdx];
+
+  // Flash rapide du nom du niveau suivant (non bloquant)
+  const tr = document.getElementById('survie-transition');
+  document.getElementById('st-emoji').textContent = nextLv.emoji;
+  document.getElementById('st-name').textContent  = `→ Niveau ${nextLv.id} · ${nextLv.theme}`;
+  document.getElementById('st-score').textContent = `Score cumulé : ${_survieScore.toLocaleString('fr-FR')}`;
+  const fill = document.getElementById('st-bar-fill');
+  fill.style.animation = 'none'; void fill.offsetWidth;
+  fill.style.setProperty('--stDur', '1200ms');
+  fill.style.animation = 'stBarFill 1200ms linear forwards';
+  tr.classList.remove('hidden');
+  burst(window.innerWidth/2, window.innerHeight*.35, 28, 'logo');
+
+  setTimeout(()=>{
+    tr.classList.add('hidden');
+    // Appliquer palette du niveau suivant
+    const palettes=[['#d4f4ff','#c8f7ef','#d4fff0'],['#fff3d4','#ffe8c0','#fdffd4'],['#d8ffd4','#e8ffd0','#fdffd4'],['#fff0d4','#ffe8cc','#fff8d4'],['#ffd4f0','#f0d4ff','#fff9d4'],['#d4eeff','#c8f4ff','#d4fff8'],['#fffbd4','#fff5c0','#fdffd4'],['#d8ffd4','#e8ffd0','#fdffd4'],['#ffd4e8','#ffe8d0','#fff9d4'],['#d4ffe8','#d4fff7','#f0ffd4'],['#d4eeff','#e8f4ff','#fff8d4'],['#d4ffd8','#f0ffd4','#fff7d4'],['#ffe8d4','#fff0e0','#fffbd4'],['#ead4ff','#ffd4f0','#fff4ff'],['#d4eeff','#d4f8ff','#f0f8ff'],['#ffd4d4','#ffe0d4','#fff4d4'],['#ead4ff','#ffd4f8','#fff9ff'],['#ffe8d4','#fff0e0','#fffbd4'],['#d4ffe8','#d4fff7','#f0fff8'],['#ffe8d0','#ffd4b0','#fff8e8'],['#d4eeff','#c8f4ff','#e8f8ff']];
+    const p = palettes[nextIdx] || palettes[0];
+    const r = document.documentElement.style;
+    r.setProperty('--bg-top', p[0]); r.setProperty('--bg-mid', p[1]); r.setProperty('--bg-bot', p[2]);
+    // Glissement interne via l'API publique du player
+    if(player1 && player1.survieDoSlide) player1.survieDoSlide(nextIdx);
+    slideFn(nextIdx);
+  }, 1200);
+}
+
+/**
+ * Appelé quand le joueur perd en mode survie (game over).
+ */
+function _survieOnGameOver(levelScore){
+  _survieScore += levelScore;
+  _survieActive = false;
+  if(typeof KS !== 'undefined' && KS.isHighscore(_survieScore)){
+    const lv = ALL_LEVELS[_survieLevelIdx];
+    setTimeout(()=>showWofEntry({
+      score: _survieScore,
+      levelId: lv.id,
+      levelEmoji: '🔥',
+      levelTheme: `Survie · éliminé Lv.${lv.id}`,
+      onDone: ()=>{}
+    }), 800);
+  }
+}
+
+/**
+ * Victoire ultime — survécu aux 21 niveaux !
+ */
+function _survieVictory(){
+  _survieActive = false;
+  soundLevelUp();
+  const positions = [
+    {x:window.innerWidth*.25,y:window.innerHeight*.3},{x:window.innerWidth*.75,y:window.innerHeight*.3},
+    {x:window.innerWidth*.5,y:window.innerHeight*.2},{x:window.innerWidth*.15,y:window.innerHeight*.5},
+    {x:window.innerWidth*.85,y:window.innerHeight*.5},{x:window.innerWidth*.5,y:window.innerHeight*.45},
+  ];
+  positions.forEach((pos,i)=>setTimeout(()=>{burst(pos.x,pos.y,30,'logo');burst(pos.x,pos.y,20,'combo');},i*150));
+  setTimeout(()=>{
+    showOverlay({
+      title:'🏯 MAÎTRE DES KANA !',
+      sub:`<span style="font-size:32px">🔥</span><br>Tu as survécu aux <strong>21 niveaux</strong> !<br>Score total : <strong style="color:var(--neon-violet)">${_survieScore.toLocaleString('fr-FR')}</strong>`,
+      words:[],
+      btn1:'🔥 Recommencer la survie', act1:()=>_survieStart(0),
+      btn2:'📋 Menu principal',        act2:()=>showMenu(),
+    });
+    if(typeof KS !== 'undefined' && KS.isHighscore(_survieScore)){
+      setTimeout(()=>showWofEntry({score:_survieScore,levelId:21,levelEmoji:'🏯',levelTheme:'Survie Complète · 21 niveaux',onDone:()=>{}}), 2400);
+    }
+  }, 1200);
 }
 
 // ── Retour au menu niveaux ──
@@ -2634,7 +2817,13 @@ function _fitBattleBoard(){
 
   // ── Score / streak ──
   function updateScore(){
-    dom.scoreEl.textContent=score.toLocaleString();
+    if(gameMode==='survie' && _survieActive){
+      // Afficher score cumulé + score du niveau en cours
+      const total = _survieScore + score;
+      dom.scoreEl.textContent = total.toLocaleString('fr-FR');
+    } else {
+      dom.scoreEl.textContent=score.toLocaleString();
+    }
     dom.scoreEl.classList.remove('bump');void dom.scoreEl.offsetWidth;dom.scoreEl.classList.add('bump');
   }
   function updateStreak(){
@@ -2825,7 +3014,9 @@ function renderPanel(){
   function scanLine(cells,found){
     // Le 💩 et le ☠️ sont traités comme des cases vides pour la détection de mots (jamais matchables)
     const line=cells.map(({r,c})=>(board[r][c].filled&&board[r][c].char!=='💩'&&board[r][c].char!=='☠️')?board[r][c].char:'\x00').join('');
-    activeWords.forEach(w=>{
+const wordsToScan = gameMode === 'survie' ? _survieAllWords : activeWords;
+    
+    wordsToScan.forEach(w=>{
       let i=line.indexOf(w.kana);
       while(i!==-1){
         const key=cells.slice(i,i+w.kana.length).map(cc=>`${cc.r},${cc.c}`).join('|');
@@ -2893,10 +3084,19 @@ function renderPanel(){
       const cf=scanFullBoard();
       if(cf.length){setTimeout(()=>processCascade(cf,true),300);return;}
       _skullSentThisCascade=false; // reset après la fin de la chaîne
-      const allDone=activeWords.every(w=>foundRound.has(w.kana));
+      // En survie : "cycle terminé" = tous les mots du niveau courant DÉJÀ INTRODUITS sont formés
+      const currentLevelKanas = new Set(LEVEL_WORDS_LOCAL.map(w=>w.kana));
+      const currentActiveWords = gameMode==='survie'
+        ? activeWords.filter(w => currentLevelKanas.has(w.kana))
+        : activeWords;
+      const allDone = currentActiveWords.every(w=>foundRound.has(w.kana));
       if(allDone){
         if(puzzleMode)return;
-        if(wordIntroIdx>=LEVEL_WORDS_LOCAL.length)setTimeout(levelDone,400);else introNext();
+        if(wordIntroIdx>=LEVEL_WORDS_LOCAL.length){
+          setTimeout(levelDone,400);
+        } else {
+          if(gameMode==='survie') introNextSurvie(); else introNext();
+        }
       }else safeSpawn();
     },820);
   }
@@ -2963,12 +3163,120 @@ function renderPanel(){
     rebuildPool();soundNewWord();renderPanel();
   }
 
+  /**
+   * Glissement survie : charge le niveau suivant SANS reset grille.
+   * - Retire le boss du niveau précédent du word panel
+   * - Charge les nouveaux mots dans LEVEL_WORDS_LOCAL
+   * - Repart avec wordIntroIdx=0 sur le nouveau niveau
+   * - Les anciens mots restent dans activeWords (scorables mais hors panel)
+   * - Accélère la vitesse
+   */
+  function _survieDoSlide(nextLevelIdx){
+    currentLevelIdx = nextLevelIdx;
+    const nextWords = ALL_LEVELS[nextLevelIdx].words.map(w=>({...w, mult:1}));
+
+    // Retirer le boss du niveau précédent (mot le plus long = boss)
+    const bossIdx = activeWords.findIndex(w=>w.boss);
+    if(bossIdx !== -1) activeWords.splice(bossIdx, 1);
+
+    // Charger les nouveaux mots (ils seront introduits progressivement par introNext)
+    LEVEL_WORDS_LOCAL = nextWords;
+    LEVEL_WORDS = LEVEL_WORDS_LOCAL;
+    wordIntroIdx = 0;
+    isLastCycle = false;
+    foundRound = new Set();
+
+    // Accélération survie progressive
+    const survieSpeedBonus = Math.min(nextLevelIdx * 30, 400);
+    DROP_SPEED = Math.max(700, DROP_SPEED - survieSpeedBonus);
+    startTimer();
+
+    // Mettre à jour le badge niveau
+    const lvlData = ALL_LEVELS[nextLevelIdx];
+    const badge = document.getElementById('level-badge');
+    if(badge){
+      badge.innerHTML=`<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span><span style="font-size:10px;color:#ff0066;display:block;font-family:'Fredoka One',cursive;text-shadow:0 0 8px rgba(255,0,102,.5)">🔥 SURVIE</span>`;
+    }
+
+    // Reconstruire le pool avec tous les kana connus (anciens + nouveaux)
+    // Le pool inclut les kana des activeWords restants + le 1er mot du nouveau niveau
+    rebuildSurviePool();
+
+    // Introduire le 1er mot du nouveau niveau immédiatement
+    introNextSurvie();
+
+    // Redémarrer le spawn (la grille est toujours là, pas de reset)
+    gameRunning = true;
+    resolvingWords = false;
+    safeSpawn();
+  }
+
+  /**
+   * Pool survie : UNIQUEMENT les kana des mots encore dans activeWords.
+   * On double les kana des mots non encore trouvés pour favoriser leur apparition.
+   */
+  function rebuildSurviePool(){
+    // Seuls les kana utiles = ceux des mots actifs dans le panel
+    const activeChars = new Set(activeWords.flatMap(w=>[...w.kana]));
+    // Doubler les kana des mots pas encore trouvés ce round (pour les faire apparaître plus)
+    const pendingChars = new Set(
+      activeWords.filter(w=>!foundRound.has(w.kana)).flatMap(w=>[...w.kana])
+    );
+    kanaPool = [...activeChars].flatMap(ch => pendingChars.has(ch) ? [ch,ch] : [ch]);
+  }
+
+  /**
+   * Introduit le prochain mot du nouveau niveau dans activeWords.
+   * Cap strict : max 5 mots dans activeWords en mode survie.
+   * Retire le plus vieux mot non-boss si on dépasse 5.
+   */
+  function introNextSurvie(){
+    if(wordIntroIdx >= LEVEL_WORDS_LOCAL.length) return;
+const nextW = LEVEL_WORDS_LOCAL[wordIntroIdx];
+    if(!_survieAllWords.some(x => x.kana === nextW.kana)) {
+      _survieAllWords.push(nextW);
+    }
+
+    // Cap à 5 : retirer le mot le plus ancien non-boss si nécessaire
+    if(activeWords.length >= 5){
+      // Trouver le premier mot non-boss de l'ancien niveau (pas du LEVEL_WORDS_LOCAL courant)
+      const currentKanas = new Set(LEVEL_WORDS_LOCAL.map(w=>w.kana));
+      const oldIdx = activeWords.findIndex(w => !w.boss && !currentKanas.has(w.kana));
+      if(oldIdx !== -1) activeWords.splice(oldIdx, 1);
+      else {
+        // Tous sont du niveau courant ou boss : retirer le 1er non-boss
+        const fallback = activeWords.findIndex(w=>!w.boss);
+        if(fallback !== -1) activeWords.splice(fallback, 1);
+      }
+    }
+
+    const w = LEVEL_WORDS_LOCAL[wordIntroIdx++]; w.mult=1;
+    activeWords.push(w);
+    if(wordIntroIdx >= LEVEL_WORDS_LOCAL.length) isLastCycle = true;
+    rebuildSurviePool();
+    soundNewWord();
+    renderPanel();
+  }
+
   // ── Fin de partie ──
   function endGame(){
     clearInterval(dropTimer);gameRunning=false;resolvingWords=false;
     // En mode battle : notifier le coordinateur global
     if((gameMode==='vsBot'||gameMode==='vs2p'||gameMode==='botVsBot') && typeof _battleEndGame==='function'){
       _battleEndGame(id); return;
+    }
+    // En mode survie : game over définitif
+    if(gameMode==='survie' && typeof _survieOnGameOver==='function'){
+      soundGameOver();
+      const lvlData=ALL_LEVELS[currentLevelIdx];
+      _survieOnGameOver(score);
+      showOverlay({
+        title:'💀 Survie terminée !',
+        sub:`Éliminé au niveau ${lvlData.id} · ${lvlData.emoji} ${lvlData.theme}<br>Score cumulé : <strong style="color:var(--neon-violet)">${(_survieScore+score).toLocaleString('fr-FR')}</strong>`,
+        btn1:'🔥 Recommencer la survie',act1:()=>_survieStart(0),
+        btn2:'📋 Menu principal',act2:()=>showMenu(),
+      });
+      return;
     }
     soundGameOver();
     const lvlData=ALL_LEVELS[currentLevelIdx];
@@ -2982,6 +3290,12 @@ function renderPanel(){
     if((gameMode==='vsBot'||gameMode==='vs2p'||gameMode==='botVsBot') && typeof _battleEndGame==='function'){
       soundLevelUp();
       _battleEndGame(id==='p1'?'p2':'p1'); // l'adversaire perd
+      return;
+    }
+    // En mode survie : glissement sans nettoyer la grille
+    if(gameMode==='survie' && typeof _survieSlideToNextLevel==='function'){
+      soundLevelUp();
+      _survieSlideToNextLevel(score, ()=>{});
       return;
     }
     soundLevelUp();
@@ -3027,7 +3341,15 @@ function renderPanel(){
     LEVEL_WORDS_LOCAL=ALL_LEVELS[currentLevelIdx].words.map(w=>({...w}));
     LEVEL_WORDS=LEVEL_WORDS_LOCAL; // compatibilité globale mode solo
     const lvlData=ALL_LEVELS[currentLevelIdx];
-    score=0;streak=0;DROP_SPEED=1400;
+    // En mode survie : ne pas remettre le score à 0, conserver la vitesse accumulée + bonus accélération
+    if(gameMode==='survie' && _survieActive){
+      score=0; streak=0;
+      // Accélération progressive : chaque niveau démarre plus vite
+      const survieSpeedBonus = Math.min(_survieLevelIdx * 30, 400);
+      DROP_SPEED = Math.max(700, 1400 - survieSpeedBonus);
+    } else {
+      score=0;streak=0;DROP_SPEED=1400;
+    }
     dom.streakEl.style.display='none';updateScore();
     if(!isPuzzle)puzzleMode=false;
     if(puzzleMode){
@@ -3051,7 +3373,15 @@ function renderPanel(){
     root.setProperty('--bg-mid',`var(--lv${lv}-mid,var(--lv1-mid))`);
     root.setProperty('--bg-bot',`var(--lv${lv}-bot,var(--lv1-bot))`);
     const badge=document.getElementById('level-badge');
-    if(badge){badge.innerHTML=puzzleMode?`<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span><span style="font-size:10px;color:var(--neon-gold);display:block">⚡ SN-${puzzleSNDef.num} ${puzzleSNDef.stars}</span>`:`<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span>`;}
+    if(badge){
+      if(puzzleMode){
+        badge.innerHTML=`<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span><span style="font-size:10px;color:var(--neon-gold);display:block">⚡ SN-${puzzleSNDef.num} ${puzzleSNDef.stars}</span>`;
+      } else if(gameMode==='survie'){
+        badge.innerHTML=`<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span><span style="font-size:10px;color:#ff0066;display:block;font-family:'Fredoka One',cursive;animation:survivePulse 1.4s ease-in-out infinite alternate;text-shadow:0 0 8px rgba(255,0,102,.5)">🔥 SURVIE</span>`;
+      } else {
+        badge.innerHTML=`<span class="badge-emoji">${lvlData.emoji}</span><span class="badge-num" style="color:${lvlData.color}">Lv.${lvlData.id}</span>`;
+      }
+    }
     if(puzzleMode){
       rebuildPool();
       dom.wordPanelEl.innerHTML='';
@@ -3078,6 +3408,9 @@ function renderPanel(){
       setTimeout(()=>safeSpawn(),350);
     }else{
       const w=LEVEL_WORDS_LOCAL[wordIntroIdx++];w.mult=1;activeWords.push(w);
+if(gameMode === 'survie') {
+        if(!_survieAllWords.some(x => x.kana === w.kana)) _survieAllWords.push(w);
+      }
       rebuildPool();renderPanel();nextChar=rndKana();dom.nextKanaEl.textContent=nextChar;
     }
   }
@@ -3102,6 +3435,7 @@ function renderPanel(){
     hardDrop,
     startGame,
     startPuzzle,
+    survieDoSlide: _survieDoSlide,
     render,
     moveLeft(){ if(ok(active.x-1,active.y)){active.x--;render();}},
     moveRight(){if(ok(active.x+1,active.y)){active.x++;render();}},
