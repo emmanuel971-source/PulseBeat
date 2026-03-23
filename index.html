@@ -764,6 +764,7 @@ body::before{
   position: relative;
   line-height: 1;
   overflow: hidden;
+  white-space: nowrap;
 }
 /* Digraphes (2 kana) : taille réduite pour tenir dans le bloc */
 #quiz-kana-card.digraph {
@@ -838,9 +839,13 @@ body::before{
 #quiz-reveal-word-kana {
   font-family: 'Noto Sans JP', sans-serif;
   font-weight: 900;
-  font-size: clamp(26px, 7.5vw, 38px);
+  font-size: clamp(16px, 6vw, 38px);
   line-height: 1.1;
   color: var(--text-dark);
+  white-space: nowrap;
+  width: 100%;
+  text-align: center;
+  display: block;
 }
 #quiz-reveal-word-kana .kana-highlight {
   color: #a855f7;
@@ -944,6 +949,82 @@ body::before{
   margin-top: 8px;
 }
 #quiz-back-btn:hover { transform: translateY(-1px); }
+/* ═══ STATS OVERLAY ═══ */
+#stats-overlay {
+  position: fixed; inset: 0; z-index: 290;
+  display: flex; flex-direction: column; align-items: center;
+  background: linear-gradient(160deg, var(--bg-top) 0%, var(--bg-mid) 50%, var(--bg-bot) 100%);
+  overflow: hidden;
+}
+#stats-overlay::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 55% 40% at 10% 20%, rgba(168,85,247,.2) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 90% 80%, rgba(99,102,241,.18) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+  animation: blobDrift 8s ease-in-out infinite alternate;
+}
+#stats-overlay.hidden { display: none !important; }
+#stats-inner {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 480px;
+  height: 100dvh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#stats-header {
+  flex-shrink: 0;
+  padding: clamp(12px,3dvh,20px) 16px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+#stats-robot { font-size: 44px; line-height: 1; filter: drop-shadow(0 0 12px rgba(168,85,247,.6)); animation: robotBobble 1.6s ease-in-out infinite alternate; }
+#stats-title { font-family: 'Fredoka One', cursive; font-size: clamp(22px,6vw,28px); color: #a855f7; text-shadow: 0 0 16px rgba(168,85,247,.35); text-align: center; }
+#stats-subtitle { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: clamp(12px,3vw,14px); color: var(--text-dim); text-align: center; }
+#stats-summary { display: flex; gap: 8px; padding: 0 16px 10px; flex-shrink: 0; }
+.stats-sum-card { flex:1; background:rgba(255,255,255,.7); backdrop-filter:blur(8px); border-radius:16px; padding:10px 8px; text-align:center; box-shadow:0 4px 14px rgba(0,0,0,.07); border:1.5px solid rgba(168,85,247,.15); }
+.stats-sum-val { font-family:'Fredoka One',cursive; font-size:clamp(20px,5.5vw,26px); line-height:1; color:#a855f7; }
+.stats-sum-lbl { font-family:'Nunito',sans-serif; font-weight:800; font-size:clamp(10px,2.5vw,12px); color:var(--text-dim); margin-top:2px; }
+#stats-legend { display:flex; gap:10px; justify-content:center; padding:0 16px 8px; flex-shrink:0; }
+.stats-leg { display:flex; align-items:center; gap:4px; font-family:'Nunito',sans-serif; font-weight:800; font-size:clamp(11px,2.8vw,13px); color:var(--text-dim); }
+.stats-leg-dot { width:12px; height:12px; border-radius:50%; }
+#stats-scroll { flex:1; overflow-y:auto; overflow-x:hidden; padding:0 16px 16px; -webkit-overflow-scrolling:touch; }
+#stats-scroll::-webkit-scrollbar { display:none; }
+#stats-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+.stats-kana-cell { aspect-ratio:1; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:transform .15s cubic-bezier(.34,1.56,.64,1); position:relative; box-shadow:0 3px 8px rgba(0,0,0,.1); border:2px solid transparent; }
+.stats-kana-cell:hover { transform:scale(1.12); z-index:2; }
+.stats-kana-cell.untested { background:rgba(255,255,255,.55); border-color:rgba(0,0,0,.06); }
+.stats-kana-cell.mastered { background:linear-gradient(135deg,#d4ffea,#a8ffce); border-color:rgba(0,180,80,.3); }
+.stats-kana-cell.learning { background:linear-gradient(135deg,#fff3cc,#ffe580); border-color:rgba(220,160,0,.3); }
+.stats-kana-cell.struggling { background:linear-gradient(135deg,#ffe0e0,#ffb3b3); border-color:rgba(220,60,60,.3); }
+.stats-kana-char { font-family:'Noto Sans JP',sans-serif; font-weight:900; font-size:clamp(22px,6vw,30px); color:#1a1040; line-height:1; }
+.stats-kana-pct { font-family:'Fredoka One',cursive; font-size:clamp(11px,2.8vw,13px); color:var(--text-dim); margin-top:2px; }
+.stats-kana-cell.mastered .stats-kana-pct { color:#00994d; }
+.stats-kana-cell.struggling .stats-kana-pct { color:#cc3333; }
+#stats-tooltip { position:fixed; background:rgba(20,10,50,.96); border:1.5px solid #a855f7; border-radius:16px; padding:12px 16px; color:#fff; font-family:'Nunito',sans-serif; font-size:13px; box-shadow:0 6px 24px rgba(168,85,247,.4); z-index:600; pointer-events:none; min-width:160px; animation:quizRevealIn .2s ease both; }
+#stats-tooltip.hidden { display:none !important; }
+#stats-tooltip .tt-kana { font-family:'Noto Sans JP',sans-serif; font-weight:900; font-size:28px; color:#c77dff; text-align:center; display:block; margin-bottom:6px; }
+#stats-tooltip .tt-row { display:flex; justify-content:space-between; gap:12px; font-weight:800; font-size:12px; line-height:1.6; }
+#stats-tooltip .tt-good { color:#72e8b8; }
+#stats-tooltip .tt-bad  { color:#ff8080; }
+#stats-tooltip .tt-date { color:#a0d8ff; font-size:11px; margin-top:4px; text-align:center; }
+#stats-tabs {
+  display:flex; gap:8px; width:calc(100% - 32px);
+  background:rgba(255,255,255,.45); border-radius:20px; padding:5px;
+  box-shadow:0 4px 18px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.8);
+  flex-shrink:0; margin:0 16px 8px; align-self:center;
+}
+.stats-tab {
+  flex:1; font-family:'Fredoka One',cursive; font-size:clamp(14px,3.8vw,17px);
+  border:none; border-radius:15px; padding:10px 8px;
+  cursor:pointer; background:transparent; color:var(--text-dim); transition:all .22s;
+}
+.stats-tab.active {
+  background:linear-gradient(135deg,#a855f7,#6366f1); color:#fff;
+  box-shadow:0 4px 14px rgba(168,85,247,.4); transform:scale(1.02);
+}
+#stats-back-btn { font-family:'Fredoka One',cursive; font-size:clamp(15px,4vw,18px); padding:11px 32px; border:none; border-radius:50px; background:linear-gradient(135deg,#a855f7,#6366f1); color:#fff; cursor:pointer; box-shadow:0 5px 18px rgba(168,85,247,.4); transition:transform .18s cubic-bezier(.34,1.56,.64,1); flex-shrink:0; margin:8px 16px 16px; align-self:center; }
+#stats-back-btn:hover { transform:translateY(-2px) scale(1.03); }
+
 #tuto-info-banner {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -2002,8 +2083,8 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
 
     <!-- Mode tabs -->
     <div id="quiz-mode-selector">
-      <button class="quiz-mode-tab active" id="quiz-tab-learn" onclick="quizSetMode('learn')">🌸 Apprentissage</button>
-      <button class="quiz-mode-tab" id="quiz-tab-speed" onclick="quizSetMode('speed')">⚡ Vitesse</button>
+      <button class="quiz-mode-tab active" id="quiz-tab-hiragana" onclick="quizSetMode('hiragana')">🎌 Hiragana</button>
+      <button class="quiz-mode-tab" id="quiz-tab-vocab" onclick="quizSetMode('vocab')">📖 Vocabulaire</button>
     </div>
 
     <!-- Stage kana -->
@@ -2044,6 +2125,59 @@ body.battle-mode .enc-toast-box.show{display:block;animation:encRise 2.2s ease f
 
     <!-- Retour -->
     <button id="quiz-back-btn" onclick="hideQuiz()">← Retour au menu</button>
+  </div>
+</div>
+
+<!-- ═══ STATS OVERLAY ═══ -->
+<div id="stats-overlay" class="hidden">
+  <div id="confetti-stats" style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;"></div>
+  <div id="stats-inner">
+    <div id="stats-header">
+      <div id="stats-robot">🤖</div>
+      <div id="stats-title">Tes stats d'apprentissage</div>
+      <div id="stats-subtitle">Kana-kun suit ta progression !</div>
+    </div>
+    <div id="stats-summary">
+      <div class="stats-sum-card">
+        <div class="stats-sum-val" id="stats-sum-tested">0</div>
+        <div class="stats-sum-lbl">testés</div>
+      </div>
+      <div class="stats-sum-card">
+        <div class="stats-sum-val" id="stats-sum-pct" style="color:#00cc66">—</div>
+        <div class="stats-sum-lbl">réussite</div>
+      </div>
+      <div class="stats-sum-card">
+        <div class="stats-sum-val" id="stats-sum-mastered">0</div>
+        <div class="stats-sum-lbl">maîtrisés</div>
+      </div>
+      <div class="stats-sum-card">
+        <div class="stats-sum-val" id="stats-sum-streak" style="color:var(--neon-gold)">0</div>
+        <div class="stats-sum-lbl">streak max</div>
+      </div>
+    </div>
+    <div id="stats-tabs">
+      <button class="stats-tab active" id="stats-tab-kana" onclick="statsSetTab('kana')">🎌 Hiragana</button>
+      <button class="stats-tab" id="stats-tab-vocab" onclick="statsSetTab('vocab')">📖 Vocabulaire</button>
+    </div>
+    <div id="stats-legend">
+      <div class="stats-leg"><div class="stats-leg-dot" style="background:#72e8b8"></div>Maîtrisé ≥80%</div>
+      <div class="stats-leg"><div class="stats-leg-dot" style="background:#ffe580"></div>En cours</div>
+      <div class="stats-leg"><div class="stats-leg-dot" style="background:#ffb3b3"></div>À revoir</div>
+      <div class="stats-leg"><div class="stats-leg-dot" style="background:rgba(255,255,255,.55);border:1px solid #ccc"></div>Pas encore</div>
+    </div>
+    <div id="stats-scroll">
+      <div id="stats-grid"></div>
+    </div>
+    <button id="stats-back-btn" onclick="hideStats()">← Retour au menu</button>
+  </div>
+  <!-- Tooltip détail -->
+  <div id="stats-tooltip" class="hidden">
+    <span class="tt-kana" id="tt-kana">あ</span>
+    <div class="tt-row"><span>✅ Bonnes</span><span class="tt-good" id="tt-good">0</span></div>
+    <div class="tt-row"><span>❌ Ratés</span><span class="tt-bad" id="tt-bad">0</span></div>
+    <div class="tt-row"><span>📊 Tests</span><span id="tt-tests">0</span></div>
+    <div class="tt-row"><span>🔥 Streak</span><span style="color:var(--neon-gold)" id="tt-streak">0</span></div>
+    <div class="tt-date" id="tt-date"></div>
   </div>
 </div>
 
@@ -2398,6 +2532,43 @@ const KS = {
   getPlayers(){ return this._get(this.KEYS.PLAYERS)||{p1:'Joueur 1',p2:'Joueur 2'}; },
   savePlayers(players){ this._set(this.KEYS.PLAYERS,players); },
   getPlayerName(pid){ return this.getPlayers()[pid]||'Joueur 1'; },
+
+  // ── Stats Quiz kana ──
+  KEYS_QUIZ_STATS: 'kanadrop_quiz_stats',
+  getQuizStats(){ return this._get('kanadrop_quiz_stats')||{}; },
+  recordQuizAnswer(kana, correct){
+    const stats = this.getQuizStats();
+    if(!stats[kana]) stats[kana] = {tests:0, correct:0, wrong:0, lastDate:null, streak:0, bestStreak:0};
+    stats[kana].tests++;
+    if(correct){
+      stats[kana].correct++;
+      stats[kana].streak = (stats[kana].streak||0) + 1;
+      stats[kana].bestStreak = Math.max(stats[kana].bestStreak||0, stats[kana].streak);
+    } else {
+      stats[kana].wrong++;
+      stats[kana].streak = 0;
+    }
+    stats[kana].lastDate = new Date().toISOString();
+    this._set('kanadrop_quiz_stats', stats);
+  },
+
+  // ── Stats Quiz Vocabulaire ──
+  getVocabStats(){ return this._get('kanadrop_vocab_stats')||{}; },
+  recordVocabAnswer(wordKana, correct){
+    const stats = this.getVocabStats();
+    if(!stats[wordKana]) stats[wordKana]={tests:0,correct:0,wrong:0,lastDate:null,streak:0,bestStreak:0};
+    stats[wordKana].tests++;
+    if(correct){
+      stats[wordKana].correct++;
+      stats[wordKana].streak=(stats[wordKana].streak||0)+1;
+      stats[wordKana].bestStreak=Math.max(stats[wordKana].bestStreak||0,stats[wordKana].streak);
+    } else {
+      stats[wordKana].wrong++;
+      stats[wordKana].streak=0;
+    }
+    stats[wordKana].lastDate=new Date().toISOString();
+    this._set('kanadrop_vocab_stats',stats);
+  },
 };
 
 // Charger les keybinds sauvegardés au démarrage
@@ -2449,7 +2620,7 @@ let ROWS=12;
   }
   [
     'confetti','confetti-menu','confetti-mode',
-    'confetti-wof','confetti-tuto','confetti-kb','confetti-quiz'
+    'confetti-wof','confetti-tuto','confetti-kb','confetti-quiz','confetti-stats'
   ].forEach(id=>{ const el=document.getElementById(id); if(el) fillConfetti(el); });
 })();
 
@@ -5286,6 +5457,10 @@ const BOT={
         <span style="font-size:20px;">⚙️</span>
         <div><div style="font-size:13px;">Config touches</div><div style="font-size:10px;opacity:.75;font-weight:700;">Personnaliser les contrôles</div></div>
       </button>
+      <button id="bot-nav-stats" style="background:linear-gradient(135deg,#2e1065,#4c1d95);border:none;border-radius:14px;color:#fff;padding:10px 14px;font-size:13px;font-family:'Nunito',sans-serif;font-weight:900;cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:9px;transition:transform .15s,box-shadow .15s;box-shadow:0 3px 12px rgba(46,16,101,.4);">
+        <span style="font-size:20px;">📊</span>
+        <div><div style="font-size:13px;">Mes stats Quiz</div><div style="font-size:10px;opacity:.75;font-weight:700;">Progression kana</div></div>
+      </button>
       <div style="text-align:center;color:#7c6a9a;font-size:10px;padding-top:2px;">🌸 かなDROP · Kana-kun</div>
     </div>
     <button id="bot-toggle" style="background:linear-gradient(135deg,#a855f7,#4d96ff);border:none;border-radius:50%;width:46px;height:46px;font-size:22px;cursor:pointer;box-shadow:0 3px 14px rgba(168,85,247,.5);display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;" title="Menu Kana-kun">🤖</button>
@@ -5303,7 +5478,7 @@ const BOT={
   });
 
   // Hover effect on nav buttons
-  ['bot-nav-tuto','bot-nav-wof','bot-nav-keys'].forEach(id=>{
+  ['bot-nav-tuto','bot-nav-wof','bot-nav-keys','bot-nav-stats'].forEach(id=>{
     const btn=document.getElementById(id);
     btn.addEventListener('mouseenter',()=>{btn.style.transform='translateX(-3px) scale(1.02)';});
     btn.addEventListener('mouseleave',()=>{btn.style.transform='';});
@@ -5312,6 +5487,7 @@ const BOT={
   document.getElementById('bot-nav-tuto').addEventListener('click',()=>{panel.style.display='none';toggle.style.transform='';toggle.style.boxShadow='0 3px 14px rgba(168,85,247,.5)';showTuto();});
   document.getElementById('bot-nav-wof').addEventListener('click',()=>{panel.style.display='none';toggle.style.transform='';toggle.style.boxShadow='0 3px 14px rgba(168,85,247,.5)';showWallOfFame();});
   document.getElementById('bot-nav-keys').addEventListener('click',()=>{panel.style.display='none';toggle.style.transform='';toggle.style.boxShadow='0 3px 14px rgba(168,85,247,.5)';showKeybinds();});
+  document.getElementById('bot-nav-stats').addEventListener('click',()=>{panel.style.display='none';toggle.style.transform='';toggle.style.boxShadow='0 3px 14px rgba(168,85,247,.5)';showStats();});
 })();
 
 
@@ -5597,10 +5773,10 @@ const QUIZ_KANA_LIST = (()=>{
   return list;
 })();
 
-let _quizMode = 'learn';
-let _quizQueue = [];        // file d'attente : kana à tester (inclut les ratés remis en file)
-let _quizDone = new Set();  // kana maîtrisés (bonne réponse du 1er coup)
-let _quizErrors = new Set();// kana ratés au moins une fois
+let _quizMode = 'hiragana'; // 'hiragana' | 'vocab'
+let _quizQueue = [];
+let _quizDone = new Set();
+let _quizErrors = new Set();
 let _quizScore = 0;
 let _quizStreak = 0;
 let _quizCorrectIdx = 0;
@@ -5611,38 +5787,63 @@ let _quizLastExWord = null; // anti-répétition du mot exemple
 const QUIZ_TIMER_MS = 5000;
 const QUIZ_AUTO_ADVANCE_MS = 1800; // délai avant passage auto à la question suivante
 
+// Liste vocabulaire : tous les mots uniques de tous les niveaux
+const QUIZ_VOCAB_LIST = (()=>{
+  const seen = new Set();
+  const list = [];
+  ALL_LEVELS.forEach(lv=>{
+    lv.words.forEach(w=>{
+      if(!seen.has(w.kana)){
+        seen.add(w.kana);
+        list.push(w);
+      }
+    });
+  });
+  return list;
+})();
+
 function showQuiz(){
   document.getElementById('menu-overlay').classList.add('hidden');
   document.getElementById('quiz-overlay').classList.remove('hidden');
-  // Initialiser les confettis quiz
   const cq = document.getElementById('confetti-quiz');
-  if(cq && !cq.children.length && typeof fillConfetti === 'function') fillConfetti(cq);
-  _quizScore = 0;
-  _quizStreak = 0;
-  _quizDone = new Set();
-  _quizErrors = new Set();
-  _quizQueue = QUIZ_KANA_LIST.map((_,i)=>i);
-  // Couleur de fond initiale aléatoire
+  if(cq && !cq.children.length && typeof fillConfetti==='function') fillConfetti(cq);
+  _quizScore = 0; _quizStreak = 0;
+  _quizDone = new Set(); _quizErrors = new Set();
+  _quizLastExWord = null;
   _quizChangeBg();
+  _quizInitQueue();
   _quizRender();
+}
+
+function _quizInitQueue(){
+  if(_quizMode==='hiragana'){
+    _quizQueue = QUIZ_KANA_LIST.map((_,i)=>i);
+  } else {
+    _quizQueue = QUIZ_VOCAB_LIST.map((_,i)=>i);
+  }
 }
 
 function hideQuiz(){
   _quizStopTimer();
-  if(_quizAutoTimeout){ clearTimeout(_quizAutoTimeout); _quizAutoTimeout=null; }
+  if(_quizAutoTimeout){clearTimeout(_quizAutoTimeout);_quizAutoTimeout=null;}
   document.getElementById('quiz-overlay').classList.add('hidden');
   document.getElementById('menu-overlay').classList.remove('hidden');
 }
 
 function quizSetMode(mode){
   _quizMode = mode;
-  document.getElementById('quiz-tab-learn').classList.toggle('active', mode==='learn');
-  document.getElementById('quiz-tab-speed').classList.toggle('active', mode==='speed');
+  document.getElementById('quiz-tab-hiragana').classList.toggle('active', mode==='hiragana');
+  document.getElementById('quiz-tab-vocab').classList.toggle('active', mode==='vocab');
+  // Réinitialiser complètement
+  _quizScore=0; _quizStreak=0; _quizDone=new Set(); _quizErrors=new Set();
+  _quizLastExWord=null;
+  _quizInitQueue();
   _quizRender();
 }
 
 function _quizCurrentItem(){
   if(!_quizQueue.length) return null;
+  if(_quizMode==='vocab') return QUIZ_VOCAB_LIST[_quizQueue[0]];
   return QUIZ_KANA_LIST[_quizQueue[0]];
 }
 
@@ -5656,71 +5857,92 @@ function _quizChangeBg(){
 }
 
 function _quizRender(){
-  if(_quizAutoTimeout){ clearTimeout(_quizAutoTimeout); _quizAutoTimeout=null; }
-  if(!_quizQueue.length){ _quizVictory(); return; }
+  if(_quizAutoTimeout){clearTimeout(_quizAutoTimeout);_quizAutoTimeout=null;}
+  if(!_quizQueue.length){_quizVictory();return;}
 
-  // Changer de couleur toutes les 10 questions répondues
-  if(_quizDone.size > 0 && _quizDone.size % 10 === 0 && !_quizAnswered){
-    _quizChangeBg();
-  }
+  // Changement couleur tous les 10
+  if(_quizDone.size>0 && _quizDone.size%10===0 && !_quizAnswered) _quizChangeBg();
 
-  _quizAnswered = false;
+  _quizAnswered=false;
   _quizStopTimer();
 
-  const item = _quizCurrentItem();
-  const kana = item.kana;
-  const correctRomaji = KANA_TO_ROMAJI[kana] || kana;
-  const total = QUIZ_KANA_LIST.length;
-  const qNum = total - _quizQueue.length + 1;
+  const item=_quizCurrentItem();
+  const isVocab=(_quizMode==='vocab');
+  const total=isVocab?QUIZ_VOCAB_LIST.length:QUIZ_KANA_LIST.length;
+  const qNum=total-_quizQueue.length+1;
 
-  // Header : "Kana X/53" | score | 🔥streak 💀erreurs
-  document.getElementById('quiz-progress-text').textContent = `Kana ${qNum}/${total}`;
-  document.getElementById('quiz-score-display').textContent = _quizScore.toLocaleString('fr-FR') + ' pts';
-  const streakTxt = _quizStreak >= 3 ? `🔥×${_quizStreak}` : '';
-  const errTxt = _quizErrors.size > 0 ? `💀${_quizErrors.size}` : '';
-  document.getElementById('quiz-streak-display').textContent = [streakTxt, errTxt].filter(Boolean).join(' ');
+  // Header
+  const label=isVocab?'Mot':'Kana';
+  document.getElementById('quiz-progress-text').textContent=`${label} ${qNum}/${total}`;
+  document.getElementById('quiz-score-display').textContent=_quizScore.toLocaleString('fr-FR')+' pts';
+  const streakTxt=_quizStreak>=3?`🔥×${_quizStreak}`:'';
+  const errTxt=_quizErrors.size>0?`💀${_quizErrors.size}`:'';
+  document.getElementById('quiz-streak-display').textContent=[streakTxt,errTxt].filter(Boolean).join(' ');
 
-  // Carte kana — digraphe = classe spéciale pour réduire la taille
-  const card = document.getElementById('quiz-kana-card');
-  card.textContent = kana;
-  card.style.background = kanaBg(kana[0]);
-  card.style.fontSize = '';
-  card.className = kana.length > 1 ? 'digraph' : '';
-  setTimeout(()=>soundDrop(), 10);
-  void card.offsetWidth;
-  card.classList.add('drop-in');
+  const card=document.getElementById('quiz-kana-card');
 
-  // Cacher révélation
+  if(isVocab){
+    // MODE VOCAB : afficher le grand emoji
+    card.className='emoji-mode';
+    card.textContent=item.emoji;
+    card.style.fontSize='';
+    card.style.background='transparent';
+    void card.offsetWidth;
+    card.classList.add('emoji-in');
+
+    // 4 propositions : mots en hiragana
+    const allWords=QUIZ_VOCAB_LIST.map(w=>w.kana).filter(k=>k!==item.kana);
+    const distractors=shuffle(allWords).slice(0,3);
+    const choices=shuffle([item.kana,...distractors]);
+    _quizCorrectIdx=choices.indexOf(item.kana);
+
+    choices.forEach((k,i)=>{
+      const btn=document.getElementById('qc'+i);
+      btn.textContent=k;
+      // Adapter la taille selon la longueur du mot
+      const kLen=[...k].length;
+      const fs = kLen>=5?'clamp(12px,3.2vw,16px)':kLen>=4?'clamp(13px,3.5vw,18px)':kLen>=3?'clamp(14px,4vw,20px)':'clamp(16px,4.5vw,22px)';
+      btn.style.fontSize=fs;
+      btn.style.fontFamily="'Noto Sans JP',sans-serif";
+      btn.style.fontWeight='900';
+      btn.className='quiz-choice-btn';
+      btn.disabled=false;
+      btn.style.display='';
+    });
+  } else {
+    // MODE HIRAGANA : afficher le kana
+    const kana=item.kana;
+    card.textContent=kana;
+    card.style.background=kanaBg(kana[0]);
+    card.style.fontSize='';
+    card.className=kana.length>1?'digraph':'';
+    setTimeout(()=>soundDrop(),10);
+    void card.offsetWidth;
+    card.classList.add('drop-in');
+
+    const correctRomaji=KANA_TO_ROMAJI[kana]||kana;
+    const allRomajis=Object.values(KANA_TO_ROMAJI).filter(r=>r!==correctRomaji);
+    const distractors=shuffle(allRomajis).slice(0,3);
+    const choices=shuffle([correctRomaji,...distractors]);
+    _quizCorrectIdx=choices.indexOf(correctRomaji);
+
+    choices.forEach((r,i)=>{
+      const btn=document.getElementById('qc'+i);
+      btn.textContent=r;
+      btn.style.fontSize='';
+      btn.style.fontFamily="'Fredoka One',cursive";
+      btn.style.fontWeight='';
+      btn.className='quiz-choice-btn';
+      btn.disabled=false;
+      btn.style.display='';
+    });
+  }
+
   document.getElementById('quiz-reveal').classList.add('hidden');
 
-  // Réafficher les boutons
-  for(let i=0;i<4;i++){
-    const btn = document.getElementById('qc'+i);
-    btn.style.display = '';
-    btn.style.visibility = '';
-  }
-
-  // Générer 4 choix
-  const allRomajis = Object.values(KANA_TO_ROMAJI).filter(r=>r!==correctRomaji);
-  const distractors = shuffle(allRomajis).slice(0,3);
-  const choices = shuffle([correctRomaji, ...distractors]);
-  _quizCorrectIdx = choices.indexOf(correctRomaji);
-
-  choices.forEach((r,i)=>{
-    const btn = document.getElementById('qc'+i);
-    btn.textContent = r;
-    btn.className = 'quiz-choice-btn';
-    btn.disabled = false;
-  });
-
-  // Timer mode vitesse
-  const timerBar = document.getElementById('quiz-timer-bar');
-  if(_quizMode === 'speed'){
-    timerBar.classList.remove('hidden');
-    _quizStartTimer();
-  } else {
-    timerBar.classList.add('hidden');
-  }
+  // Timer TOUJOURS actif (les deux modes)
+  document.getElementById('quiz-timer-bar').classList.remove('hidden');
+  _quizStartTimer();
 }
 
 function _quizStartTimer(){
@@ -5749,99 +5971,141 @@ function quizAnswer(choiceIdx){
 }
 
 function _quizReveal(choiceIdx){
-  _quizAnswered = true;
-  const item = _quizCurrentItem();
-  const kana = item.kana;
-  const correct = choiceIdx === _quizCorrectIdx;
+  _quizAnswered=true;
+  const item=_quizCurrentItem();
+  const isVocab=(_quizMode==='vocab');
+  const correct=choiceIdx===_quizCorrectIdx;
+  const itemKey=item.kana; // kana pour hiragana, mot pour vocab
 
   // Colorer boutons
   for(let i=0;i<4;i++){
-    const btn = document.getElementById('qc'+i);
-    btn.disabled = true;
-    if(i === _quizCorrectIdx) btn.classList.add('correct');
-    else if(i === choiceIdx && !correct) btn.classList.add('wrong');
+    const btn=document.getElementById('qc'+i);
+    btn.disabled=true;
+    if(i===_quizCorrectIdx) btn.classList.add('correct');
+    else if(i===choiceIdx && !correct) btn.classList.add('wrong');
   }
 
-  // Gérer la file
+  // Gérer la file + stats
   _quizQueue.shift();
+  if(typeof KS!=='undefined'){
+    if(isVocab) KS.recordVocabAnswer(itemKey,correct);
+    else KS.recordQuizAnswer(itemKey,correct);
+  }
+
   if(correct){
     _quizStreak++;
-    _quizDone.add(kana);
-    _quizScore += 100 * (_quizStreak >= 5 ? 2 : 1);
+    _quizDone.add(itemKey);
+    _quizScore+=100*(_quizStreak>=5?2:1);
     soundWord();
-    const card = document.getElementById('quiz-kana-card');
-    const r = card.getBoundingClientRect();
-    burst(r.left+r.width/2, r.top+r.height/2, _quizStreak>=5?28:16, _quizStreak>=5?'boss':'combo');
-    if(_quizStreak % 5 === 0){
-      setTimeout(()=>{
-        burst(window.innerWidth/2, window.innerHeight*.4, 40, 'logo');
-        burst(window.innerWidth/2, window.innerHeight*.4, 25, 'combo');
-      }, 200);
+    const card=document.getElementById('quiz-kana-card');
+    const r=card.getBoundingClientRect();
+    burst(r.left+r.width/2,r.top+r.height/2,_quizStreak>=5?28:16,_quizStreak>=5?'boss':'combo');
+    if(_quizStreak%5===0){
+      setTimeout(()=>{burst(window.innerWidth/2,window.innerHeight*.4,40,'logo');burst(window.innerWidth/2,window.innerHeight*.4,25,'combo');},200);
       soundLevelUp();
     }
-    // Changer la couleur de fond toutes les 10 bonnes réponses
-    if(_quizDone.size % 10 === 0) setTimeout(_quizChangeBg, 400);
+    if(_quizDone.size%10===0) setTimeout(_quizChangeBg,400);
   } else {
-    _quizStreak = 0;
-    _quizErrors.add(kana);
-    _quizDone.delete(kana);
+    _quizStreak=0;
+    _quizErrors.add(itemKey);
+    _quizDone.delete(itemKey);
     soundGameOver();
-    const reinsertPos = Math.min(2 + Math.floor(Math.random()*3), _quizQueue.length);
-    const failIdx = QUIZ_KANA_LIST.findIndex(it=>it.kana===kana);
-    _quizQueue.splice(reinsertPos, 0, failIdx);
+    const reinsertPos=Math.min(2+Math.floor(Math.random()*3),_quizQueue.length);
+    const failIdx=isVocab
+      ? QUIZ_VOCAB_LIST.findIndex(it=>it.kana===itemKey)
+      : QUIZ_KANA_LIST.findIndex(it=>it.kana===itemKey);
+    _quizQueue.splice(reinsertPos,0,failIdx);
   }
 
-  document.getElementById('quiz-score-display').textContent = _quizScore.toLocaleString('fr-FR') + ' pts';
-  document.getElementById('quiz-streak-display').textContent = _quizStreak >= 3 ? `🔥×${_quizStreak}` : '';
-  document.getElementById('quiz-progress-text').textContent =
-    `${_quizDone.size}/${QUIZ_KANA_LIST.length} maîtrisés${_quizErrors.size ? ' · '+_quizErrors.size+' ⚠️':''}`;
+  document.getElementById('quiz-score-display').textContent=_quizScore.toLocaleString('fr-FR')+' pts';
+  const st=_quizStreak>=3?`🔥×${_quizStreak}`:'';
+  const et=_quizErrors.size>0?`💀${_quizErrors.size}`:'';
+  document.getElementById('quiz-streak-display').textContent=[st,et].filter(Boolean).join(' ');
+  const total=isVocab?QUIZ_VOCAB_LIST.length:QUIZ_KANA_LIST.length;
+  const qNum=total-_quizQueue.length+1;
+  document.getElementById('quiz-progress-text').textContent=`${isVocab?'Mot':'Kana'} ${Math.min(qNum,total)}/${total}`;
 
-  // Choisir le mot exemple en évitant la répétition
-  const candidates = item.candidates || [item.exWord];
-  let exWord = candidates.length > 1
-    ? candidates.filter(c=>c!==_quizLastExWord)[Math.floor(Math.random()*(candidates.length-1))]
-    : candidates[0];
-  if(!exWord) exWord = candidates[0];
-  _quizLastExWord = exWord;
+  const card=document.getElementById('quiz-kana-card');
 
-  // Exploser la carte puis afficher le grand emoji SANS cadre
-  const card = document.getElementById('quiz-kana-card');
-  card.classList.remove('drop-in');
-  card.classList.add('explode');
-
-  setTimeout(()=>{
-    card.className = 'emoji-mode';
-    card.textContent = exWord.emoji;
-    card.style.fontSize = '';
-    card.style.background = 'transparent';
-    void card.offsetWidth;
-    card.classList.add('emoji-in');
+  if(isVocab){
+    // MODE VOCAB : après réponse, montrer le kana en grand sur la carte
+    card.classList.remove('emoji-in','emoji-mode');
+    card.style.background=kanaBg(item.kana[0]);
+    card.textContent=item.kana;
+    // Adapter la taille de la carte selon la longueur du mot
+    const kLen=[...item.kana].length;
+    const cardFs = kLen>=5?'clamp(20px,5vw,28px)':kLen>=4?'clamp(26px,6.5vw,34px)':kLen>=3?'clamp(34px,9vw,44px)':kLen>=2?'clamp(44px,12vw,58px)':'clamp(56px,15vw,72px)';
+    card.style.fontSize = cardFs;
+    card.style.letterSpacing = kLen>=3?'-1px':'0px';
+    card.style.whiteSpace = 'nowrap';
+    card.className=kLen>1?'drop-in':'drop-in';
     soundDrop();
-  }, 330);
 
-  // Révélation épurée : mot avec kana ciblé coloré + traduction
-  const wordKana = exWord.kana;
-  const highlighted = wordKana.replace(kana, `<span class="kana-highlight">${kana}</span>`);
-  document.getElementById('quiz-reveal-word-kana').innerHTML = highlighted;
-  document.getElementById('quiz-reveal-word-meaning').textContent = exWord.meaning;
+    // Révélation : kana + traduction
+    const wordEl=document.getElementById('quiz-reveal-word-kana');
+    wordEl.style.fontSize='clamp(16px,6vw,38px)'; // reset
+    wordEl.textContent=item.kana;
+    document.getElementById('quiz-reveal-word-meaning').textContent=item.emoji+' '+item.meaning;
+    // Auto-fit : réduire jusqu'à tenir dans la largeur
+    requestAnimationFrame(()=>_quizFitWordEl(wordEl));
+  } else {
+    // MODE HIRAGANA : exploser le kana puis montrer l'emoji du mot exemple
+    const kana=item.kana;
+    card.classList.remove('drop-in');
+    card.classList.add('explode');
+    const exWord=_quizPickExWord(item);
+    _quizLastExWord=exWord;
 
-  const resultEl = document.getElementById('quiz-reveal-result');
-  resultEl.textContent = correct ? (choiceIdx>=0 ? '✅' : '') : '❌';
-  resultEl.className = correct ? 'correct' : 'wrong';
+    setTimeout(()=>{
+      card.className='emoji-mode';
+      card.textContent=exWord.emoji;
+      card.style.fontSize='';
+      card.style.background='transparent';
+      void card.offsetWidth;
+      card.classList.add('emoji-in');
+      soundDrop();
+    },330);
 
-  const reveal = document.getElementById('quiz-reveal');
-  reveal.style.animation = 'none'; void reveal.offsetWidth;
-  reveal.style.animation = 'quizRevealIn .4s cubic-bezier(.34,1.56,.64,1) both';
+    const wordKana=exWord.kana;
+    const highlighted=wordKana.replace(kana,`<span class="kana-highlight">${kana}</span>`);
+    const wEl=document.getElementById('quiz-reveal-word-kana');
+    wEl.style.fontSize='clamp(16px,6vw,38px)';
+    wEl.innerHTML=highlighted;
+    document.getElementById('quiz-reveal-word-meaning').textContent=exWord.meaning;
+    requestAnimationFrame(()=>_quizFitWordEl(wEl));
+
+    setTimeout(()=>speakWord(kana,false),300);
+    setTimeout(()=>speakWord(exWord.kana,false),1400);
+  }
+
+  const resultEl=document.getElementById('quiz-reveal-result');
+  resultEl.textContent=correct?'✅':'❌';
+  resultEl.className=correct?'correct':'wrong';
+
+  const reveal=document.getElementById('quiz-reveal');
+  reveal.style.animation='none';void reveal.offsetWidth;
+  reveal.style.animation='quizRevealIn .4s cubic-bezier(.34,1.56,.64,1) both';
   reveal.classList.remove('hidden');
 
-  // Son kana puis mot exemple
-  setTimeout(()=>speakWord(kana, false), 300);
-  setTimeout(()=>speakWord(exWord.kana, false), 1400);
-
-  // Auto-avance
-  _quizAutoTimeout = setTimeout(()=>_quizRender(), QUIZ_AUTO_ADVANCE_MS + (correct ? 0 : 500));
+  _quizAutoTimeout=setTimeout(()=>_quizRender(),QUIZ_AUTO_ADVANCE_MS+(correct?0:500));
 }
 
+function _quizFitWordEl(el){
+  // Réduit la font-size jusqu'à ce que scrollWidth <= offsetWidth
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  const minSize = 14;
+  while(el.scrollWidth > el.offsetWidth && size > minSize){
+    size -= 1;
+    el.style.fontSize = size + 'px';
+  }
+}
+
+function _quizPickExWord(item){
+  const candidates=item.candidates||[item.exWord];
+  if(candidates.length<=1) return candidates[0];
+  const filtered=candidates.filter(c=>c!==_quizLastExWord);
+  return filtered[Math.floor(Math.random()*filtered.length)]||candidates[0];
+}
 function _quizVictory(){
   _quizStopTimer();
   soundLevelUp();
@@ -5885,6 +6149,181 @@ function _quizVictory(){
     }, 500);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+//  PAGE STATS KANA-KUN
+// ═══════════════════════════════════════════════════════════════════
+
+// Table traditionnelle gojuuon — null = case vide (kana absent du jeu)
+const STATS_GOJUUON = [
+  // ── Gojuuon de base (あ→ん) ──
+  'あ','い','う','え','お',
+  'か','き','く','け','こ',
+  'さ','し','す','せ','そ',
+  'た','ち','つ','て','と',
+  'な','に','ぬ','ね','の',
+  'は','ひ','ふ','へ','ほ',
+  'ま','み','む','め','も',
+  'や', null,'ゆ', null,'よ',
+  'ら','り','る','れ','ろ',
+  'わ', null, null,'を','ん',
+  // ── Dakuten が行→ぼ行 ──
+  'が','ぎ','ぐ','げ','ご',
+  'ざ','じ','ず','ぜ','ぞ',
+  'だ','ぢ','づ','で','ど',
+  'ば','び','ぶ','べ','ぼ',
+  // ── Handakuten ぱ行 ──
+  'ぱ','ぴ','ぷ','ぺ','ぽ',
+  // ── Yoon きゃ行～ぴょ行 ──
+  'きゃ','きゅ','きょ',
+  'しゃ','しゅ','しょ',
+  'ちゃ','ちゅ','ちょ',
+  'にゃ','にゅ','にょ',
+  'ひゃ','ひゅ','ひょ',
+  'みゃ','みゅ','みょ',
+  'りゃ','りゅ','りょ',
+  'ぎゃ','ぎゅ','ぎょ',
+  'じゃ','じゅ','じょ',
+  'びゃ','びゅ','びょ',
+  'ぴゃ','ぴゅ','ぴょ',
+];
+
+// Kana effectivement présents dans le Quiz
+const _QUIZ_KANA_SET = new Set(QUIZ_KANA_LIST.map(it=>it.kana));
+
+let _statsTab = 'kana'; // 'kana' | 'vocab'
+
+function statsSetTab(tab){
+  _statsTab = tab;
+  document.getElementById('stats-tab-kana').classList.toggle('active', tab==='kana');
+  document.getElementById('stats-tab-vocab').classList.toggle('active', tab==='vocab');
+  _statsRender();
+}
+
+function showStats(){
+  document.getElementById('menu-overlay').classList.add('hidden');
+  document.getElementById('stats-overlay').classList.remove('hidden');
+  const cs = document.getElementById('confetti-stats');
+  if(cs && !cs.children.length && typeof fillConfetti==='function') fillConfetti(cs);
+  _statsRender();
+}
+
+function hideStats(){
+  document.getElementById('stats-overlay').classList.add('hidden');
+  document.getElementById('menu-overlay').classList.remove('hidden');
+  document.getElementById('stats-tooltip').classList.add('hidden');
+}
+
+function _statsRender(){
+  if(_statsTab==='vocab'){ _statsRenderVocab(); return; }
+  const stats=KS.getQuizStats();
+  let totalTests=0,totalCorrect=0,mastered=0,bestStreak=0;
+  STATS_GOJUUON.forEach(k=>{
+    if(!k) return;
+    const s=stats[k];
+    if(s&&s.tests>0){ totalTests+=s.tests; totalCorrect+=s.correct; bestStreak=Math.max(bestStreak,s.bestStreak||0); if((s.correct/s.tests)>=0.8)mastered++; }
+  });
+  const pct=totalTests>0?Math.round(totalCorrect/totalTests*100):null;
+  const tested=STATS_GOJUUON.filter(k=>k&&stats[k]&&stats[k].tests>0).length;
+  document.getElementById('stats-sum-tested').textContent=tested;
+  document.getElementById('stats-sum-pct').textContent=pct!==null?pct+'%':'—';
+  document.getElementById('stats-sum-mastered').textContent=mastered;
+  document.getElementById('stats-sum-streak').textContent=bestStreak;
+  const grid=document.getElementById('stats-grid');
+  grid.style.gridTemplateColumns='repeat(5,1fr)';
+  grid.innerHTML='';
+  let section='base';
+  STATS_GOJUUON.forEach((kana)=>{
+    if(kana==='きゃ'&&section==='base'){
+      section='yoon';
+      const sep=document.createElement('div');
+      sep.style.cssText='grid-column:1/-1;font-family:"Fredoka One",cursive;font-size:12px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;padding:6px 0 2px;text-align:center;';
+      sep.textContent='── Combinaisons ──';
+      grid.appendChild(sep);
+    }
+    if(kana===null){
+      const empty=document.createElement('div');
+      empty.className='stats-kana-cell';
+      empty.style.cssText='background:rgba(0,0,0,.03);border-color:transparent;box-shadow:none;cursor:default;';
+      grid.appendChild(empty); return;
+    }
+    const s=stats[kana]; const inQuiz=_QUIZ_KANA_SET.has(kana);
+    const cell=document.createElement('div'); cell.className='stats-kana-cell';
+    if(!inQuiz){ cell.style.cssText='background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.08);cursor:default;opacity:.4;'; cell.innerHTML=`<span class="stats-kana-char" style="font-size:clamp(13px,3.5vw,18px)">${kana}</span>`; grid.appendChild(cell); return; }
+    let sc='untested',pt='';
+    if(s&&s.tests>0){ const r=s.correct/s.tests; sc=r>=0.8?'mastered':r>=0.4?'learning':'struggling'; pt=Math.round(r*100)+'%'; }
+    cell.classList.add(sc);
+    const fs=kana.length>1?'font-size:clamp(11px,3vw,15px)':'';
+    cell.innerHTML=`<span class="stats-kana-char" style="${fs}">${kana}</span><span class="stats-kana-pct">${pt}</span>`;
+    cell.addEventListener('mouseenter',e=>_statsShowTooltip(e,kana,s));
+    cell.addEventListener('mouseleave',()=>document.getElementById('stats-tooltip').classList.add('hidden'));
+    cell.addEventListener('touchstart',e=>{e.preventDefault();_statsShowTooltip(e.touches[0],kana,s);},{passive:false});
+    grid.appendChild(cell);
+  });
+}
+
+function _statsRenderVocab(){
+  const stats=KS.getVocabStats();
+  let totalTests=0,totalCorrect=0,mastered=0,bestStreak=0;
+  QUIZ_VOCAB_LIST.forEach(w=>{
+    const s=stats[w.kana];
+    if(s&&s.tests>0){ totalTests+=s.tests; totalCorrect+=s.correct; bestStreak=Math.max(bestStreak,s.bestStreak||0); if((s.correct/s.tests)>=0.8)mastered++; }
+  });
+  const pct=totalTests>0?Math.round(totalCorrect/totalTests*100):null;
+  const tested=QUIZ_VOCAB_LIST.filter(w=>stats[w.kana]&&stats[w.kana].tests>0).length;
+  document.getElementById('stats-sum-tested').textContent=tested;
+  document.getElementById('stats-sum-pct').textContent=pct!==null?pct+'%':'—';
+  document.getElementById('stats-sum-mastered').textContent=mastered;
+  document.getElementById('stats-sum-streak').textContent=bestStreak;
+  const grid=document.getElementById('stats-grid');
+  grid.style.gridTemplateColumns='repeat(4,1fr)';
+  grid.innerHTML='';
+  QUIZ_VOCAB_LIST.forEach(w=>{
+    const s=stats[w.kana];
+    const cell=document.createElement('div'); cell.className='stats-kana-cell';
+    let sc='untested',pt='';
+    if(s&&s.tests>0){ const r=s.correct/s.tests; sc=r>=0.8?'mastered':r>=0.4?'learning':'struggling'; pt=Math.round(r*100)+'%'; }
+    cell.classList.add(sc);
+    cell.innerHTML=`<span style="font-size:clamp(32px,8.5vw,44px);line-height:1">${w.emoji}</span><span style="font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:clamp(14px,3.8vw,18px);color:#1a1040;margin-top:3px">${w.kana}</span><span class="stats-kana-pct" style="font-size:clamp(11px,2.8vw,13px)">${pt}</span>`;
+    cell.addEventListener('mouseenter',e=>_statsShowTooltip(e,w.kana,s,w));
+    cell.addEventListener('mouseleave',()=>document.getElementById('stats-tooltip').classList.add('hidden'));
+    cell.addEventListener('touchstart',e=>{e.preventDefault();_statsShowTooltip(e.touches[0],w.kana,s,w);},{passive:false});
+    grid.appendChild(cell);
+  });
+}
+
+function _statsShowTooltip(e, kana, s, word){
+  const tt = document.getElementById('stats-tooltip');
+  if(!s || s.tests===0){ tt.classList.add('hidden'); return; }
+  // Afficher emoji + kana ou juste kana
+  document.getElementById('tt-kana').textContent = word ? word.emoji+' '+kana : kana;
+  document.getElementById('tt-good').textContent = s.correct;
+  document.getElementById('tt-bad').textContent = s.wrong;
+  document.getElementById('tt-tests').textContent = s.tests;
+  document.getElementById('tt-streak').textContent = s.bestStreak||0;
+
+  // Date formatée
+  let dateTxt = '';
+  if(s.lastDate){
+    try{
+      const d=new Date(s.lastDate), now=new Date(), diff=Math.floor((now-d)/864e5);
+      if(diff===0) dateTxt="Testé aujourd'hui";
+      else if(diff===1) dateTxt='Testé hier';
+      else if(diff<7) dateTxt=`Il y a ${diff} jours`;
+      else dateTxt=d.toLocaleDateString('fr-FR');
+    }catch(e){ dateTxt=''; }
+  }
+  document.getElementById('tt-date').textContent = dateTxt;
+
+  tt.classList.remove('hidden');
+  // Positionner le tooltip près du curseur sans déborder
+  const tx = Math.min(e.clientX+12, window.innerWidth-180);
+  const ty = Math.min(e.clientY-10, window.innerHeight-160);
+  tt.style.left = tx+'px';
+  tt.style.top  = ty+'px';
+}
+
+// ─────────────────────────────────────────────────────────────────
 
 // Init initial calcRows
 calcRows();
