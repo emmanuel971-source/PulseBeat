@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>BPM Detector</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BPM Detector Pro</title>
 
 <style>
 body {
@@ -13,19 +13,23 @@ body {
   padding:20px;
 }
 
-.level-meter-bg {
+h1 { font-size:50px; }
+
+.meter {
   width:100%;
-  height:10px;
+  height:12px;
   background:#222;
   position:relative;
-  margin-bottom:5px;
+  margin-bottom:8px;
 }
-.level-meter-fill {
+
+.fill {
   height:100%;
   width:0%;
   background:linear-gradient(90deg,#47ffe8,#e8ff47,#ff4747);
 }
-.threshold-line {
+
+.threshold {
   position:absolute;
   top:0;
   width:2px;
@@ -35,222 +39,262 @@ body {
 
 canvas { width:100%; height:80px; background:#111; }
 
-.controls { margin-top:15px; }
-.controls label { font-size:12px; display:block; margin-top:5px; }
+.controls label {
+  display:block;
+  font-size:12px;
+  margin-top:5px;
+}
 
-button { margin-top:15px; padding:10px; }
+button { padding:10px; margin-top:10px; }
 
 </style>
 </head>
 
 <body>
 
-<h2>BPM Detector</h2>
+<h2>BPM Detector (quasi pro)</h2>
 
-<div class="level-meter-bg">
-  <div class="level-meter-fill" id="levelMeter"></div>
-  <div class="threshold-line" id="thresholdLine"></div>
+<div class="meter">
+  <div class="fill" id="meter"></div>
+  <div class="threshold" id="threshold"></div>
 </div>
 
-<div id="levelDb">-∞ dB</div>
+<div id="db">-∞ dB</div>
 
-<canvas id="waveform"></canvas>
+<canvas id="wave"></canvas>
 
 <h1 id="bpm">--</h1>
 
-<button onclick="toggleDetection()">START / STOP</button>
+<button onclick="toggle()">START / STOP</button>
 
 <div class="controls">
-  <label>Silence <input type="range" id="silenceSlider" min="-100" max="-20" value="-85"></label>
-  <label>Seuil <input type="range" id="thresholdSlider" min="0.5" max="3" step="0.1" value="1.1"></label>
-  <label>Transient <input type="range" id="transientSlider" min="5" max="80" value="25"></label>
-  <label>BPM Min <input type="range" id="bpmMinSlider" min="30" max="120" value="50"></label>
-  <label>BPM Max <input type="range" id="bpmMaxSlider" min="120" max="300" value="220"></label>
+  <label>Sensibilité <input type="range" id="sens" min="1.2" max="3" step="0.1" value="1.8"></label>
+  <label>Lissage <input type="range" id="smooth" min="0.7" max="0.99" step="0.01" value="0.9"></label>
 </div>
 
 <script>
 
-// ==========================
-// PARAMÈTRES
-// ==========================
-
-let SILENCE_GATE_DB = -85;
-let THRESHOLD_MULT = 1.1;
-let TRANSIENT_THRESHOLD = 25;
-let BPM_MIN = 50;
-let BPM_MAX = 220;
-
-const FFT_SIZE = 2048;
-const MIN_BEAT_INTERVAL_MS = 250;
-
-// ==========================
+// ======================
 // AUDIO
-// ==========================
+// ======================
 
-let audioCtx, analyser, stream;
-let running = false;
+let ctx, analyser, src, stream;
+let running=false;
 
-let lastBeatTime = 0;
-let beatTimes = [];
+// ======================
+// STATE
+// ======================
 
-let dbHistory = [];
-let lastDbUpdate = 0;
+let energyHistory=[];
+let onsetHistory=[];
+let beatTimes=[];
 
-// ==========================
+let lastBeat=0;
+
+// ======================
+// PARAMS
+// ======================
+
+let SENS=1.8;
+let SMOOTH=0.9;
+
+// ======================
 // UI
-// ==========================
+// ======================
 
-const levelMeter = document.getElementById("levelMeter");
-const levelDb = document.getElementById("levelDb");
-const thresholdLine = document.getElementById("thresholdLine");
+const meter = document.getElementById("meter");
+const thresholdEl = document.getElementById("threshold");
 const bpmEl = document.getElementById("bpm");
+const dbEl = document.getElementById("db");
 
-const canvas = document.getElementById("waveform");
-const ctx = canvas.getContext("2d");
+const canvas = document.getElementById("wave");
+const cctx = canvas.getContext("2d");
 
-// sliders
-silenceSlider.oninput = e => SILENCE_GATE_DB = +e.target.value;
-thresholdSlider.oninput = e => THRESHOLD_MULT = +e.target.value;
-transientSlider.oninput = e => TRANSIENT_THRESHOLD = +e.target.value;
-bpmMinSlider.oninput = e => BPM_MIN = +e.target.value;
-bpmMaxSlider.oninput = e => BPM_MAX = +e.target.value;
+sens.oninput = e=>SENS=+e.target.value;
+smooth.oninput = e=>SMOOTH=+e.target.value;
 
-// ==========================
-// START / STOP
-// ==========================
+// ======================
+// START
+// ======================
 
-async function toggleDetection() {
-  if (running) {
+async function toggle(){
+
+  if(running){
     stream.getTracks().forEach(t=>t.stop());
-    audioCtx.close();
-    running = false;
+    ctx.close();
+    running=false;
     return;
   }
 
-  audioCtx = new AudioContext();
-  stream = await navigator.mediaDevices.getUserMedia({audio:true});
-  const source = audioCtx.createMediaStreamSource(stream);
+  ctx = new AudioContext();
 
-  analyser = audioCtx.createAnalyser();
-  analyser.fftSize = FFT_SIZE;
+  stream = await navigator.mediaDevices.getUserMedia({
+    audio:{
+      echoCancellation:false,
+      noiseSuppression:false,
+      autoGainControl:false
+    }
+  });
 
-  source.connect(analyser);
+  src = ctx.createMediaStreamSource(stream);
 
-  running = true;
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 2048;
+
+  src.connect(analyser);
+
+  running=true;
   loop();
 }
 
-// ==========================
+// ======================
 // LOOP
-// ==========================
+// ======================
 
-function loop() {
-  if (!running) return;
+function loop(){
+  if(!running) return;
   requestAnimationFrame(loop);
 
-  const bufLen = analyser.frequencyBinCount;
-  const freqData = new Float32Array(bufLen);
-  analyser.getFloatFrequencyData(freqData);
+  const buffer = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(buffer);
 
-  // RMS
-  let rms = 0;
-  for (let i=0;i<bufLen;i++) {
-    const lin = Math.pow(10, freqData[i]/20);
-    rms += lin*lin;
+  // ======================
+  // ENERGY (envelope follower)
+  // ======================
+
+  let sum=0;
+  for(let i=0;i<buffer.length;i++){
+    sum += buffer[i]*buffer[i];
   }
 
-  const rmsDb = 10*Math.log10(rms/bufLen);
+  let energy = Math.sqrt(sum / buffer.length);
 
-  // VU
-  let norm = (rmsDb + 90)/70;
-  norm = Math.pow(norm,2.5);
+  // smoothing
+  if(energyHistory.length>0){
+    energy = SMOOTH*energyHistory[energyHistory.length-1] + (1-SMOOTH)*energy;
+  }
+
+  energyHistory.push(energy);
+  if(energyHistory.length>200) energyHistory.shift();
+
+  // ======================
+  // DB + VU
+  // ======================
+
+  let db = 20*Math.log10(energy);
+  dbEl.textContent = isFinite(db)? db.toFixed(1)+" dB":"-∞";
+
+  let norm = (db+60)/60;
+  norm = Math.pow(norm,2);
   norm = Math.max(0,Math.min(1,norm));
-  levelMeter.style.width = (norm*100)+"%";
 
-  // DB moyen
-  dbHistory.push(rmsDb);
-  if (dbHistory.length>30) dbHistory.shift();
+  meter.style.width = (norm*100)+"%";
 
-  if (performance.now()-lastDbUpdate>1000){
-    const avg = dbHistory.reduce((a,b)=>a+b)/dbHistory.length;
-    levelDb.textContent = avg.toFixed(1)+" dB";
-    lastDbUpdate = performance.now();
+  // ======================
+  // ONSET DETECTION
+  // ======================
+
+  let diff = 0;
+  if(energyHistory.length>1){
+    diff = energy - energyHistory[energyHistory.length-2];
   }
 
-  // waveform + transient
-  const timeData = new Uint8Array(bufLen);
-  analyser.getByteTimeDomainData(timeData);
+  onsetHistory.push(diff);
+  if(onsetHistory.length>50) onsetHistory.shift();
 
-  drawWave(timeData);
+  const mean = avg(onsetHistory);
+  const std = stddev(onsetHistory, mean);
 
-  let peak = 0;
-  for (let i=0;i<timeData.length;i++){
-    const v = Math.abs(timeData[i]-128);
-    if (v>peak) peak=v;
-  }
-
-  if (rmsDb < SILENCE_GATE_DB) return;
-
-  // spectral flux simple
-  let flux = 0;
-  for (let i=1;i<bufLen;i++){
-    const diff = freqData[i]-freqData[i-1];
-    if (diff>0) flux+=diff;
-  }
-
-  const threshold = THRESHOLD_MULT * 10;
+  const threshold = mean + SENS*std;
 
   // seuil visuel
-  let thrNorm = threshold / 50;
+  let thrNorm = (threshold*5);
   thrNorm = Math.max(0,Math.min(1,thrNorm));
-  thresholdLine.style.left = (thrNorm*100)+"%";
+  thresholdEl.style.left = (thrNorm*100)+"%";
 
   const now = performance.now();
-  const delta = now - lastBeatTime;
 
-  if ((flux>threshold || peak>TRANSIENT_THRESHOLD) && delta>MIN_BEAT_INTERVAL_MS){
-    lastBeatTime = now;
+  if(diff > threshold && now-lastBeat>250){
+    lastBeat = now;
 
-    levelMeter.style.background="lime";
-    setTimeout(()=>levelMeter.style.background="",80);
+    meter.style.background="lime";
+    setTimeout(()=>meter.style.background="",60);
 
     beatTimes.push(now);
-    if (beatTimes.length>10) beatTimes.shift();
+    if(beatTimes.length>30) beatTimes.shift();
 
-    if (beatTimes.length>3){
-      let intervals=[];
-      for(let i=1;i<beatTimes.length;i++){
-        intervals.push(beatTimes[i]-beatTimes[i-1]);
-      }
-      const avg = intervals.reduce((a,b)=>a+b)/intervals.length;
-      const bpm = 60000/avg;
+    computeBPM();
+  }
 
-      if (bpm>BPM_MIN && bpm<BPM_MAX){
-        bpmEl.textContent = Math.round(bpm);
-      }
+  draw(buffer);
+}
+
+// ======================
+// BPM via autocorrélation simplifiée
+// ======================
+
+function computeBPM(){
+
+  if(beatTimes.length<8) return;
+
+  let intervals=[];
+  for(let i=1;i<beatTimes.length;i++){
+    intervals.push(beatTimes[i]-beatTimes[i-1]);
+  }
+
+  const hist = {};
+
+  intervals.forEach(i=>{
+    const bpm = Math.round(60000/i);
+    if(bpm<40 || bpm>220) return;
+    hist[bpm] = (hist[bpm]||0)+1;
+  });
+
+  let bestBpm=null;
+  let max=0;
+
+  for(let b in hist){
+    if(hist[b]>max){
+      max=hist[b];
+      bestBpm=b;
     }
+  }
+
+  if(bestBpm){
+    bpmEl.textContent = bestBpm;
   }
 }
 
-// ==========================
-// WAVEFORM
-// ==========================
+// ======================
+// DRAW
+// ======================
 
-function drawWave(data){
+function draw(buffer){
+
   const w = canvas.width = canvas.offsetWidth;
   const h = canvas.height = canvas.offsetHeight;
 
-  ctx.clearRect(0,0,w,h);
-  ctx.beginPath();
+  cctx.clearRect(0,0,w,h);
 
-  for(let i=0;i<data.length;i++){
-    const y = (data[i]/255)*h;
-    const x = (i/data.length)*w;
-    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  cctx.beginPath();
+
+  for(let i=0;i<buffer.length;i++){
+    const x = (i/buffer.length)*w;
+    const y = (buffer[i]*0.5+0.5)*h;
+    i===0?cctx.moveTo(x,y):cctx.lineTo(x,y);
   }
 
-  ctx.strokeStyle="#47ffe8";
-  ctx.stroke();
+  cctx.strokeStyle="#47ffe8";
+  cctx.stroke();
+}
+
+// ======================
+// MATH
+// ======================
+
+function avg(a){ return a.reduce((x,y)=>x+y,0)/a.length; }
+function stddev(a,m){
+  return Math.sqrt(a.reduce((s,v)=>s+(v-m)*(v-m),0)/a.length);
 }
 
 </script>
