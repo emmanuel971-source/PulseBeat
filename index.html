@@ -3,56 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BPM Detector Pro</title>
+<title>BPM Detector SUPER PRO</title>
 
 <style>
-body {
-  background:#0a0a0f;
-  color:#fff;
-  font-family:monospace;
-  padding:20px;
-}
+body { background:#0a0a0f; color:#fff; font-family:monospace; padding:20px; }
+h1 { font-size:48px; margin:10px 0; }
 
-h1 { font-size:50px; }
+.meter { width:100%; height:12px; background:#222; position:relative; }
+.fill { height:100%; width:0%; background:linear-gradient(90deg,#47ffe8,#e8ff47,#ff4747); }
+.threshold { position:absolute; top:0; width:2px; height:100%; background:red; }
 
-.meter {
-  width:100%;
-  height:12px;
-  background:#222;
-  position:relative;
-  margin-bottom:8px;
-}
+canvas { width:100%; height:80px; background:#111; margin-top:10px; }
 
-.fill {
-  height:100%;
-  width:0%;
-  background:linear-gradient(90deg,#47ffe8,#e8ff47,#ff4747);
-}
-
-.threshold {
-  position:absolute;
-  top:0;
-  width:2px;
-  height:100%;
-  background:red;
-}
-
-canvas { width:100%; height:80px; background:#111; }
-
-.controls label {
-  display:block;
-  font-size:12px;
-  margin-top:5px;
-}
-
+.controls label { display:block; font-size:12px; margin-top:6px; }
 button { padding:10px; margin-top:10px; }
 
+.state { font-size:12px; color:#888; margin-top:5px; }
+.lock { color:#47ff8a; }
 </style>
 </head>
 
 <body>
 
-<h2>BPM Detector (quasi pro)</h2>
+<h2>BPM Detector — SUPER PRO</h2>
 
 <div class="meter">
   <div class="fill" id="meter"></div>
@@ -64,12 +37,13 @@ button { padding:10px; margin-top:10px; }
 <canvas id="wave"></canvas>
 
 <h1 id="bpm">--</h1>
+<div class="state" id="state">silence</div>
 
 <button onclick="toggle()">START / STOP</button>
 
 <div class="controls">
   <label>Sensibilité <input type="range" id="sens" min="1.2" max="3" step="0.1" value="1.8"></label>
-  <label>Lissage <input type="range" id="smooth" min="0.7" max="0.99" step="0.01" value="0.9"></label>
+  <label>Lissage <input type="range" id="smooth" min="0.5" max="0.95" step="0.01" value="0.75"></label>
 </div>
 
 <script>
@@ -90,13 +64,17 @@ let onsetHistory=[];
 let beatTimes=[];
 
 let lastBeat=0;
+let lastOnsetTime=0;
+
+let smoothedBpm=null;
 
 // ======================
 // PARAMS
 // ======================
 
 let SENS=1.8;
-let SMOOTH=0.9;
+let SMOOTH=0.75;
+const BPM_TIMEOUT = 2000;
 
 // ======================
 // UI
@@ -106,6 +84,7 @@ const meter = document.getElementById("meter");
 const thresholdEl = document.getElementById("threshold");
 const bpmEl = document.getElementById("bpm");
 const dbEl = document.getElementById("db");
+const stateEl = document.getElementById("state");
 
 const canvas = document.getElementById("wave");
 const cctx = canvas.getContext("2d");
@@ -114,7 +93,7 @@ sens.oninput = e=>SENS=+e.target.value;
 smooth.oninput = e=>SMOOTH=+e.target.value;
 
 // ======================
-// START
+// START / STOP
 // ======================
 
 async function toggle(){
@@ -158,9 +137,7 @@ function loop(){
   const buffer = new Float32Array(analyser.fftSize);
   analyser.getFloatTimeDomainData(buffer);
 
-  // ======================
-  // ENERGY (envelope follower)
-  // ======================
+  // ========= ENERGY =========
 
   let sum=0;
   for(let i=0;i<buffer.length;i++){
@@ -169,17 +146,15 @@ function loop(){
 
   let energy = Math.sqrt(sum / buffer.length);
 
-  // smoothing
+  // smoothing audio
   if(energyHistory.length>0){
-    energy = SMOOTH*energyHistory[energyHistory.length-1] + (1-SMOOTH)*energy;
+    energy = SMOOTH*energyHistory.at(-1) + (1-SMOOTH)*energy;
   }
 
   energyHistory.push(energy);
   if(energyHistory.length>200) energyHistory.shift();
 
-  // ======================
-  // DB + VU
-  // ======================
+  // ========= DB + VU =========
 
   let db = 20*Math.log10(energy);
   dbEl.textContent = isFinite(db)? db.toFixed(1)+" dB":"-∞";
@@ -187,81 +162,98 @@ function loop(){
   let norm = (db+60)/60;
   norm = Math.pow(norm,2);
   norm = Math.max(0,Math.min(1,norm));
-
   meter.style.width = (norm*100)+"%";
 
-  // ======================
-  // ONSET DETECTION
-  // ======================
+  // ========= ONSET =========
 
-  let diff = 0;
-  if(energyHistory.length>1){
-    diff = energy - energyHistory[energyHistory.length-2];
-  }
+  let diff = energy - (energyHistory.at(-2) || energy);
 
   onsetHistory.push(diff);
   if(onsetHistory.length>50) onsetHistory.shift();
 
   const mean = avg(onsetHistory);
   const std = stddev(onsetHistory, mean);
-
   const threshold = mean + SENS*std;
 
   // seuil visuel
-  let thrNorm = (threshold*5);
+  let thrNorm = threshold*5;
   thrNorm = Math.max(0,Math.min(1,thrNorm));
   thresholdEl.style.left = (thrNorm*100)+"%";
 
   const now = performance.now();
 
-  if(diff > threshold && now-lastBeat>250){
-    lastBeat = now;
+  if(diff > threshold && now-lastBeat>180){
 
+    lastBeat = now;
+    lastOnsetTime = now;
+
+    // flash visuel
     meter.style.background="lime";
     setTimeout(()=>meter.style.background="",60);
 
+    // BPM instantané
+    if(beatTimes.length>=1){
+      const interval = now - beatTimes.at(-1);
+      const instantBpm = 60000 / interval;
+
+      if(instantBpm>40 && instantBpm<220){
+        bpmEl.textContent = Math.round(instantBpm);
+      }
+    }
+
     beatTimes.push(now);
-    if(beatTimes.length>30) beatTimes.shift();
+    if(beatTimes.length>20) beatTimes.shift();
 
     computeBPM();
+  }
+
+  // ========= TIMEOUT =========
+
+  if(now - lastOnsetTime > BPM_TIMEOUT){
+    bpmEl.textContent="--";
+    stateEl.textContent="silence";
+    beatTimes=[];
+    smoothedBpm=null;
   }
 
   draw(buffer);
 }
 
 // ======================
-// BPM via autocorrélation simplifiée
+// BPM STABLE
 // ======================
 
 function computeBPM(){
 
-  if(beatTimes.length<8) return;
+  if(beatTimes.length<6) return;
 
   let intervals=[];
   for(let i=1;i<beatTimes.length;i++){
     intervals.push(beatTimes[i]-beatTimes[i-1]);
   }
 
-  const hist = {};
+  const avgInt = avg(intervals);
+  const bpm = 60000 / avgInt;
 
-  intervals.forEach(i=>{
-    const bpm = Math.round(60000/i);
-    if(bpm<40 || bpm>220) return;
-    hist[bpm] = (hist[bpm]||0)+1;
-  });
+  if(bpm<40 || bpm>220) return;
 
-  let bestBpm=null;
-  let max=0;
-
-  for(let b in hist){
-    if(hist[b]>max){
-      max=hist[b];
-      bestBpm=b;
-    }
+  if(smoothedBpm===null){
+    smoothedBpm=bpm;
+  } else {
+    smoothedBpm = 0.7*smoothedBpm + 0.3*bpm;
   }
 
-  if(bestBpm){
-    bpmEl.textContent = bestBpm;
+  bpmEl.textContent = Math.round(smoothedBpm);
+
+  // état
+  const stability = stddev(intervals, avgInt)/avgInt;
+
+  if(stability < 0.1){
+    stateEl.textContent="LOCKED";
+    stateEl.className="state lock";
+  } else {
+    stateEl.textContent="tracking";
+    stateEl.className="state";
   }
 }
 
@@ -270,17 +262,15 @@ function computeBPM(){
 // ======================
 
 function draw(buffer){
-
   const w = canvas.width = canvas.offsetWidth;
   const h = canvas.height = canvas.offsetHeight;
 
   cctx.clearRect(0,0,w,h);
-
   cctx.beginPath();
 
   for(let i=0;i<buffer.length;i++){
-    const x = (i/buffer.length)*w;
-    const y = (buffer[i]*0.5+0.5)*h;
+    const x=(i/buffer.length)*w;
+    const y=(buffer[i]*0.5+0.5)*h;
     i===0?cctx.moveTo(x,y):cctx.lineTo(x,y);
   }
 
