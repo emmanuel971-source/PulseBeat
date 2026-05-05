@@ -3,290 +3,889 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BPM Detector SUPER PRO</title>
+<title>BPM Detector PRO</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
 <style>
-body { background:#0a0a0f; color:#fff; font-family:monospace; padding:20px; }
-h1 { font-size:48px; margin:10px 0; }
+/* ========================
+   ROOT & RESET
+======================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.meter { width:100%; height:12px; background:#222; position:relative; }
-.fill { height:100%; width:0%; background:linear-gradient(90deg,#47ffe8,#e8ff47,#ff4747); }
-.threshold { position:absolute; top:0; width:2px; height:100%; background:red; }
+:root {
+  --bg:        #111214;
+  --panel:     #1a1c20;
+  --panel2:    #1e2024;
+  --border:    #2e3138;
+  --screw:     #252830;
+  --amber:     #ffb347;
+  --amber-dim: #6b3d00;
+  --amber-glow:#ffb34740;
+  --green:     #39ff8a;
+  --green-dim: #0a3320;
+  --green-glow:#39ff8a30;
+  --cyan:      #00e5ff;
+  --cyan-dim:  #003040;
+  --red:       #ff4655;
+  --red-dim:   #3d0008;
+  --text-muted:#5a6070;
+  --text-dim:  #8090a8;
+  --text:      #c8d0dc;
+  --rack-h:    4px;
+}
 
-canvas { width:100%; height:80px; background:#111; margin-top:10px; }
+body {
+  background: #0c0d0f;
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px 16px 40px;
+  gap: 0;
+}
 
-.controls label { display:block; font-size:12px; margin-top:6px; }
-button { padding:10px; margin-top:10px; }
+/* ========================
+   RACK UNIT SHELL
+======================== */
+.rack {
+  width: 100%;
+  max-width: 560px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 1px #0006,
+    0 8px 40px #00000088,
+    inset 0 1px 0 #ffffff0a;
+  overflow: hidden;
+}
 
-.state { font-size:12px; color:#888; margin-top:5px; }
-.lock { color:#47ff8a; }
+/* ========================
+   RACK HEADER / FACEPLATE
+======================== */
+.rack-header {
+  background: linear-gradient(180deg, #23262d 0%, #1a1c22 100%);
+  border-bottom: 2px solid #0d0e10;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.rack-header .title {
+  font-family: 'Orbitron', monospace;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--text);
+  flex: 1;
+}
+
+/* Power LED */
+.led-power {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green-dim);
+  border: 1px solid #0a2218;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.led-power.on {
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green), 0 0 20px var(--green-glow);
+}
+
+/* Screw corners */
+.screws {
+  position: relative;
+}
+.screw {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #3a3f4a, #1a1c20);
+  border: 1px solid #0d0e10;
+  display: inline-block;
+}
+
+/* ========================
+   MAIN BPM DISPLAY
+======================== */
+.bpm-section {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 20px 20px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.bpm-display {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.bpm-label {
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+#bpm {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(60px, 18vw, 96px);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--amber);
+  text-shadow: 0 0 20px var(--amber-glow), 0 0 60px #ffb34718;
+  letter-spacing: -2px;
+  transition: color 0.15s;
+  min-width: 160px;
+}
+
+#bpm.locked {
+  color: var(--green);
+  text-shadow: 0 0 20px var(--green-glow), 0 0 60px #39ff8a18;
+}
+
+.bpm-unit {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 3px;
+  margin-top: 2px;
+}
+
+/* State badge */
+.state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-family: 'Orbitron', monospace;
+  letter-spacing: 2px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.state-badge.silence {
+  background: #1a1c22;
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.state-badge.tracking {
+  background: #1a1800;
+  color: var(--amber);
+  border-color: #3d3000;
+}
+.state-badge.locked {
+  background: var(--green-dim);
+  color: var(--green);
+  border-color: #0e4028;
+  box-shadow: 0 0 12px var(--green-glow);
+}
+.state-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.state-badge.locked .state-dot {
+  animation: blink 1s ease-in-out infinite;
+}
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Right side BPM: stability + badge */
+.bpm-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  padding-bottom: 4px;
+  align-self: flex-end;
+}
+
+/* ========================
+   METERS ROW
+======================== */
+.meters-row {
+  display: flex;
+  gap: 0;
+  height: 100px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+/* VU Meter — vertical */
+.vu-wrap {
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-right: 1px solid var(--border);
+  gap: 4px;
+}
+.vu-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.vu-bar-wrap {
+  flex: 1;
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+}
+.vu-bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  position: relative;
+  overflow: hidden;
+  background: #0d1014;
+  border: 1px solid #1a1e24;
+}
+.vu-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0%;
+  border-radius: 2px 2px 0 0;
+  transition: height 0.04s;
+}
+#vu-bass .vu-fill {
+  background: linear-gradient(0deg, #00e5ff 0%, #39ff8a 60%, #ffb347 85%, #ff4655 100%);
+}
+
+.vu-db {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* Oscilloscope canvas */
+.scope-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  gap: 4px;
+}
+.scope-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+}
+#wave {
+  flex: 1;
+  width: 100%;
+  display: block;
+  border-radius: 2px;
+  background: #080a0c;
+  border: 1px solid #1a1e24;
+}
+
+/* ========================
+   BEAT FLASH STRIP
+======================== */
+.beat-strip {
+  height: 3px;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.beat-flash-bar {
+  position: absolute;
+  inset: 0;
+  background: var(--green);
+  box-shadow: 0 0 12px var(--green);
+  opacity: 0;
+  transition: opacity 0.05s;
+}
+
+/* ========================
+   CONTROLS
+======================== */
+.controls-panel {
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.ctrl-group {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ctrl-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+}
+.ctrl-val {
+  color: var(--amber);
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 6px var(--amber-glow);
+  border: 2px solid var(--bg);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+input[type=range]:hover::-webkit-slider-thumb {
+  box-shadow: 0 0 12px var(--amber-glow);
+}
+
+/* ========================
+   BUTTON
+======================== */
+.btn-panel {
+  padding: 14px 20px;
+  background: var(--panel);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+#btn-toggle {
+  flex: 1;
+  padding: 12px 20px;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: var(--green-dim);
+  color: var(--green);
+  border: 1px solid #1a4030;
+  box-shadow: 0 0 0 transparent;
+  transition: all 0.2s;
+}
+#btn-toggle:hover {
+  background: #0e3d28;
+  box-shadow: 0 0 16px var(--green-glow);
+}
+#btn-toggle.running {
+  background: var(--red-dim);
+  color: var(--red);
+  border-color: #4d0010;
+}
+#btn-toggle.running:hover {
+  box-shadow: 0 0 16px #ff466540;
+}
+
+#btn-reset {
+  padding: 12px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+#btn-reset:hover {
+  color: var(--text);
+  border-color: #4a5060;
+}
+
+/* ========================
+   BEAT HISTORY ROW
+======================== */
+.history-row {
+  display: flex;
+  gap: 3px;
+  padding: 8px 20px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  align-items: center;
+}
+.history-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s, box-shadow 0.3s;
+  flex-shrink: 0;
+}
+.history-dot.active {
+  background: var(--amber);
+  box-shadow: 0 0 6px var(--amber-glow);
+}
+.history-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* ========================
+   RACK FOOTER
+======================== */
+.rack-footer {
+  background: linear-gradient(180deg, #16181e 0%, #111214 100%);
+  border-top: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.rack-footer span {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+}
 </style>
 </head>
-
 <body>
 
-<h2>BPM Detector — SUPER PRO</h2>
+<div class="rack">
 
-<div class="meter">
-  <div class="fill" id="meter"></div>
-  <div class="threshold" id="threshold"></div>
-</div>
+  <!-- HEADER -->
+  <div class="rack-header">
+    <div class="screw"></div>
+    <span class="brand">STUDIO</span>
+    <span class="title">BPM DETECTOR PRO</span>
+    <div class="led-power" id="led-power"></div>
+    <div class="screw"></div>
+  </div>
 
-<div id="db">-∞ dB</div>
+  <!-- BPM DISPLAY -->
+  <div class="bpm-section">
+    <div class="bpm-display">
+      <div class="bpm-label">TEMPO</div>
+      <div id="bpm">--</div>
+      <div class="bpm-unit">BPM</div>
+    </div>
+    <div class="bpm-right">
+      <div class="state-badge silence" id="state-badge">
+        <div class="state-dot"></div>
+        <span id="state-text">SILENCE</span>
+      </div>
+    </div>
+  </div>
 
-<canvas id="wave"></canvas>
+  <!-- BEAT FLASH STRIP -->
+  <div class="beat-strip">
+    <div class="beat-flash-bar" id="beat-flash"></div>
+  </div>
 
-<h1 id="bpm">--</h1>
-<div class="state" id="state">silence</div>
+  <!-- METERS ROW -->
+  <div class="meters-row">
+    <div class="vu-wrap">
+      <div class="vu-label">BASS</div>
+      <div class="vu-bar-wrap">
+        <div class="vu-bar" id="vu-bass">
+          <div class="vu-fill" id="vu-fill"></div>
+        </div>
+      </div>
+      <div class="vu-db" id="db-label">-∞</div>
+    </div>
+    <div class="scope-wrap">
+      <div class="scope-label">WAVEFORM</div>
+      <canvas id="wave"></canvas>
+    </div>
+  </div>
 
-<button onclick="toggle()">START / STOP</button>
+  <!-- BEAT HISTORY -->
+  <div class="history-row" id="history-row">
+    <div class="history-label">BEAT GRID</div>
+  </div>
 
-<div class="controls">
-  <label>Sensibilité <input type="range" id="sens" min="1.2" max="3" step="0.1" value="1.8"></label>
-  <label>Lissage <input type="range" id="smooth" min="0.5" max="0.95" step="0.01" value="0.75"></label>
+  <!-- CONTROLS -->
+  <div class="controls-panel">
+    <div class="ctrl-group">
+      <div class="ctrl-label">
+        SENSIBILITÉ
+        <span class="ctrl-val" id="sens-val">1.8</span>
+      </div>
+      <input type="range" id="sens" min="1.2" max="3" step="0.1" value="1.8">
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label">
+        LISSAGE BPM
+        <span class="ctrl-val" id="smooth-val">0.75</span>
+      </div>
+      <input type="range" id="smooth" min="0.5" max="0.95" step="0.01" value="0.75">
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label">
+        REFRACTORY (ms)
+        <span class="ctrl-val" id="refrac-val">180</span>
+      </div>
+      <input type="range" id="refrac" min="100" max="400" step="10" value="180">
+    </div>
+  </div>
+
+  <!-- BUTTON -->
+  <div class="btn-panel">
+    <button id="btn-toggle" onclick="toggle()">▶ START</button>
+    <button id="btn-reset" onclick="resetState()">RESET</button>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="rack-footer">
+    <span>BASS ONSET DETECTION</span>
+    <span>v2.0</span>
+  </div>
+
 </div>
 
 <script>
-
-// ======================
+// ============================================================
 // AUDIO
-// ======================
-
+// ============================================================
 let ctx, analyser, src, stream;
-let running=false;
+let running = false;
 
-// ======================
+// ============================================================
 // STATE
-// ======================
+// ============================================================
+let energyHistory = [];
+let onsetHistory  = [];
+let beatTimes     = [];
+let lastBeat      = 0;
+let lastOnsetTime = 0;
+let smoothedBpm   = null;
+let flashTimeout  = null;
 
-let energyHistory=[];
-let onsetHistory=[];
-let beatTimes=[];
-
-let lastBeat=0;
-let lastOnsetTime=0;
-
-let smoothedBpm=null;
-
-// ======================
+// ============================================================
 // PARAMS
-// ======================
+// ============================================================
+let SENS    = 1.8;
+let SMOOTH  = 0.75;
+let REFRAC  = 180;
+const BPM_TIMEOUT = 2500;
 
-let SENS=1.8;
-let SMOOTH=0.75;
-const BPM_TIMEOUT = 2000;
+// History dots
+const HIST_COUNT = 16;
 
-// ======================
-// UI
-// ======================
+// ============================================================
+// UI REFS
+// ============================================================
+const bpmEl       = document.getElementById('bpm');
+const dbLabel     = document.getElementById('db-label');
+const vuFill      = document.getElementById('vu-fill');
+const stateBadge  = document.getElementById('state-badge');
+const stateText   = document.getElementById('state-text');
+const beatFlash   = document.getElementById('beat-flash');
+const ledPower    = document.getElementById('led-power');
+const btnToggle   = document.getElementById('btn-toggle');
+const histRow     = document.getElementById('history-row');
 
-const meter = document.getElementById("meter");
-const thresholdEl = document.getElementById("threshold");
-const bpmEl = document.getElementById("bpm");
-const dbEl = document.getElementById("db");
-const stateEl = document.getElementById("state");
+const canvas = document.getElementById('wave');
+const cctx   = canvas.getContext('2d');
 
-const canvas = document.getElementById("wave");
-const cctx = canvas.getContext("2d");
+// Build history dots
+const histDots = [];
+for (let i = 0; i < HIST_COUNT; i++) {
+  const d = document.createElement('div');
+  d.className = 'history-dot';
+  histRow.insertBefore(d, histRow.querySelector('.history-label'));
+  histDots.push(d);
+}
 
-sens.oninput = e=>SENS=+e.target.value;
-smooth.oninput = e=>SMOOTH=+e.target.value;
+// Controls
+document.getElementById('sens').oninput = e => {
+  SENS = +e.target.value;
+  document.getElementById('sens-val').textContent = SENS.toFixed(1);
+};
+document.getElementById('smooth').oninput = e => {
+  SMOOTH = +e.target.value;
+  document.getElementById('smooth-val').textContent = SMOOTH.toFixed(2);
+};
+document.getElementById('refrac').oninput = e => {
+  REFRAC = +e.target.value;
+  document.getElementById('refrac-val').textContent = REFRAC;
+};
 
-// ======================
+// ============================================================
 // START / STOP
-// ======================
-
-async function toggle(){
-
-  if(running){
-    stream.getTracks().forEach(t=>t.stop());
+// ============================================================
+async function toggle() {
+  if (running) {
+    stream.getTracks().forEach(t => t.stop());
     ctx.close();
-    running=false;
+    running = false;
+    ledPower.classList.remove('on');
+    btnToggle.textContent = '▶ START';
+    btnToggle.classList.remove('running');
+    resetState();
     return;
   }
 
   ctx = new AudioContext();
 
   stream = await navigator.mediaDevices.getUserMedia({
-    audio:{
-      echoCancellation:false,
-      noiseSuppression:false,
-      autoGainControl:false
+    audio: {
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl:  false
     }
   });
 
-  src = ctx.createMediaStreamSource(stream);
-
+  src      = ctx.createMediaStreamSource(stream);
   analyser = ctx.createAnalyser();
   analyser.fftSize = 2048;
 
   src.connect(analyser);
 
-  running=true;
+  running = true;
+  ledPower.classList.add('on');
+  btnToggle.textContent = '■ STOP';
+  btnToggle.classList.add('running');
   loop();
 }
 
-// ======================
-// LOOP
-// ======================
+// ============================================================
+// RESET STATE
+// ============================================================
+function resetState() {
+  energyHistory = [];
+  onsetHistory  = [];
+  beatTimes     = [];
+  lastBeat      = 0;
+  lastOnsetTime = 0;
+  smoothedBpm   = null;
+  bpmEl.textContent = '--';
+  bpmEl.classList.remove('locked');
+  setUIState('silence');
+  histDots.forEach(d => d.classList.remove('active'));
+}
 
-function loop(){
-  if(!running) return;
+// ============================================================
+// MAIN LOOP
+// ============================================================
+function loop() {
+  if (!running) return;
   requestAnimationFrame(loop);
 
-  const buffer = new Float32Array(analyser.fftSize);
-  analyser.getFloatTimeDomainData(buffer);
+  const timeDomain = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(timeDomain);
 
-  // ========= ENERGY =========
+  // ---- BASS ENERGY (spectrale, basses < ~200 Hz) ----
+  const freqBins = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(freqBins);
 
-  let sum=0;
-  for(let i=0;i<buffer.length;i++){
-    sum += buffer[i]*buffer[i];
+  // Calcul de la fréquence par bin
+  const nyquist = ctx.sampleRate / 2;
+  const binHz   = nyquist / analyser.frequencyBinCount;
+  const bassMax = Math.round(200 / binHz);   // bin index ~ 200 Hz
+
+  let bassSum = 0;
+  for (let i = 0; i < bassMax; i++) bassSum += freqBins[i];
+  let bassEnergy = bassSum / bassMax / 255;   // normalisé 0..1
+
+  // Lissage léger sur l'énergie (on garde réactif, lissage faible)
+  const ESMO = 0.4;
+  if (energyHistory.length > 0) {
+    bassEnergy = ESMO * energyHistory.at(-1) + (1 - ESMO) * bassEnergy;
   }
+  energyHistory.push(bassEnergy);
+  if (energyHistory.length > 300) energyHistory.shift();
 
-  let energy = Math.sqrt(sum / buffer.length);
+  // ---- VU METER ----
+  const db   = 20 * Math.log10(bassEnergy + 1e-9);
+  const norm = Math.max(0, Math.min(1, (db + 50) / 50));
+  vuFill.style.height = (norm * 100) + '%';
+  dbLabel.textContent = isFinite(db) ? db.toFixed(1) + ' dB' : '-∞';
 
-  // smoothing audio
-  if(energyHistory.length>0){
-    energy = SMOOTH*energyHistory.at(-1) + (1-SMOOTH)*energy;
-  }
-
-  energyHistory.push(energy);
-  if(energyHistory.length>200) energyHistory.shift();
-
-  // ========= DB + VU =========
-
-  let db = 20*Math.log10(energy);
-  dbEl.textContent = isFinite(db)? db.toFixed(1)+" dB":"-∞";
-
-  let norm = (db+60)/60;
-  norm = Math.pow(norm,2);
-  norm = Math.max(0,Math.min(1,norm));
-  meter.style.width = (norm*100)+"%";
-
-  // ========= ONSET =========
-
-  let diff = energy - (energyHistory.at(-2) || energy);
-
+  // ---- ONSET (dérivée d'énergie basse) ----
+  const diff = bassEnergy - (energyHistory.at(-2) || bassEnergy);
   onsetHistory.push(diff);
-  if(onsetHistory.length>50) onsetHistory.shift();
+  if (onsetHistory.length > 60) onsetHistory.shift();
 
-  const mean = avg(onsetHistory);
-  const std = stddev(onsetHistory, mean);
-  const threshold = mean + SENS*std;
-
-  // seuil visuel
-  let thrNorm = threshold*5;
-  thrNorm = Math.max(0,Math.min(1,thrNorm));
-  thresholdEl.style.left = (thrNorm*100)+"%";
+  const mean      = avg(onsetHistory);
+  const sd        = stddev(onsetHistory, mean);
+  const threshold = mean + SENS * sd;
 
   const now = performance.now();
 
-  if(diff > threshold && now-lastBeat>180){
-
-    lastBeat = now;
-    lastOnsetTime = now;
-
-    // flash visuel
-    meter.style.background="lime";
-    setTimeout(()=>meter.style.background="",60);
-
-    // BPM instantané
-    if(beatTimes.length>=1){
-      const interval = now - beatTimes.at(-1);
-      const instantBpm = 60000 / interval;
-
-      if(instantBpm>40 && instantBpm<220){
-        bpmEl.textContent = Math.round(instantBpm);
-      }
-    }
-
-    beatTimes.push(now);
-    if(beatTimes.length>20) beatTimes.shift();
-
-    computeBPM();
+  if (diff > threshold && now - lastBeat > REFRAC) {
+    triggerBeat(now);
   }
 
-  // ========= TIMEOUT =========
-
-  if(now - lastOnsetTime > BPM_TIMEOUT){
-    bpmEl.textContent="--";
-    stateEl.textContent="silence";
-    beatTimes=[];
-    smoothedBpm=null;
+  // ---- TIMEOUT SILENCE ----
+  if (now - lastOnsetTime > BPM_TIMEOUT && lastOnsetTime > 0) {
+    resetState();
   }
 
-  draw(buffer);
+  drawWave(timeDomain);
 }
 
-// ======================
-// BPM STABLE
-// ======================
+// ============================================================
+// BEAT TRIGGER
+// ============================================================
+function triggerBeat(now) {
+  lastBeat      = now;
+  lastOnsetTime = now;
 
-function computeBPM(){
+  // Flash barre
+  clearTimeout(flashTimeout);
+  beatFlash.style.opacity = '1';
+  flashTimeout = setTimeout(() => { beatFlash.style.opacity = '0'; }, 80);
 
-  if(beatTimes.length<6) return;
-
-  let intervals=[];
-  for(let i=1;i<beatTimes.length;i++){
-    intervals.push(beatTimes[i]-beatTimes[i-1]);
+  // BPM instantané (1 intervalle)
+  if (beatTimes.length >= 1) {
+    const interval    = now - beatTimes.at(-1);
+    const instantBpm  = 60000 / interval;
+    if (instantBpm > 40 && instantBpm < 220) {
+      bpmEl.textContent = Math.round(instantBpm);
+    }
   }
 
-  const avgInt = avg(intervals);
-  const bpm = 60000 / avgInt;
+  beatTimes.push(now);
+  if (beatTimes.length > 24) beatTimes.shift();
 
-  if(bpm<40 || bpm>220) return;
+  // Update history dots
+  const active = Math.min(beatTimes.length, HIST_COUNT);
+  histDots.forEach((d, i) => {
+    d.classList.toggle('active', i < active);
+  });
 
-  if(smoothedBpm===null){
-    smoothedBpm=bpm;
+  computeBPM();
+}
+
+// ============================================================
+// BPM STABLE (avec filtrage des intervalles aberrants)
+// ============================================================
+function computeBPM() {
+  if (beatTimes.length < 6) return;
+
+  // Construire les intervalles
+  let intervals = [];
+  for (let i = 1; i < beatTimes.length; i++) {
+    intervals.push(beatTimes[i] - beatTimes[i - 1]);
+  }
+
+  // Filtrage des aberrants : on garde ceux à ±30% de la médiane
+  const med      = median(intervals);
+  const filtered = intervals.filter(v => v > med * 0.7 && v < med * 1.3);
+
+  if (filtered.length < 4) return;
+
+  const avgInt = avg(filtered);
+  const bpm    = 60000 / avgInt;
+  if (bpm < 40 || bpm > 220) return;
+
+  if (smoothedBpm === null) {
+    smoothedBpm = bpm;
   } else {
-    smoothedBpm = 0.7*smoothedBpm + 0.3*bpm;
+    smoothedBpm = SMOOTH * smoothedBpm + (1 - SMOOTH) * bpm;
   }
 
   bpmEl.textContent = Math.round(smoothedBpm);
 
-  // état
-  const stability = stddev(intervals, avgInt)/avgInt;
+  // État
+  const stability = stddev(filtered, avgInt) / avgInt;
 
-  if(stability < 0.1){
-    stateEl.textContent="LOCKED";
-    stateEl.className="state lock";
+  if (stability < 0.08) {
+    setUIState('locked');
   } else {
-    stateEl.textContent="tracking";
-    stateEl.className="state";
+    setUIState('tracking');
   }
 }
 
-// ======================
-// DRAW
-// ======================
+// ============================================================
+// UI STATE
+// ============================================================
+function setUIState(state) {
+  stateBadge.className = 'state-badge ' + state;
+  stateText.textContent = state.toUpperCase();
+  if (state === 'locked') {
+    bpmEl.classList.add('locked');
+  } else {
+    bpmEl.classList.remove('locked');
+  }
+}
 
-function draw(buffer){
-  const w = canvas.width = canvas.offsetWidth;
-  const h = canvas.height = canvas.offsetHeight;
+// ============================================================
+// DRAW WAVEFORM
+// ============================================================
+function drawWave(buffer) {
+  const w = canvas.width  = canvas.offsetWidth  * devicePixelRatio;
+  const h = canvas.height = canvas.offsetHeight * devicePixelRatio;
 
-  cctx.clearRect(0,0,w,h);
+  cctx.clearRect(0, 0, w, h);
+
+  // Grille de fond
+  cctx.strokeStyle = '#1a1e24';
+  cctx.lineWidth   = 1;
+  const mid = h / 2;
+  cctx.beginPath(); cctx.moveTo(0, mid); cctx.lineTo(w, mid); cctx.stroke();
+
+  // Waveform
   cctx.beginPath();
-
-  for(let i=0;i<buffer.length;i++){
-    const x=(i/buffer.length)*w;
-    const y=(buffer[i]*0.5+0.5)*h;
-    i===0?cctx.moveTo(x,y):cctx.lineTo(x,y);
+  for (let i = 0; i < buffer.length; i++) {
+    const x = (i / buffer.length) * w;
+    const y = (buffer[i] * 0.5 + 0.5) * h;
+    i === 0 ? cctx.moveTo(x, y) : cctx.lineTo(x, y);
   }
 
-  cctx.strokeStyle="#47ffe8";
+  cctx.strokeStyle  = '#00e5ff88';
+  cctx.lineWidth    = 1.5 * devicePixelRatio;
+  cctx.shadowColor  = '#00e5ff';
+  cctx.shadowBlur   = 4;
   cctx.stroke();
+
+  cctx.shadowBlur = 0;
 }
 
-// ======================
+// ============================================================
 // MATH
-// ======================
-
-function avg(a){ return a.reduce((x,y)=>x+y,0)/a.length; }
-function stddev(a,m){
-  return Math.sqrt(a.reduce((s,v)=>s+(v-m)*(v-m),0)/a.length);
+// ============================================================
+function avg(a)         { return a.reduce((s, v) => s + v, 0) / a.length; }
+function stddev(a, m)   { return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); }
+function median(a) {
+  const s = [...a].sort((x, y) => x - y);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
-
 </script>
 
 </body>
