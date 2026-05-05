@@ -2,39 +2,32 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>BPM Detector PRO</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
 <style>
-/* ========================
-   ROOT & RESET
-======================== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:        #111214;
-  --panel:     #1a1c20;
-  --panel2:    #1e2024;
-  --border:    #2e3138;
-  --screw:     #252830;
-  --amber:     #ffb347;
-  --amber-dim: #6b3d00;
-  --amber-glow:#ffb34740;
-  --green:     #39ff8a;
-  --green-dim: #0a3320;
-  --green-glow:#39ff8a30;
-  --cyan:      #00e5ff;
-  --cyan-dim:  #003040;
-  --red:       #ff4655;
-  --red-dim:   #3d0008;
-  --text-muted:#5a6070;
-  --text-dim:  #8090a8;
-  --text:      #c8d0dc;
-  --rack-h:    4px;
+  --bg:         #111214;
+  --panel:      #1a1c20;
+  --panel2:     #1e2024;
+  --border:     #2e3138;
+  --amber:      #ffb347;
+  --amber-dim:  #6b3d00;
+  --amber-glow: #ffb34750;
+  --green:      #39ff8a;
+  --green-dim:  #0a3320;
+  --green-glow: #39ff8a40;
+  --cyan:       #00e5ff;
+  --red:        #ff4655;
+  --red-dim:    #3d0008;
+  --text-muted: #5a6070;
+  --text:       #c8d0dc;
 }
 
-body {
+html, body {
   background: #0c0d0f;
   color: var(--text);
   font-family: 'Share Tech Mono', monospace;
@@ -42,444 +35,283 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 20px 16px 40px;
-  gap: 0;
+  padding: 12px 10px 32px;
 }
 
-/* ========================
-   RACK UNIT SHELL
-======================== */
+/* ── RACK SHELL ── */
 .rack {
   width: 100%;
-  max-width: 560px;
+  max-width: 480px;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  box-shadow:
-    0 0 0 1px #0006,
-    0 8px 40px #00000088,
-    inset 0 1px 0 #ffffff0a;
+  border-radius: 8px;
+  box-shadow: 0 8px 40px #00000099, inset 0 1px 0 #ffffff08;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ========================
-   RACK HEADER / FACEPLATE
-======================== */
+/* ── HEADER ── */
 .rack-header {
-  background: linear-gradient(180deg, #23262d 0%, #1a1c22 100%);
+  background: linear-gradient(180deg, #23262d, #1a1c22);
   border-bottom: 2px solid #0d0e10;
-  padding: 10px 16px;
+  padding: 10px 14px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
-
+.screw {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #3a3f4a, #1a1c20);
+  border: 1px solid #0d0e10;
+  flex-shrink: 0;
+}
 .brand {
   font-family: 'Orbitron', monospace;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 4px;
   color: var(--text-muted);
-  text-transform: uppercase;
 }
-
-.rack-header .title {
+.rack-title {
   font-family: 'Orbitron', monospace;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 2px;
   color: var(--text);
   flex: 1;
 }
-
-/* Power LED */
 .led-power {
-  width: 8px;
-  height: 8px;
+  width: 8px; height: 8px;
   border-radius: 50%;
-  background: var(--green-dim);
-  border: 1px solid #0a2218;
+  background: #0a2218;
+  border: 1px solid #061410;
   transition: background 0.3s, box-shadow 0.3s;
+  flex-shrink: 0;
 }
 .led-power.on {
   background: var(--green);
   box-shadow: 0 0 8px var(--green), 0 0 20px var(--green-glow);
 }
 
-/* Screw corners */
-.screws {
-  position: relative;
-}
-.screw {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #3a3f4a, #1a1c20);
-  border: 1px solid #0d0e10;
-  display: inline-block;
-}
-
-/* ========================
-   MAIN BPM DISPLAY
-======================== */
+/* ── BPM DISPLAY ── */
 .bpm-section {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  padding: 20px 20px 12px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
-}
-
-.bpm-display {
-  flex: 1;
+  padding: 16px 18px 12px;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
+  justify-content: space-between;
 }
-
+.bpm-left { display: flex; flex-direction: column; }
 .bpm-label {
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 4px;
   color: var(--text-muted);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
-
 #bpm {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(60px, 18vw, 96px);
+  font-size: clamp(64px, 22vw, 88px);
   font-weight: 900;
   line-height: 1;
   color: var(--amber);
-  text-shadow: 0 0 20px var(--amber-glow), 0 0 60px #ffb34718;
+  text-shadow: 0 0 24px var(--amber-glow);
   letter-spacing: -2px;
-  transition: color 0.15s;
-  min-width: 160px;
+  transition: color 0.2s, text-shadow 0.2s;
 }
-
 #bpm.locked {
   color: var(--green);
-  text-shadow: 0 0 20px var(--green-glow), 0 0 60px #39ff8a18;
+  text-shadow: 0 0 24px var(--green-glow);
 }
-
 .bpm-unit {
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: 11px;
   letter-spacing: 3px;
+  color: var(--text-muted);
   margin-top: 2px;
 }
-
-/* State badge */
 .state-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 5px;
+  padding: 5px 10px;
   border-radius: 3px;
-  font-size: 11px;
   font-family: 'Orbitron', monospace;
-  letter-spacing: 2px;
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 2px;
   border: 1px solid transparent;
   transition: all 0.2s;
+  align-self: flex-end;
+  margin-bottom: 4px;
 }
-.state-badge.silence {
-  background: #1a1c22;
-  color: var(--text-muted);
-  border-color: var(--border);
-}
-.state-badge.tracking {
-  background: #1a1800;
-  color: var(--amber);
-  border-color: #3d3000;
-}
+.state-badge.silence { background: #1a1c22; color: var(--text-muted); border-color: var(--border); }
+.state-badge.tracking { background: #1a1800; color: var(--amber); border-color: #3d3000; }
 .state-badge.locked {
-  background: var(--green-dim);
-  color: var(--green);
-  border-color: #0e4028;
-  box-shadow: 0 0 12px var(--green-glow);
+  background: var(--green-dim); color: var(--green); border-color: #0e4028;
+  box-shadow: 0 0 10px var(--green-glow);
 }
-.state-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.state-badge.locked .state-dot {
-  animation: blink 1s ease-in-out infinite;
-}
-@keyframes blink {
-  0%,100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
+.state-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.state-badge.locked .state-dot { animation: blink 1s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-/* Right side BPM: stability + badge */
-.bpm-right {
+/* ── BEAT FLASH ── */
+.beat-strip { height: 3px; background: var(--border); flex-shrink: 0; }
+.beat-flash-bar { height: 100%; width: 100%; background: var(--green); box-shadow: 0 0 10px var(--green); opacity: 0; transition: opacity 0.05s; }
+
+/* ── VU + SCOPE : COLONNE ── */
+.meters-col {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-  padding-bottom: 4px;
-  align-self: flex-end;
-}
-
-/* ========================
-   METERS ROW
-======================== */
-.meters-row {
-  display: flex;
-  gap: 0;
-  height: 100px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
 
-/* VU Meter — vertical */
+/* VU Meter horizontal */
 .vu-wrap {
-  width: 72px;
   display: flex;
-  flex-direction: column;
-  padding: 10px 12px;
-  border-right: 1px solid var(--border);
-  gap: 4px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid #1a1e24;
 }
 .vu-label {
-  font-size: 9px;
-  letter-spacing: 3px;
-  color: var(--text-muted);
-  text-align: center;
+  font-size: 9px; letter-spacing: 3px; color: var(--text-muted);
+  flex-shrink: 0; width: 30px;
 }
-.vu-bar-wrap {
-  flex: 1;
-  display: flex;
-  gap: 3px;
-  align-items: flex-end;
-}
-.vu-bar {
-  flex: 1;
-  border-radius: 2px 2px 0 0;
-  position: relative;
-  overflow: hidden;
+.vu-bar-h {
+  flex: 1; height: 10px;
   background: #0d1014;
+  border-radius: 3px;
   border: 1px solid #1a1e24;
+  overflow: hidden;
+  position: relative;
 }
-.vu-fill {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 0%;
-  border-radius: 2px 2px 0 0;
-  transition: height 0.04s;
+.vu-fill-h {
+  height: 100%; width: 0%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--cyan) 0%, var(--green) 55%, var(--amber) 80%, var(--red) 100%);
+  transition: width 0.04s;
 }
-#vu-bass .vu-fill {
-  background: linear-gradient(0deg, #00e5ff 0%, #39ff8a 60%, #ffb347 85%, #ff4655 100%);
-}
-
-.vu-db {
-  font-size: 9px;
-  color: var(--text-muted);
-  text-align: center;
-  font-family: 'Share Tech Mono', monospace;
+#db-label {
+  font-size: 9px; color: var(--text-muted);
+  flex-shrink: 0; width: 52px; text-align: right;
 }
 
-/* Oscilloscope canvas */
+/* Oscilloscope */
 .scope-wrap {
-  flex: 1;
+  padding: 6px 14px 10px;
   display: flex;
   flex-direction: column;
-  padding: 10px 12px;
   gap: 4px;
 }
-.scope-label {
-  font-size: 9px;
-  letter-spacing: 3px;
-  color: var(--text-muted);
-}
+.scope-label { font-size: 9px; letter-spacing: 3px; color: var(--text-muted); }
 #wave {
-  flex: 1;
-  width: 100%;
-  display: block;
-  border-radius: 2px;
+  width: 100%; height: 70px; display: block;
+  border-radius: 3px;
   background: #080a0c;
   border: 1px solid #1a1e24;
 }
 
-/* ========================
-   BEAT FLASH STRIP
-======================== */
-.beat-strip {
-  height: 3px;
-  background: var(--border);
-  position: relative;
-  overflow: hidden;
+/* ── BEAT GRID ── */
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: nowrap;
 }
-.beat-flash-bar {
-  position: absolute;
-  inset: 0;
-  background: var(--green);
-  box-shadow: 0 0 12px var(--green);
-  opacity: 0;
-  transition: opacity 0.05s;
+.history-label {
+  font-size: 9px; letter-spacing: 2px; color: var(--text-muted);
+  margin-left: auto; flex-shrink: 0;
+}
+.history-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.history-dot.active {
+  background: var(--amber);
+  box-shadow: 0 0 5px var(--amber-glow);
 }
 
-/* ========================
-   CONTROLS
-======================== */
+/* ── CONTROLS : colonne propre ── */
 .controls-panel {
   background: var(--panel2);
   border-bottom: 1px solid var(--border);
-  padding: 14px 20px;
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  align-items: flex-end;
-}
-
-.ctrl-group {
-  flex: 1;
-  min-width: 120px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
 }
-
+.ctrl-group { display: flex; flex-direction: column; gap: 6px; }
 .ctrl-label {
-  font-size: 9px;
-  letter-spacing: 3px;
-  color: var(--text-muted);
-  display: flex;
-  justify-content: space-between;
+  font-size: 9px; letter-spacing: 3px; color: var(--text-muted);
+  display: flex; justify-content: space-between;
 }
-.ctrl-val {
-  color: var(--amber);
-}
+.ctrl-val { color: var(--amber); }
 
 input[type=range] {
   -webkit-appearance: none;
-  width: 100%;
-  height: 4px;
+  width: 100%; height: 4px;
   background: var(--border);
   border-radius: 2px;
-  outline: none;
-  cursor: pointer;
+  outline: none; cursor: pointer;
 }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 14px;
-  height: 14px;
+  width: 20px; height: 20px;   /* plus grand pour doigt */
   border-radius: 50%;
   background: var(--amber);
   box-shadow: 0 0 6px var(--amber-glow);
   border: 2px solid var(--bg);
   cursor: pointer;
-  transition: box-shadow 0.2s;
-}
-input[type=range]:hover::-webkit-slider-thumb {
-  box-shadow: 0 0 12px var(--amber-glow);
 }
 
-/* ========================
-   BUTTON
-======================== */
+/* ── BOUTONS ── */
 .btn-panel {
-  padding: 14px 20px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
   background: var(--panel);
-  display: flex;
-  gap: 12px;
-  align-items: center;
 }
-
 #btn-toggle {
-  flex: 1;
-  padding: 12px 20px;
+  flex: 1; padding: 14px 16px;
   font-family: 'Orbitron', monospace;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background: var(--green-dim);
-  color: var(--green);
+  font-size: 12px; font-weight: 700; letter-spacing: 3px;
+  border: none; border-radius: 5px; cursor: pointer;
+  background: var(--green-dim); color: var(--green);
   border: 1px solid #1a4030;
-  box-shadow: 0 0 0 transparent;
   transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
-#btn-toggle:hover {
-  background: #0e3d28;
-  box-shadow: 0 0 16px var(--green-glow);
-}
-#btn-toggle.running {
-  background: var(--red-dim);
-  color: var(--red);
-  border-color: #4d0010;
-}
-#btn-toggle.running:hover {
-  box-shadow: 0 0 16px #ff466540;
-}
-
+#btn-toggle:active { opacity: 0.8; }
+#btn-toggle.running { background: var(--red-dim); color: var(--red); border-color: #4d0010; }
 #btn-reset {
-  padding: 12px 16px;
+  padding: 14px 14px;
   font-family: 'Share Tech Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 2px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text-muted);
+  font-size: 11px; letter-spacing: 2px;
+  border: 1px solid var(--border); border-radius: 5px;
+  cursor: pointer; background: transparent; color: var(--text-muted);
   transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
-#btn-reset:hover {
-  color: var(--text);
-  border-color: #4a5060;
-}
+#btn-reset:active { color: var(--text); }
 
-/* ========================
-   BEAT HISTORY ROW
-======================== */
-.history-row {
-  display: flex;
-  gap: 3px;
-  padding: 8px 20px;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  align-items: center;
-}
-.history-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--border);
-  transition: background 0.3s, box-shadow 0.3s;
-  flex-shrink: 0;
-}
-.history-dot.active {
-  background: var(--amber);
-  box-shadow: 0 0 6px var(--amber-glow);
-}
-.history-label {
-  font-size: 9px;
-  letter-spacing: 2px;
-  color: var(--text-muted);
-  margin-left: auto;
-}
-
-/* ========================
-   RACK FOOTER
-======================== */
+/* ── FOOTER ── */
 .rack-footer {
-  background: linear-gradient(180deg, #16181e 0%, #111214 100%);
+  background: linear-gradient(180deg, #16181e, #111214);
   border-top: 1px solid var(--border);
-  padding: 8px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 7px 14px;
+  display: flex; justify-content: space-between;
 }
-.rack-footer span {
-  font-size: 9px;
-  letter-spacing: 2px;
-  color: var(--text-muted);
-}
+.rack-footer span { font-size: 9px; letter-spacing: 2px; color: var(--text-muted); }
 </style>
 </head>
 <body>
@@ -490,41 +322,33 @@ input[type=range]:hover::-webkit-slider-thumb {
   <div class="rack-header">
     <div class="screw"></div>
     <span class="brand">STUDIO</span>
-    <span class="title">BPM DETECTOR PRO</span>
+    <span class="rack-title">BPM DETECTOR PRO</span>
     <div class="led-power" id="led-power"></div>
     <div class="screw"></div>
   </div>
 
   <!-- BPM DISPLAY -->
   <div class="bpm-section">
-    <div class="bpm-display">
+    <div class="bpm-left">
       <div class="bpm-label">TEMPO</div>
       <div id="bpm">--</div>
       <div class="bpm-unit">BPM</div>
     </div>
-    <div class="bpm-right">
-      <div class="state-badge silence" id="state-badge">
-        <div class="state-dot"></div>
-        <span id="state-text">SILENCE</span>
-      </div>
+    <div class="state-badge silence" id="state-badge">
+      <div class="state-dot"></div>
+      <span id="state-text">SILENCE</span>
     </div>
   </div>
 
   <!-- BEAT FLASH STRIP -->
-  <div class="beat-strip">
-    <div class="beat-flash-bar" id="beat-flash"></div>
-  </div>
+  <div class="beat-strip"><div class="beat-flash-bar" id="beat-flash"></div></div>
 
-  <!-- METERS ROW -->
-  <div class="meters-row">
+  <!-- VU + SCOPE en colonne -->
+  <div class="meters-col">
     <div class="vu-wrap">
       <div class="vu-label">BASS</div>
-      <div class="vu-bar-wrap">
-        <div class="vu-bar" id="vu-bass">
-          <div class="vu-fill" id="vu-fill"></div>
-        </div>
-      </div>
-      <div class="vu-db" id="db-label">-∞</div>
+      <div class="vu-bar-h"><div class="vu-fill-h" id="vu-fill"></div></div>
+      <div id="db-label">-∞ dB</div>
     </div>
     <div class="scope-wrap">
       <div class="scope-label">WAVEFORM</div>
@@ -532,7 +356,7 @@ input[type=range]:hover::-webkit-slider-thumb {
     </div>
   </div>
 
-  <!-- BEAT HISTORY -->
+  <!-- BEAT GRID -->
   <div class="history-row" id="history-row">
     <div class="history-label">BEAT GRID</div>
   </div>
@@ -540,29 +364,20 @@ input[type=range]:hover::-webkit-slider-thumb {
   <!-- CONTROLS -->
   <div class="controls-panel">
     <div class="ctrl-group">
-      <div class="ctrl-label">
-        SENSIBILITÉ
-        <span class="ctrl-val" id="sens-val">1.8</span>
-      </div>
+      <div class="ctrl-label">SENSIBILITÉ <span class="ctrl-val" id="sens-val">1.8</span></div>
       <input type="range" id="sens" min="1.2" max="3" step="0.1" value="1.8">
     </div>
     <div class="ctrl-group">
-      <div class="ctrl-label">
-        LISSAGE BPM
-        <span class="ctrl-val" id="smooth-val">0.75</span>
-      </div>
+      <div class="ctrl-label">LISSAGE BPM <span class="ctrl-val" id="smooth-val">0.75</span></div>
       <input type="range" id="smooth" min="0.5" max="0.95" step="0.01" value="0.75">
     </div>
     <div class="ctrl-group">
-      <div class="ctrl-label">
-        REFRACTORY (ms)
-        <span class="ctrl-val" id="refrac-val">180</span>
-      </div>
+      <div class="ctrl-label">REFRACTORY (ms) <span class="ctrl-val" id="refrac-val">180</span></div>
       <input type="range" id="refrac" min="100" max="400" step="10" value="180">
     </div>
   </div>
 
-  <!-- BUTTON -->
+  <!-- BOUTONS -->
   <div class="btn-panel">
     <button id="btn-toggle" onclick="toggle()">▶ START</button>
     <button id="btn-reset" onclick="resetState()">RESET</button>
@@ -571,7 +386,7 @@ input[type=range]:hover::-webkit-slider-thumb {
   <!-- FOOTER -->
   <div class="rack-footer">
     <span>BASS ONSET DETECTION</span>
-    <span>v2.0</span>
+    <span>v2.1</span>
   </div>
 
 </div>
@@ -597,36 +412,34 @@ let flashTimeout  = null;
 // ============================================================
 // PARAMS
 // ============================================================
-let SENS    = 1.8;
-let SMOOTH  = 0.75;
-let REFRAC  = 180;
+let SENS   = 1.8;
+let SMOOTH = 0.75;
+let REFRAC = 180;
 const BPM_TIMEOUT = 2500;
-
-// History dots
-const HIST_COUNT = 16;
+const HIST_COUNT  = 16;
 
 // ============================================================
 // UI REFS
 // ============================================================
-const bpmEl       = document.getElementById('bpm');
-const dbLabel     = document.getElementById('db-label');
-const vuFill      = document.getElementById('vu-fill');
-const stateBadge  = document.getElementById('state-badge');
-const stateText   = document.getElementById('state-text');
-const beatFlash   = document.getElementById('beat-flash');
-const ledPower    = document.getElementById('led-power');
-const btnToggle   = document.getElementById('btn-toggle');
-const histRow     = document.getElementById('history-row');
+const bpmEl      = document.getElementById('bpm');
+const dbLabel    = document.getElementById('db-label');
+const vuFill     = document.getElementById('vu-fill');
+const stateBadge = document.getElementById('state-badge');
+const stateText  = document.getElementById('state-text');
+const beatFlash  = document.getElementById('beat-flash');
+const ledPower   = document.getElementById('led-power');
+const btnToggle  = document.getElementById('btn-toggle');
+const histRow    = document.getElementById('history-row');
+const canvas     = document.getElementById('wave');
+const cctx       = canvas.getContext('2d');
 
-const canvas = document.getElementById('wave');
-const cctx   = canvas.getContext('2d');
-
-// Build history dots
-const histDots = [];
+// Build beat grid dots (avant le label)
+const histLabel = histRow.querySelector('.history-label');
+const histDots  = [];
 for (let i = 0; i < HIST_COUNT; i++) {
   const d = document.createElement('div');
   d.className = 'history-dot';
-  histRow.insertBefore(d, histRow.querySelector('.history-label'));
+  histRow.insertBefore(d, histLabel);
   histDots.push(d);
 }
 
@@ -660,19 +473,13 @@ async function toggle() {
   }
 
   ctx = new AudioContext();
-
   stream = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      echoCancellation: false,
-      noiseSuppression: false,
-      autoGainControl:  false
-    }
+    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
   });
 
   src      = ctx.createMediaStreamSource(stream);
   analyser = ctx.createAnalyser();
   analyser.fftSize = 2048;
-
   src.connect(analyser);
 
   running = true;
@@ -683,15 +490,11 @@ async function toggle() {
 }
 
 // ============================================================
-// RESET STATE
+// RESET
 // ============================================================
 function resetState() {
-  energyHistory = [];
-  onsetHistory  = [];
-  beatTimes     = [];
-  lastBeat      = 0;
-  lastOnsetTime = 0;
-  smoothedBpm   = null;
+  energyHistory = []; onsetHistory = []; beatTimes = [];
+  lastBeat = 0; lastOnsetTime = 0; smoothedBpm = null;
   bpmEl.textContent = '--';
   bpmEl.classList.remove('locked');
   setUIState('silence');
@@ -708,34 +511,32 @@ function loop() {
   const timeDomain = new Float32Array(analyser.fftSize);
   analyser.getFloatTimeDomainData(timeDomain);
 
-  // ---- BASS ENERGY (spectrale, basses < ~200 Hz) ----
+  // -- BASS ENERGY (bins < ~200 Hz) --
   const freqBins = new Uint8Array(analyser.frequencyBinCount);
   analyser.getByteFrequencyData(freqBins);
 
-  // Calcul de la fréquence par bin
   const nyquist = ctx.sampleRate / 2;
   const binHz   = nyquist / analyser.frequencyBinCount;
-  const bassMax = Math.round(200 / binHz);   // bin index ~ 200 Hz
+  const bassMax = Math.round(200 / binHz);
 
   let bassSum = 0;
   for (let i = 0; i < bassMax; i++) bassSum += freqBins[i];
-  let bassEnergy = bassSum / bassMax / 255;   // normalisé 0..1
+  let bassEnergy = bassSum / bassMax / 255;
 
-  // Lissage léger sur l'énergie (on garde réactif, lissage faible)
-  const ESMO = 0.4;
+  // Lissage léger (réactif)
   if (energyHistory.length > 0) {
-    bassEnergy = ESMO * energyHistory.at(-1) + (1 - ESMO) * bassEnergy;
+    bassEnergy = 0.4 * energyHistory.at(-1) + 0.6 * bassEnergy;
   }
   energyHistory.push(bassEnergy);
   if (energyHistory.length > 300) energyHistory.shift();
 
-  // ---- VU METER ----
+  // -- VU METER horizontal --
   const db   = 20 * Math.log10(bassEnergy + 1e-9);
-  const norm = Math.max(0, Math.min(1, (db + 50) / 50));
-  vuFill.style.height = (norm * 100) + '%';
-  dbLabel.textContent = isFinite(db) ? db.toFixed(1) + ' dB' : '-∞';
+  const norm  = Math.max(0, Math.min(1, (db + 50) / 50));
+  vuFill.style.width = (norm * 100) + '%';
+  dbLabel.textContent = isFinite(db) ? db.toFixed(1) + ' dB' : '-∞ dB';
 
-  // ---- ONSET (dérivée d'énergie basse) ----
+  // -- ONSET --
   const diff = bassEnergy - (energyHistory.at(-2) || bassEnergy);
   onsetHistory.push(diff);
   if (onsetHistory.length > 60) onsetHistory.shift();
@@ -743,14 +544,13 @@ function loop() {
   const mean      = avg(onsetHistory);
   const sd        = stddev(onsetHistory, mean);
   const threshold = mean + SENS * sd;
-
-  const now = performance.now();
+  const now       = performance.now();
 
   if (diff > threshold && now - lastBeat > REFRAC) {
     triggerBeat(now);
   }
 
-  // ---- TIMEOUT SILENCE ----
+  // -- TIMEOUT SILENCE --
   if (now - lastOnsetTime > BPM_TIMEOUT && lastOnsetTime > 0) {
     resetState();
   }
@@ -759,21 +559,18 @@ function loop() {
 }
 
 // ============================================================
-// BEAT TRIGGER
+// BEAT
 // ============================================================
 function triggerBeat(now) {
-  lastBeat      = now;
-  lastOnsetTime = now;
+  lastBeat = lastOnsetTime = now;
 
-  // Flash barre
   clearTimeout(flashTimeout);
   beatFlash.style.opacity = '1';
   flashTimeout = setTimeout(() => { beatFlash.style.opacity = '0'; }, 80);
 
-  // BPM instantané (1 intervalle)
   if (beatTimes.length >= 1) {
-    const interval    = now - beatTimes.at(-1);
-    const instantBpm  = 60000 / interval;
+    const interval   = now - beatTimes.at(-1);
+    const instantBpm = 60000 / interval;
     if (instantBpm > 40 && instantBpm < 220) {
       bpmEl.textContent = Math.round(instantBpm);
     }
@@ -782,53 +579,34 @@ function triggerBeat(now) {
   beatTimes.push(now);
   if (beatTimes.length > 24) beatTimes.shift();
 
-  // Update history dots
   const active = Math.min(beatTimes.length, HIST_COUNT);
-  histDots.forEach((d, i) => {
-    d.classList.toggle('active', i < active);
-  });
+  histDots.forEach((d, i) => d.classList.toggle('active', i < active));
 
   computeBPM();
 }
 
 // ============================================================
-// BPM STABLE (avec filtrage des intervalles aberrants)
+// BPM STABLE
 // ============================================================
 function computeBPM() {
   if (beatTimes.length < 6) return;
 
-  // Construire les intervalles
   let intervals = [];
-  for (let i = 1; i < beatTimes.length; i++) {
-    intervals.push(beatTimes[i] - beatTimes[i - 1]);
-  }
+  for (let i = 1; i < beatTimes.length; i++) intervals.push(beatTimes[i] - beatTimes[i - 1]);
 
-  // Filtrage des aberrants : on garde ceux à ±30% de la médiane
   const med      = median(intervals);
   const filtered = intervals.filter(v => v > med * 0.7 && v < med * 1.3);
-
   if (filtered.length < 4) return;
 
   const avgInt = avg(filtered);
   const bpm    = 60000 / avgInt;
   if (bpm < 40 || bpm > 220) return;
 
-  if (smoothedBpm === null) {
-    smoothedBpm = bpm;
-  } else {
-    smoothedBpm = SMOOTH * smoothedBpm + (1 - SMOOTH) * bpm;
-  }
-
+  smoothedBpm = smoothedBpm === null ? bpm : SMOOTH * smoothedBpm + (1 - SMOOTH) * bpm;
   bpmEl.textContent = Math.round(smoothedBpm);
 
-  // État
   const stability = stddev(filtered, avgInt) / avgInt;
-
-  if (stability < 0.08) {
-    setUIState('locked');
-  } else {
-    setUIState('tracking');
-  }
+  setUIState(stability < 0.08 ? 'locked' : 'tracking');
 }
 
 // ============================================================
@@ -837,54 +615,50 @@ function computeBPM() {
 function setUIState(state) {
   stateBadge.className = 'state-badge ' + state;
   stateText.textContent = state.toUpperCase();
-  if (state === 'locked') {
-    bpmEl.classList.add('locked');
-  } else {
-    bpmEl.classList.remove('locked');
-  }
+  bpmEl.classList.toggle('locked', state === 'locked');
 }
 
 // ============================================================
-// DRAW WAVEFORM
+// WAVEFORM
 // ============================================================
 function drawWave(buffer) {
-  const w = canvas.width  = canvas.offsetWidth  * devicePixelRatio;
-  const h = canvas.height = canvas.offsetHeight * devicePixelRatio;
+  const dpr = window.devicePixelRatio || 1;
+  const w   = canvas.width  = canvas.offsetWidth  * dpr;
+  const h   = canvas.height = canvas.offsetHeight * dpr;
 
   cctx.clearRect(0, 0, w, h);
 
-  // Grille de fond
+  // ligne centrale
   cctx.strokeStyle = '#1a1e24';
   cctx.lineWidth   = 1;
-  const mid = h / 2;
-  cctx.beginPath(); cctx.moveTo(0, mid); cctx.lineTo(w, mid); cctx.stroke();
+  cctx.beginPath();
+  cctx.moveTo(0, h / 2); cctx.lineTo(w, h / 2);
+  cctx.stroke();
 
-  // Waveform
+  // waveform
   cctx.beginPath();
   for (let i = 0; i < buffer.length; i++) {
     const x = (i / buffer.length) * w;
     const y = (buffer[i] * 0.5 + 0.5) * h;
     i === 0 ? cctx.moveTo(x, y) : cctx.lineTo(x, y);
   }
-
-  cctx.strokeStyle  = '#00e5ff88';
-  cctx.lineWidth    = 1.5 * devicePixelRatio;
-  cctx.shadowColor  = '#00e5ff';
-  cctx.shadowBlur   = 4;
+  cctx.strokeStyle = '#00e5ff88';
+  cctx.lineWidth   = 1.5 * dpr;
+  cctx.shadowColor = '#00e5ff';
+  cctx.shadowBlur  = 4;
   cctx.stroke();
-
-  cctx.shadowBlur = 0;
+  cctx.shadowBlur  = 0;
 }
 
 // ============================================================
 // MATH
 // ============================================================
-function avg(a)         { return a.reduce((s, v) => s + v, 0) / a.length; }
-function stddev(a, m)   { return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); }
+function avg(a)       { return a.reduce((s, v) => s + v, 0) / a.length; }
+function stddev(a, m) { return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); }
 function median(a) {
   const s = [...a].sort((x, y) => x - y);
-  const mid = Math.floor(s.length / 2);
-  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 </script>
 
