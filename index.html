@@ -2,948 +2,258 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>BPM Detector</title>
+
 <style>
-  :root {
-    --bg: #0a0a0f;
-    --surface: #12121a;
-    --surface2: #1a1a26;
-    --accent: #e8ff47;
-    --accent2: #47ffe8;
-    --text: #f0f0f5;
-    --muted: #5a5a72;
-    --danger: #ff4747;
-    --green: #47ff8a;
-    --radius: 16px;
-  }
+body {
+  background:#0a0a0f;
+  color:#fff;
+  font-family:monospace;
+  padding:20px;
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+.level-meter-bg {
+  width:100%;
+  height:10px;
+  background:#222;
+  position:relative;
+  margin-bottom:5px;
+}
+.level-meter-fill {
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#47ffe8,#e8ff47,#ff4747);
+}
+.threshold-line {
+  position:absolute;
+  top:0;
+  width:2px;
+  height:100%;
+  background:red;
+}
 
-  html, body {
-    width: 100%; height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Courier New', monospace;
-    overflow: hidden;
-    user-select: none;
-  }
+canvas { width:100%; height:80px; background:#111; }
 
-  body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 2rem 1.5rem 3rem;
-    min-height: 100dvh;
-  }
+.controls { margin-top:15px; }
+.controls label { font-size:12px; display:block; margin-top:5px; }
 
-  /* ── Header ── */
-  header {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .logo {
-    font-size: 11px;
-    letter-spacing: 0.3em;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-.status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--surface2); /* Gris très foncé par défaut */
-    transition: background 0.05s, box-shadow 0.05s; /* Rapide pour le flash */
-  }
-  /* On supprime l'animation pulse-dot */
-  .status-dot.flash {
-    background: var(--accent);
-    box-shadow: 0 0 12px var(--accent);
-  }
+button { margin-top:15px; padding:10px; }
 
-
-  /* ── BPM ring ── */
-  .bpm-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-    position: relative;
-  }
-
-  .bpm-ring {
-    width: 220px; height: 220px;
-    border-radius: 50%;
-    border: 1.5px solid var(--surface2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    transition: border-color 0.4s;
-  }
-  .bpm-ring.listening {
-    border-color: var(--muted);
-  }
-  .bpm-ring.locked {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 0 rgba(232,255,71,0.4);
-    animation: ring-breathe 1.5s ease-in-out infinite;
-  }
-  @keyframes ring-breathe {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(232,255,71,0.2); }
-    50% { box-shadow: 0 0 0 18px rgba(232,255,71,0); }
-  }
-  .bpm-ring.beat-flash {
-    animation: ring-beat 0.12s ease-out !important;
-  }
-  @keyframes ring-beat {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.04); }
-    100% { transform: scale(1); }
-  }
-
-  .bpm-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-  }
-  .bpm-value {
-    font-size: 80px;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--accent);
-    letter-spacing: -2px;
-    transition: color 0.2s;
-    font-variant-numeric: tabular-nums;
-  }
-  .bpm-value.no-signal { color: var(--muted); }
-  .bpm-label {
-    font-size: 10px;
-    letter-spacing: 0.4em;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-
-  /* SVG ring progress */
-  .ring-svg {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    transform: rotate(-90deg);
-    pointer-events: none;
-  }
-  .ring-progress {
-    fill: none;
-    stroke: var(--accent);
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-dasharray: 660;
-    stroke-dashoffset: 660;
-    transition: stroke-dashoffset 0.1s linear;
-    opacity: 0.3;
-  }
-
-  /* ── Phase indicator ── */
-  .phase-row {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-height: 28px;
-  }
-  .beat-led {
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--surface2);
-    border: 1px solid var(--muted);
-    transition: background 0.05s, box-shadow 0.05s;
-    flex-shrink: 0;
-  }
-  .beat-led.flash {
-    background: var(--accent2);
-    box-shadow: 0 0 10px var(--accent2);
-  }
-  .phase-label {
-    font-size: 10px;
-    letter-spacing: 0.25em;
-    color: var(--muted);
-    text-transform: uppercase;
-    transition: color 0.3s;
-  }
-  .phase-label.listening { color: var(--muted); }
-  .phase-label.locked    { color: var(--green); }
-
-  /* ── Confidence bar ── */
-  .confidence-wrap {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .conf-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-  .conf-bar-bg {
-    height: 4px;
-    background: var(--surface2);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-  .conf-bar-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    width: 0%;
-    transition: width 0.4s ease, background 0.4s;
-  }
-
-  /* ── Level meter ── */
-  .level-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-  }
-  .level-label {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    color: var(--muted);
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  .level-meter-bg {
-    flex: 1;
-    height: 6px;
-    background: var(--surface2);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .level-meter-fill {
-    height: 100%;
-    width: 0%;
-    border-radius: 3px;
-    background: linear-gradient(90deg, var(--accent2) 0%, var(--accent) 60%, var(--danger) 100%);
-    transition: width 0.05s linear;
-  }
-  .level-db {
-    font-size: 10px;
-    color: var(--muted);
-    min-width: 36px;
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* ── Waveform ── */
-  .waveform-wrap { width: 100%; position: relative; }
-  canvas#waveform {
-    width: 100%; height: 72px;
-    display: block;
-    border-radius: 8px;
-  }
-
-  /* ── Beat history dots ── */
-  .beat-history {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    align-items: center;
-    height: 20px;
-  }
-  .beat-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--surface2);
-    transition: background 0.1s, transform 0.1s;
-  }
-  .beat-dot.recent {
-    background: var(--accent);
-    transform: scale(1.4);
-  }
-  .beat-dot.old { background: var(--muted); }
-
-  /* ── Stats row ── */
-  .stats-row {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-  }
-  .stat-card {
-    background: var(--surface);
-    border: 0.5px solid var(--surface2);
-    border-radius: 10px;
-    padding: 10px 8px;
-    text-align: center;
-  }
-  .stat-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--accent2);
-    letter-spacing: -0.5px;
-  }
-  .stat-label {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
-
-  /* ── Buttons ── */
-  .btn-start {
-    width: 100%;
-    padding: 18px;
-    border: 1.5px solid var(--accent);
-    border-radius: var(--radius);
-    background: transparent;
-    color: var(--accent);
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s, transform 0.1s;
-    -webkit-appearance: none;
-  }
-  .btn-start:active { transform: scale(0.98); }
-  .btn-start.running {
-    background: rgba(232,255,71,0.08);
-    border-color: var(--danger);
-    color: var(--danger);
-  }
-  .btn-reset {
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    cursor: pointer;
-    padding: 4px 8px;
-    transition: color 0.2s;
-  }
-  .btn-reset:active { color: var(--text); }
-
-  .bottom-row {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .bottom-actions {
-    display: flex;
-    justify-content: center;
-  }
 </style>
 </head>
+
 <body>
 
-<header>
-  <span class="logo">BPM Detector</span>
-  <div class="status-dot" id="statusDot"></div>
-</header>
+<h2>BPM Detector</h2>
 
-<div class="bpm-container">
-  <div class="bpm-ring" id="bpmRing">
-    <svg class="ring-svg" viewBox="0 0 220 220">
-      <circle class="ring-progress" id="ringProgress" cx="110" cy="110" r="105"/>
-    </svg>
-    <div class="bpm-inner">
-      <div class="bpm-value no-signal" id="bpmValue">--</div>
-      <div class="bpm-label">BPM</div>
-    </div>
-  </div>
+<div class="level-meter-bg">
+  <div class="level-meter-fill" id="levelMeter"></div>
+  <div class="threshold-line" id="thresholdLine"></div>
 </div>
 
-<!-- Phase indicator: LED + label -->
-<div class="phase-row">
-  <div class="beat-led" id="beatLed"></div>
-  <span class="phase-label" id="phaseLabel">En attente</span>
-</div>
+<div id="levelDb">-∞ dB</div>
 
-<div class="beat-history" id="beatHistory"></div>
+<canvas id="waveform"></canvas>
 
-<div style="width:100%;display:flex;flex-direction:column;gap:10px;">
-  <div class="confidence-wrap">
-    <div class="conf-header">
-      <span>Stabilité</span>
-      <span id="confValue">0%</span>
-    </div>
-    <div class="conf-bar-bg">
-      <div class="conf-bar-fill" id="confBar"></div>
-    </div>
-  </div>
+<h1 id="bpm">--</h1>
 
-  <div class="level-row">
-    <span class="level-label">Niveau</span>
-    <div class="level-meter-bg">
-      <div class="level-meter-fill" id="levelMeter"></div>
-    </div>
-    <span class="level-db" id="levelDb">-∞</span>
-  </div>
+<button onclick="toggleDetection()">START / STOP</button>
 
-  <div class="waveform-wrap">
-    <canvas id="waveform"></canvas>
-  </div>
-</div>
-
-<div class="stats-row">
-  <div class="stat-card">
-    <div class="stat-value" id="statMin">--</div>
-    <div class="stat-label">Min</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-value" id="statBeats">0</div>
-    <div class="stat-label">Beats</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-value" id="statMax">--</div>
-    <div class="stat-label">Max</div>
-  </div>
-</div>
-
-<div class="bottom-row">
-  <button class="btn-start" id="btnStart" onclick="toggleDetection()">▶ &nbsp; Démarrer</button>
-  <div class="bottom-actions">
-    <button class="btn-reset" onclick="resetAll()">↺ &nbsp; Reset</button>
-  </div>
+<div class="controls">
+  <label>Silence <input type="range" id="silenceSlider" min="-100" max="-20" value="-85"></label>
+  <label>Seuil <input type="range" id="thresholdSlider" min="0.5" max="3" step="0.1" value="1.1"></label>
+  <label>Transient <input type="range" id="transientSlider" min="5" max="80" value="25"></label>
+  <label>BPM Min <input type="range" id="bpmMinSlider" min="30" max="120" value="50"></label>
+  <label>BPM Max <input type="range" id="bpmMaxSlider" min="120" max="300" value="220"></label>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-// CONSTANTS
-// ═══════════════════════════════════════════════════════════════
 
-const FFT_SIZE        = 2048;
-const FRAME_MS        = 1000 / 30;        // ~30 fps
-const ANALYSER_SMOOTH = 0.3;              // FFT smoothing (was 0.0 — wrong)
+// ==========================
+// PARAMÈTRES
+// ==========================
 
-// Silence gate: below this RMS level, no beat detection at all
-// Baisser le seuil de silence pour capter les légers tapotements sur la coque
-const SILENCE_GATE_DB = -85; // (au lieu de -50)
+let SILENCE_GATE_DB = -85;
+let THRESHOLD_MULT = 1.1;
+let TRANSIENT_THRESHOLD = 25;
+let BPM_MIN = 50;
+let BPM_MAX = 220;
 
-// Min interval between two beats (250ms = 240 BPM max)
+const FFT_SIZE = 2048;
 const MIN_BEAT_INTERVAL_MS = 250;
 
-// Flux history window per band (~1.4s at 30fps)
-const FLUX_HISTORY_SIZE = 43;
+// ==========================
+// AUDIO
+// ==========================
 
-// How many beats we keep to compute tempo
-const BEAT_BUFFER_SIZE = 16;
+let audioCtx, analyser, stream;
+let running = false;
 
-// Lock requires this many beats with CV below threshold
-const LOCK_MIN_BEATS = 4;        // Afficher le BPM après 4 temps au lieu de 8
-const LOCK_CV_THRESHOLD = 0.22;  // Tolérer 22% d'erreur de tempo humain (au lieu de 12%)
+let lastBeatTime = 0;
+let beatTimes = [];
 
-// Unlock if 3 consecutive intervals are far off from locked BPM
-const UNLOCK_OUTLIER_COUNT = 3;
-const UNLOCK_OUTLIER_RATIO = 0.30; // Tolérance de décrochage à 30% (au lieu de 20%)
+let dbHistory = [];
+let lastDbUpdate = 0;
 
-// BPM smoothing (low alpha = sluggish but stable)
-const BPM_ALPHA_LOCKED   = 0.08;
-const BPM_ALPHA_SEEKING  = 0.20;
+// ==========================
+// UI
+// ==========================
 
-// Beat dots UI
-const BEAT_DOTS = 16;
+const levelMeter = document.getElementById("levelMeter");
+const levelDb = document.getElementById("levelDb");
+const thresholdLine = document.getElementById("thresholdLine");
+const bpmEl = document.getElementById("bpm");
 
-// ═══════════════════════════════════════════════════════════════
-// FREQUENCY BANDS  (3 bands, all contribute to beat detection)
-// ═══════════════════════════════════════════════════════════════
-//   Low  : kick, bass guitar
-//   Mid  : snare, guitar body, voice
-//   High : clap, hi-hat, guitar attack
-const BANDS = [
-  { name: 'low',  fLo:  60, fHi:  200, weight: 1.2 },
-  { name: 'mid',  fLo: 200, fHi: 2000, weight: 0.9 },
-  { name: 'high', fLo:2000, fHi: 8000, weight: 0.7 },
-];
+const canvas = document.getElementById("waveform");
+const ctx = canvas.getContext("2d");
 
-// ═══════════════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════════════
-let audioCtx   = null;
-let analyser   = null;
-let stream     = null;
-let rafId      = null;
-let running    = false;
-let lastFrameTime = 0;
+// sliders
+silenceSlider.oninput = e => SILENCE_GATE_DB = +e.target.value;
+thresholdSlider.oninput = e => THRESHOLD_MULT = +e.target.value;
+transientSlider.oninput = e => TRANSIENT_THRESHOLD = +e.target.value;
+bpmMinSlider.oninput = e => BPM_MIN = +e.target.value;
+bpmMaxSlider.oninput = e => BPM_MAX = +e.target.value;
 
-// Per-band state
-let bandState = BANDS.map(() => ({
-  prevBins: null,        // Float32Array, previous frame magnitudes
-  fluxHistory: [],       // recent flux values for adaptive threshold
-}));
-
-// Beat timestamps (ms, performance.now())
-let beatTimestamps = [];
-let lastBeatTime   = 0;
-let beatCount      = 0;
-
-// BPM state
-let bpmSmoothed  = null;   // null = not yet computed
-let bpmLocked    = false;  // false = LISTENING, true = LOCKED
-let outlierStreak = 0;     // consecutive out-of-tempo beats
-
-// Stats
-let bpmMin = Infinity;
-let bpmMax = -Infinity;
-
-// Beat dot UI state
-let beatDotsState = new Array(BEAT_DOTS).fill(0);
-
-// Waveform canvas
-const wfCanvas = document.getElementById('waveform');
-const wfCtx    = wfCanvas.getContext('2d');
-
-// ═══════════════════════════════════════════════════════════════
-// UI REFS
-// ═══════════════════════════════════════════════════════════════
-const bpmValueEl   = document.getElementById('bpmValue');
-const bpmRingEl    = document.getElementById('bpmRing');
-const ringProgressEl = document.getElementById('ringProgress');
-const statusDotEl  = document.getElementById('statusDot');
-const confBarEl    = document.getElementById('confBar');
-const confValueEl  = document.getElementById('confValue');
-const levelMeterEl = document.getElementById('levelMeter');
-const levelDbEl    = document.getElementById('levelDb');
-const statMinEl    = document.getElementById('statMin');
-const statMaxEl    = document.getElementById('statMax');
-const statBeatsEl  = document.getElementById('statBeats');
-const beatHistoryEl= document.getElementById('beatHistory');
-const beatLedEl    = document.getElementById('beatLed');
-const phaseLabelEl = document.getElementById('phaseLabel');
-const btnStart     = document.getElementById('btnStart');
-
-// Init beat dots
-for (let i = 0; i < BEAT_DOTS; i++) {
-  const d = document.createElement('div');
-  d.className = 'beat-dot';
-  beatHistoryEl.appendChild(d);
-}
-
-// ═══════════════════════════════════════════════════════════════
+// ==========================
 // START / STOP
-// ═══════════════════════════════════════════════════════════════
+// ==========================
+
 async function toggleDetection() {
-  if (running) { stopDetection(); return; }
-  try { await startDetection(); }
-  catch(e) { alert('Accès micro refusé ou non disponible.\n' + e.message); }
-}
-
-async function startDetection() {
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-  stream = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      echoCancellation: false,
-      noiseSuppression: false,
-      autoGainControl: false,
-      sampleRate: 44100
-    }
-  });
-
-  const source = audioCtx.createMediaStreamSource(stream);
-
-  analyser = audioCtx.createAnalyser();
-  analyser.fftSize              = FFT_SIZE;
-  analyser.smoothingTimeConstant = ANALYSER_SMOOTH; // 0.3, not 0.0
-
-  source.connect(analyser);
-  // NOTE: no DynamicsCompressor — it was amplifying noise and fighting us
-
-  running = true;
-  btnStart.textContent = '■  Arrêter';
-  btnStart.classList.add('running');
-
-  resetDetectionState();
-  requestWakeLock();
-  loop();
-}
-
-function stopDetection() {
-  running = false;
-  if (rafId) cancelAnimationFrame(rafId);
-  if (stream) stream.getTracks().forEach(t => t.stop());
-  if (audioCtx) audioCtx.close();
-  audioCtx = analyser = stream = null;
-
-  btnStart.textContent = '▶  Démarrer';
-  btnStart.classList.remove('running');
-  statusDotEl.classList.remove('active');
-  bpmRingEl.classList.remove('listening', 'locked');
-  levelMeterEl.style.width = '0%';
-  levelDbEl.textContent = '-∞';
-  phaseLabelEl.textContent = 'En attente';
-  phaseLabelEl.className = 'phase-label';
-  clearWaveform();
-}
-
-// ═══════════════════════════════════════════════════════════════
-// MAIN LOOP
-// ═══════════════════════════════════════════════════════════════
-function loop(ts = 0) {
-  if (!running) return;
-  rafId = requestAnimationFrame(loop);
-  if (ts - lastFrameTime < FRAME_MS) return;
-  lastFrameTime = ts;
-
-  const bufLen  = analyser.frequencyBinCount; // FFT_SIZE/2 = 1024
-  const freqData = new Float32Array(bufLen);
-  analyser.getFloatFrequencyData(freqData);
-
-  const sr    = audioCtx.sampleRate || 44100;
-  const binHz = sr / FFT_SIZE;
-
-  // ── 1. Level meter (full-spectrum RMS)
-  let rmsSum = 0;
-  for (let i = 0; i < bufLen; i++) {
-    const lin = Math.pow(10, freqData[i] / 20);
-    rmsSum += lin * lin;
-  }
-  const rmsDb   = 10 * Math.log10(rmsSum / bufLen);
-  const levelPct = Math.max(0, Math.min(100, (rmsDb + 80) / 80 * 100));
-  levelMeterEl.style.width  = levelPct.toFixed(1) + '%';
-  levelDbEl.textContent     = isFinite(rmsDb) ? rmsDb.toFixed(0) + ' dB' : '-∞';
-
-  // ── 2. Waveform
-  const timeData = new Uint8Array(bufLen);
-  analyser.getByteTimeDomainData(timeData);
-  drawWaveform(timeData);
-
-  // ── 3. Silence gate — skip detection if too quiet
-  if (!isFinite(rmsDb) || rmsDb < SILENCE_GATE_DB) {
+  if (running) {
+    stream.getTracks().forEach(t=>t.stop());
+    audioCtx.close();
+    running = false;
     return;
   }
 
-  // ── 4. Multi-band spectral flux — weighted sum
-  let combinedFlux = 0;
-  let combinedThreshold = 0;
+  audioCtx = new AudioContext();
+  stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  const source = audioCtx.createMediaStreamSource(stream);
 
-  BANDS.forEach((band, bi) => {
-    const state = bandState[bi];
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = FFT_SIZE;
 
-    const bLo = Math.max(0, Math.floor(band.fLo / binHz));
-    const bHi = Math.min(bufLen - 1, Math.floor(band.fHi / binHz));
-    const nBins = bHi - bLo + 1;
+  source.connect(analyser);
 
-    // Init prevBins on first frame
-    if (!state.prevBins) {
-      state.prevBins = new Float32Array(bufLen).fill(-Infinity);
-    }
+  running = true;
+  loop();
+}
 
-    // Compute half-wave rectified spectral flux for this band
-    let flux = 0;
-    for (let i = bLo; i <= bHi; i++) {
-      const cur  = Math.pow(10, freqData[i] / 20);
-      const prev = Math.pow(10, state.prevBins[i] / 20);
-      const diff = cur - prev;
-      if (diff > 0) flux += diff;
-      state.prevBins[i] = freqData[i];
-    }
-    // Normalize by number of bins so bands are comparable
-    flux /= nBins;
+// ==========================
+// LOOP
+// ==========================
 
-    // Adaptive threshold for this band
-    state.fluxHistory.push(flux);
-    if (state.fluxHistory.length > FLUX_HISTORY_SIZE) state.fluxHistory.shift();
+function loop() {
+  if (!running) return;
+  requestAnimationFrame(loop);
 
-    const mean = avg(state.fluxHistory);
-    const std  = stddev(state.fluxHistory, mean);
-    const thr  = mean + 1.1 * std;
+  const bufLen = analyser.frequencyBinCount;
+  const freqData = new Float32Array(bufLen);
+  analyser.getFloatFrequencyData(freqData);
 
-    // Weighted contribution
-    combinedFlux      += flux * band.weight;
-    combinedThreshold += thr  * band.weight;
-  });
+  // RMS
+  let rms = 0;
+  for (let i=0;i<bufLen;i++) {
+    const lin = Math.pow(10, freqData[i]/20);
+    rms += lin*lin;
+  }
 
-  // ── 5. Peak detection
+  const rmsDb = 10*Math.log10(rms/bufLen);
+
+  // VU
+  let norm = (rmsDb + 90)/70;
+  norm = Math.pow(norm,2.5);
+  norm = Math.max(0,Math.min(1,norm));
+  levelMeter.style.width = (norm*100)+"%";
+
+  // DB moyen
+  dbHistory.push(rmsDb);
+  if (dbHistory.length>30) dbHistory.shift();
+
+  if (performance.now()-lastDbUpdate>1000){
+    const avg = dbHistory.reduce((a,b)=>a+b)/dbHistory.length;
+    levelDb.textContent = avg.toFixed(1)+" dB";
+    lastDbUpdate = performance.now();
+  }
+
+  // waveform + transient
+  const timeData = new Uint8Array(bufLen);
+  analyser.getByteTimeDomainData(timeData);
+
+  drawWave(timeData);
+
+  let peak = 0;
+  for (let i=0;i<timeData.length;i++){
+    const v = Math.abs(timeData[i]-128);
+    if (v>peak) peak=v;
+  }
+
+  if (rmsDb < SILENCE_GATE_DB) return;
+
+  // spectral flux simple
+  let flux = 0;
+  for (let i=1;i<bufLen;i++){
+    const diff = freqData[i]-freqData[i-1];
+    if (diff>0) flux+=diff;
+  }
+
+  const threshold = THRESHOLD_MULT * 10;
+
+  // seuil visuel
+  let thrNorm = threshold / 50;
+  thrNorm = Math.max(0,Math.min(1,thrNorm));
+  thresholdLine.style.left = (thrNorm*100)+"%";
+
   const now = performance.now();
-  const timeSinceLast = now - lastBeatTime;
+  const delta = now - lastBeatTime;
 
-  if (
-    combinedFlux > combinedThreshold &&
-    combinedFlux > 0 &&           // extra guard vs. zero-noise floor
-    timeSinceLast > MIN_BEAT_INTERVAL_MS
-  ) {
+  if ((flux>threshold || peak>TRANSIENT_THRESHOLD) && delta>MIN_BEAT_INTERVAL_MS){
     lastBeatTime = now;
-    onBeat(now);
-  }
 
-  // ── 6. Ring progress (visual metronome, only when locked)
-  if (bpmLocked && bpmSmoothed && beatTimestamps.length >= 2) {
-    const interval = 60000 / bpmSmoothed;
-    const phase    = ((now - lastBeatTime) / interval) % 1;
-    const circ     = 2 * Math.PI * 105;
-    ringProgressEl.style.strokeDashoffset = (circ * (1 - phase)).toFixed(1);
-  }
-}
+    levelMeter.style.background="lime";
+    setTimeout(()=>levelMeter.style.background="",80);
 
-// ═══════════════════════════════════════════════════════════════
-// BEAT HANDLER
-// ═══════════════════════════════════════════════════════════════
-function onBeat(ts) {
-  beatCount++;
-  statBeatsEl.textContent = beatCount;
+    beatTimes.push(now);
+    if (beatTimes.length>10) beatTimes.shift();
 
-  beatTimestamps.push(ts);
-  if (beatTimestamps.length > BEAT_BUFFER_SIZE) beatTimestamps.shift();
-
-  // Always flash the LED — immediate visual feedback of every detected beat
-  flashLed();
-  triggerBeatFlash();
-  updateBeatDots();
-
-  // Need at least 4 beats before computing anything
-  if (beatTimestamps.length < 4) return;
-
-  // Compute all inter-beat intervals
-  const intervals = [];
-  for (let i = 1; i < beatTimestamps.length; i++) {
-    intervals.push(beatTimestamps[i] - beatTimestamps[i - 1]);
-  }
-
-  // Median filtering: keep only intervals within [0.5×, 2×] of the median
-  const sorted = [...intervals].sort((a, b) => a - b);
-  const med    = sorted[Math.floor(sorted.length / 2)];
-  const filtered = intervals.filter(v => v > med * 0.5 && v < med * 2.0);
-
-  if (filtered.length < 3) return;
-
-  const meanInterval = avg(filtered);
-  const cv           = stddev(filtered, meanInterval) / meanInterval; // coefficient of variation
-  const rawBpm       = 60000 / meanInterval;
-
-  // Clamp to musical range
-  if (rawBpm < 50 || rawBpm > 220) return;
-
-  // ── Unlock check: if we're locked and this beat is way off
-  if (bpmLocked && bpmSmoothed !== null) {
-    const deviation = Math.abs(rawBpm - bpmSmoothed) / bpmSmoothed;
-    if (deviation > UNLOCK_OUTLIER_RATIO) {
-      outlierStreak++;
-      if (outlierStreak >= UNLOCK_OUTLIER_COUNT) {
-        // Lost the beat — drop back to listening
-        setLocked(false);
+    if (beatTimes.length>3){
+      let intervals=[];
+      for(let i=1;i<beatTimes.length;i++){
+        intervals.push(beatTimes[i]-beatTimes[i-1]);
       }
-      return; // don't update BPM on outlier beats
-    } else {
-      outlierStreak = 0;
+      const avg = intervals.reduce((a,b)=>a+b)/intervals.length;
+      const bpm = 60000/avg;
+
+      if (bpm>BPM_MIN && bpm<BPM_MAX){
+        bpmEl.textContent = Math.round(bpm);
+      }
     }
   }
-
-  // ── Smooth BPM
-  const alpha = bpmLocked ? BPM_ALPHA_LOCKED : BPM_ALPHA_SEEKING;
-  if (bpmSmoothed === null) {
-    bpmSmoothed = rawBpm;
-  } else {
-    bpmSmoothed = alpha * rawBpm + (1 - alpha) * bpmSmoothed;
-  }
-
-  // ── Lock check
-  if (!bpmLocked && beatTimestamps.length >= LOCK_MIN_BEATS && cv < LOCK_CV_THRESHOLD) {
-    setLocked(true);
-  }
-
-  // ── Update confidence bar (based on CV)
-  // CV=0 → 100%, CV=LOCK_CV_THRESHOLD → ~50%, CV>0.3 → 0%
-  const stability = Math.max(0, Math.min(1, 1 - cv / 0.3));
-  const stabPct   = Math.round(stability * 100);
-  confBarEl.style.width  = stabPct + '%';
-  confBarEl.style.background =
-    stabPct > 70 ? 'var(--accent)' :
-    stabPct > 40 ? '#ffaa00' : '#ff6644';
-  confValueEl.textContent = stabPct + '%';
-
-  // ── Display BPM only when locked
-  if (bpmLocked) {
-    const display = Math.round(bpmSmoothed);
-    bpmValueEl.textContent = display;
-    bpmValueEl.classList.remove('no-signal');
-
-    if (display < bpmMin) { bpmMin = display; statMinEl.textContent = bpmMin; }
-    if (display > bpmMax) { bpmMax = display; statMaxEl.textContent = bpmMax; }
-  }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// LOCK / UNLOCK
-// ═══════════════════════════════════════════════════════════════
-function setLocked(locked) {
-  bpmLocked     = locked;
-  outlierStreak = 0;
-
-  bpmRingEl.classList.toggle('listening', !locked);
-  bpmRingEl.classList.toggle('locked',    locked);
-
-  if (locked) {
-    phaseLabelEl.textContent = 'Tempo verrouillé';
-    phaseLabelEl.className   = 'phase-label locked';
-  } else {
-    phaseLabelEl.textContent = 'Analyse…';
-    phaseLabelEl.className   = 'phase-label listening';
-    // Hide BPM display when we lose lock
-    bpmValueEl.textContent = '--';
-    bpmValueEl.classList.add('no-signal');
-    ringProgressEl.style.strokeDashoffset = '660';
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// VISUAL FEEDBACK
-// ═══════════════════════════════════════════════════════════════
-let ledTimer = null;
-function flashLed() {
-  beatLedEl.classList.add('flash');
-  statusDotEl.classList.add('flash'); // Ajout pour le voyant en haut à droite
-  
-  if (ledTimer) clearTimeout(ledTimer);
-  ledTimer = setTimeout(() => {
-    beatLedEl.classList.remove('flash');
-    statusDotEl.classList.remove('flash'); // Extinction
-  }, 80);
-}
-
-function triggerBeatFlash() {
-  bpmRingEl.classList.remove('beat-flash');
-  void bpmRingEl.offsetWidth;
-  bpmRingEl.classList.add('beat-flash');
-  setTimeout(() => bpmRingEl.classList.remove('beat-flash'), 150);
-}
-
-function updateBeatDots() {
-  beatDotsState.shift();
-  beatDotsState.push(1);
-  setTimeout(() => {
-    if (beatDotsState[beatDotsState.length - 1] === 1) {
-      beatDotsState[beatDotsState.length - 1] = 2;
-      renderDots();
-    }
-  }, 300);
-  renderDots();
-}
-
-function renderDots() {
-  const dots = beatHistoryEl.children;
-  for (let i = 0; i < BEAT_DOTS; i++) {
-    dots[i].className = 'beat-dot';
-    if      (beatDotsState[i] === 1) dots[i].classList.add('recent');
-    else if (beatDotsState[i] === 2) dots[i].classList.add('old');
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
+// ==========================
 // WAVEFORM
-// ═══════════════════════════════════════════════════════════════
-function drawWaveform(data) {
-  const dpr = window.devicePixelRatio || 1;
-  const w = wfCanvas.offsetWidth;
-  const h = wfCanvas.offsetHeight;
-  if (wfCanvas.width !== w * dpr || wfCanvas.height !== h * dpr) {
-    wfCanvas.width  = w * dpr;
-    wfCanvas.height = h * dpr;
-    wfCtx.scale(dpr, dpr);
+// ==========================
+
+function drawWave(data){
+  const w = canvas.width = canvas.offsetWidth;
+  const h = canvas.height = canvas.offsetHeight;
+
+  ctx.clearRect(0,0,w,h);
+  ctx.beginPath();
+
+  for(let i=0;i<data.length;i++){
+    const y = (data[i]/255)*h;
+    const x = (i/data.length)*w;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
   }
-  wfCtx.clearRect(0, 0, w, h);
-  wfCtx.fillStyle = '#12121a';
-  wfCtx.fillRect(0, 0, w, h);
 
-  wfCtx.strokeStyle = '#1a1a26';
-  wfCtx.lineWidth   = 1;
-  wfCtx.beginPath();
-  wfCtx.moveTo(0, h / 2); wfCtx.lineTo(w, h / 2);
-  wfCtx.stroke();
-
-  wfCtx.strokeStyle = '#47ffe8';
-  wfCtx.lineWidth   = 1.5;
-  wfCtx.beginPath();
-  const sliceW = w / data.length;
-  for (let i = 0; i < data.length; i++) {
-    const v = (data[i] / 128.0) - 1;
-    const y = v * h / 2 + h / 2;
-    i === 0 ? wfCtx.moveTo(0, y) : wfCtx.lineTo(i * sliceW, y);
-  }
-  wfCtx.stroke();
+  ctx.strokeStyle="#47ffe8";
+  ctx.stroke();
 }
 
-function clearWaveform() {
-  const w = wfCanvas.offsetWidth || wfCanvas.width;
-  const h = wfCanvas.offsetHeight || wfCanvas.height;
-  wfCtx.fillStyle = '#12121a';
-  wfCtx.fillRect(0, 0, w, h);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// RESET
-// ═══════════════════════════════════════════════════════════════
-function resetDetectionState() {
-  bandState = BANDS.map(() => ({ prevBins: null, fluxHistory: [] }));
-  beatTimestamps = [];
-  bpmSmoothed    = null;
-  bpmLocked      = false;
-  outlierStreak  = 0;
-  lastBeatTime   = 0;
-  beatDotsState.fill(0);
-  renderDots();
-  ringProgressEl.style.strokeDashoffset = '660';
-  bpmRingEl.classList.remove('listening', 'locked');
-  phaseLabelEl.textContent = 'Analyse…';
-  phaseLabelEl.className   = 'phase-label listening';
-}
-
-function resetAll() {
-  beatCount = 0;
-  bpmMin    = Infinity;
-  bpmMax    = -Infinity;
-  statBeatsEl.textContent = '0';
-  statMinEl.textContent   = '--';
-  statMaxEl.textContent   = '--';
-  bpmValueEl.textContent  = '--';
-  bpmValueEl.classList.add('no-signal');
-  confBarEl.style.width   = '0%';
-  confValueEl.textContent = '0%';
-  resetDetectionState();
-}
-
-// ═══════════════════════════════════════════════════════════════
-// MATH HELPERS
-// ═══════════════════════════════════════════════════════════════
-function avg(arr) {
-  return arr.reduce((a, b) => a + b, 0) / arr.length;
-}
-function stddev(arr, mean) {
-  const m = mean !== undefined ? mean : avg(arr);
-  return Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// WAKE LOCK
-// ═══════════════════════════════════════════════════════════════
-let wakeLock = null;
-async function requestWakeLock() {
-  if ('wakeLock' in navigator) {
-    try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
-  }
-}
-document.addEventListener('visibilitychange', async () => {
-  if (wakeLock !== null && document.visibilityState === 'visible') requestWakeLock();
-});
-
-// Init
-clearWaveform();
 </script>
+
 </body>
 </html>
