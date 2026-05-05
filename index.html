@@ -9,7 +9,7 @@
 <title>BPM Detector</title>
 <style>
   :root {
-    --bg: #2d4d59;
+    --bg: #0a0a0f;
     --surface: #12121a;
     --surface2: #1a1a26;
     --accent: #e8ff47;
@@ -54,25 +54,18 @@
     color: var(--muted);
     text-transform: uppercase;
   }
-  .status-dot {
+.status-dot {
     width: 8px; height: 8px;
     border-radius: 50%;
-    background: var(--muted);
-    transition: background 0.3s, box-shadow 0.3s;
+    background: var(--surface2); /* Gris très foncé par défaut */
+    transition: background 0.05s, box-shadow 0.05s; /* Rapide pour le flash */
   }
-  .status-dot.active {
+  /* On supprime l'animation pulse-dot */
+  .status-dot.flash {
     background: var(--accent);
     box-shadow: 0 0 12px var(--accent);
-    animation: pulse-dot 1s ease-in-out infinite;
   }
-  .status-dot.beat {
-    background: #fff;
-    box-shadow: 0 0 16px #fff;
-    animation: none;
-  }
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
-  }
+
 
   /* ── BPM ring ── */
   .bpm-container {
@@ -440,8 +433,8 @@ const FRAME_MS        = 1000 / 30;        // ~30 fps
 const ANALYSER_SMOOTH = 0.3;              // FFT smoothing (was 0.0 — wrong)
 
 // Silence gate: below this RMS level, no beat detection at all
-// -55 dBFS: assez permissif pour guitare acoustique seule ou tap au doigt
-const SILENCE_GATE_DB = -55;
+// Baisser le seuil de silence pour capter les légers tapotements sur la coque
+const SILENCE_GATE_DB = -60; // (au lieu de -50)
 
 // Min interval between two beats (250ms = 240 BPM max)
 const MIN_BEAT_INTERVAL_MS = 250;
@@ -453,31 +446,30 @@ const FLUX_HISTORY_SIZE = 43;
 const BEAT_BUFFER_SIZE = 16;
 
 // Lock requires this many beats with CV below threshold
-// CV 0.12 était beaucoup trop strict pour un humain (guitare, tap) → 0.30
-const LOCK_MIN_BEATS = 6;
-const LOCK_CV_THRESHOLD = 0.30;   // 30% — permet tap au doigt et guitare
+const LOCK_MIN_BEATS = 4;        // Afficher le BPM après 4 temps au lieu de 8
+const LOCK_CV_THRESHOLD = 0.22;  // Tolérer 22% d'erreur de tempo humain (au lieu de 12%)
 
-// BPM affiché dès PREVIEW_MIN_BEATS même sans lock (mode "preview")
-const PREVIEW_MIN_BEATS = 4;
+// Unlock if 3 consecutive intervals are far off from locked BPM
+const UNLOCK_OUTLIER_COUNT = 3;
+const UNLOCK_OUTLIER_RATIO = 0.30; // Tolérance de décrochage à 30% (au lieu de 20%)
 
-// Unlock if 4 consecutive intervals are far off from locked BPM
-const UNLOCK_OUTLIER_COUNT = 4;
-const UNLOCK_OUTLIER_RATIO = 0.30; // >30% deviation from locked BPM
-
-// BPM smoothing
-const BPM_ALPHA_LOCKED   = 0.15;  // un peu plus réactif qu'avant
-const BPM_ALPHA_SEEKING  = 0.30;
+// BPM smoothing (low alpha = sluggish but stable)
+const BPM_ALPHA_LOCKED   = 0.08;
+const BPM_ALPHA_SEEKING  = 0.20;
 
 // Beat dots UI
 const BEAT_DOTS = 16;
 
-// Frequency bands — poids rééquilibrés pour couvrir guitare seule, voix,
-// tap au doigt ET batterie. Le mid prend plus de poids car c'est là que
-// vivent les transients de plectre, strumming, clap, voix.
+// ═══════════════════════════════════════════════════════════════
+// FREQUENCY BANDS  (3 bands, all contribute to beat detection)
+// ═══════════════════════════════════════════════════════════════
+//   Low  : kick, bass guitar
+//   Mid  : snare, guitar body, voice
+//   High : clap, hi-hat, guitar attack
 const BANDS = [
-  { name: 'low',  fLo:  60, fHi:  200, weight: 0.8 },  // kick, basse
-  { name: 'mid',  fLo: 200, fHi: 2000, weight: 1.2 },  // snare, guitare, voix
-  { name: 'high', fLo:2000, fHi: 8000, weight: 1.0 },  // clap, plectre, hi-hat
+  { name: 'low',  fLo:  60, fHi:  200, weight: 1.2 },
+  { name: 'mid',  fLo: 200, fHi: 2000, weight: 0.9 },
+  { name: 'high', fLo:2000, fHi: 8000, weight: 0.7 },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -576,7 +568,6 @@ async function startDetection() {
   running = true;
   btnStart.textContent = '■  Arrêter';
   btnStart.classList.add('running');
-  statusDotEl.classList.add('active');
 
   resetDetectionState();
   requestWakeLock();
@@ -598,7 +589,6 @@ function stopDetection() {
   levelDbEl.textContent = '-∞';
   phaseLabelEl.textContent = 'En attente';
   phaseLabelEl.className = 'phase-label';
-  bpmValueEl.style.color = '';  // reset couleur preview
   clearWaveform();
 }
 
@@ -673,7 +663,7 @@ function loop(ts = 0) {
 
     const mean = avg(state.fluxHistory);
     const std  = stddev(state.fluxHistory, mean);
-    const thr  = mean + 1.5 * std;
+    const thr  = mean + 1.1 * std;
 
     // Weighted contribution
     combinedFlux      += flux * band.weight;
@@ -778,18 +768,14 @@ function onBeat(ts) {
     stabPct > 40 ? '#ffaa00' : '#ff6644';
   confValueEl.textContent = stabPct + '%';
 
-  // ── Display BPM : en mode preview dès 4 beats, confirmé en mode locked
-  if (bpmSmoothed !== null && beatTimestamps.length >= PREVIEW_MIN_BEATS) {
+  // ── Display BPM only when locked
+  if (bpmLocked) {
     const display = Math.round(bpmSmoothed);
     bpmValueEl.textContent = display;
     bpmValueEl.classList.remove('no-signal');
-    // Couleur : accent (vert-jaune) si locked, muted si juste en preview
-    bpmValueEl.style.color = bpmLocked ? 'var(--accent)' : 'var(--muted)';
 
-    if (bpmLocked) {
-      if (display < bpmMin) { bpmMin = display; statMinEl.textContent = bpmMin; }
-      if (display > bpmMax) { bpmMax = display; statMaxEl.textContent = bpmMax; }
-    }
+    if (display < bpmMin) { bpmMin = display; statMinEl.textContent = bpmMin; }
+    if (display > bpmMax) { bpmMax = display; statMaxEl.textContent = bpmMax; }
   }
 }
 
@@ -821,15 +807,14 @@ function setLocked(locked) {
 // ═══════════════════════════════════════════════════════════════
 let ledTimer = null;
 function flashLed() {
-  // Petit LED dans la phase-row
   beatLedEl.classList.add('flash');
-  // StatusDot en haut à droite — clignote aussi à chaque beat détecté
-  statusDotEl.classList.add('beat');
+  statusDotEl.classList.add('flash'); // Ajout pour le voyant en haut à droite
+  
   if (ledTimer) clearTimeout(ledTimer);
   ledTimer = setTimeout(() => {
     beatLedEl.classList.remove('flash');
-    statusDotEl.classList.remove('beat');
-  }, 100);
+    statusDotEl.classList.remove('flash'); // Extinction
+  }, 80);
 }
 
 function triggerBeatFlash() {
@@ -928,7 +913,6 @@ function resetAll() {
   statMaxEl.textContent   = '--';
   bpmValueEl.textContent  = '--';
   bpmValueEl.classList.add('no-signal');
-  bpmValueEl.style.color  = '';  // reset couleur preview
   confBarEl.style.width   = '0%';
   confValueEl.textContent = '0%';
   resetDetectionState();
