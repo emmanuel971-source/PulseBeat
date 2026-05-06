@@ -273,6 +273,80 @@ input[type=range]::-webkit-slider-thumb {
   cursor: pointer;
 }
 
+/* ── MODE SELECTOR ── */
+.mode-panel {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.mode-label {
+  font-size: 9px; letter-spacing: 3px; color: var(--text-muted);
+}
+.mode-btns {
+  display: flex;
+  gap: 8px;
+}
+.mode-btn {
+  flex: 1;
+  padding: 9px 8px;
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.18s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mode-btn:active { opacity: 0.7; }
+.mode-btn.active-tap {
+  background: #1a1800;
+  color: var(--amber);
+  border-color: #3d3000;
+  box-shadow: 0 0 10px #ffb34730;
+}
+.mode-btn.active-music {
+  background: #001a2e;
+  color: var(--cyan);
+  border-color: #003d5c;
+  box-shadow: 0 0 10px #00e5ff30;
+}
+
+/* ── MUSIC MODE : panneau d'état autocorrélation ── */
+.acorr-panel {
+  display: none;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 14px 10px;
+  flex-direction: column;
+  gap: 5px;
+}
+.acorr-panel.visible { display: flex; }
+.acorr-label { font-size: 9px; letter-spacing: 3px; color: var(--text-muted); }
+#acorr-canvas {
+  width: 100%; height: 48px; display: block;
+  border-radius: 3px;
+  background: #080a0c;
+  border: 1px solid #1a1e24;
+}
+.acorr-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+#acorr-confidence { color: var(--cyan); }
+
+/* contrôles spécifiques MUSIC (masqués en mode TAP) */
+.ctrl-music-only { display: none; }
+.ctrl-music-only.visible { display: flex; }
+
 /* ── BOUTONS ── */
 .btn-panel {
   padding: 12px 14px;
@@ -361,19 +435,43 @@ input[type=range]::-webkit-slider-thumb {
     <div class="history-label">BEAT GRID</div>
   </div>
 
+  <!-- MODE SELECTOR -->
+  <div class="mode-panel">
+    <div class="mode-label">MODE</div>
+    <div class="mode-btns">
+      <button class="mode-btn active-tap" id="btn-mode-tap"   onclick="setMode('tap')">🥁 TAP / CLAP</button>
+      <button class="mode-btn"            id="btn-mode-music" onclick="setMode('music')">🎵 MUSIQUE</button>
+    </div>
+  </div>
+
+  <!-- AUTOCORRELATION VISUALIZER (music mode only) -->
+  <div class="acorr-panel" id="acorr-panel">
+    <div class="acorr-label">AUTOCORRÉLATION · FLUX SPECTRAL</div>
+    <canvas id="acorr-canvas"></canvas>
+    <div class="acorr-info">
+      <span>ANALYSE EN COURS…</span>
+      <span>CONFIANCE : <span id="acorr-confidence">--</span></span>
+    </div>
+  </div>
+
   <!-- CONTROLS -->
   <div class="controls-panel">
-    <div class="ctrl-group">
+    <div class="ctrl-group" id="ctrl-sens">
       <div class="ctrl-label">SENSIBILITÉ <span class="ctrl-val" id="sens-val">1.8</span></div>
       <input type="range" id="sens" min="1.2" max="3" step="0.1" value="1.8">
     </div>
-    <div class="ctrl-group">
+    <div class="ctrl-group" id="ctrl-smooth">
       <div class="ctrl-label">LISSAGE BPM <span class="ctrl-val" id="smooth-val">0.75</span></div>
       <input type="range" id="smooth" min="0.5" max="0.95" step="0.01" value="0.75">
     </div>
-    <div class="ctrl-group">
+    <div class="ctrl-group" id="ctrl-refrac">
       <div class="ctrl-label">REFRACTORY (ms) <span class="ctrl-val" id="refrac-val">180</span></div>
       <input type="range" id="refrac" min="100" max="400" step="10" value="180">
+    </div>
+    <!-- Contrôle MUSIC uniquement -->
+    <div class="ctrl-group ctrl-music-only" id="ctrl-acorr-smooth">
+      <div class="ctrl-label">LISSAGE BPM MUSIQUE <span class="ctrl-val" id="msmooth-val">0.85</span></div>
+      <input type="range" id="msmooth" min="0.5" max="0.97" step="0.01" value="0.85">
     </div>
   </div>
 
@@ -385,8 +483,8 @@ input[type=range]::-webkit-slider-thumb {
 
   <!-- FOOTER -->
   <div class="rack-footer">
-    <span>BASS ONSET DETECTION</span>
-    <span>v2.1</span>
+    <span id="footer-mode-label">BASS ONSET DETECTION</span>
+    <span>v3.0</span>
   </div>
 
 </div>
@@ -399,7 +497,35 @@ let ctx, analyser, src, stream;
 let running = false;
 
 // ============================================================
-// STATE
+// MODE  ('tap' | 'music')
+// ============================================================
+let currentMode = 'tap';
+
+function setMode(m) {
+  if (running) return; // pas de changement en cours de run
+  currentMode = m;
+
+  const isTap   = m === 'tap';
+  document.getElementById('btn-mode-tap').className   = 'mode-btn' + (isTap   ? ' active-tap'   : '');
+  document.getElementById('btn-mode-music').className = 'mode-btn' + (!isTap  ? ' active-music'  : '');
+
+  // panneaux
+  document.getElementById('acorr-panel').classList.toggle('visible', !isTap);
+
+  // contrôles TAP visibles/cachés
+  ['ctrl-sens','ctrl-smooth','ctrl-refrac'].forEach(id => {
+    document.getElementById(id).style.display = isTap ? '' : 'none';
+  });
+  // contrôle MUSIC
+  document.getElementById('ctrl-acorr-smooth').classList.toggle('visible', !isTap);
+
+  // footer
+  document.getElementById('footer-mode-label').textContent =
+    isTap ? 'BASS ONSET DETECTION' : 'SPECTRAL FLUX · AUTOCORRÉLATION';
+}
+
+// ============================================================
+// STATE  (TAP mode — inchangé)
 // ============================================================
 let energyHistory = [];
 let onsetHistory  = [];
@@ -417,6 +543,28 @@ let SMOOTH = 0.75;
 let REFRAC = 180;
 const BPM_TIMEOUT = 2500;
 const HIST_COUNT  = 16;
+
+// ============================================================
+// PARAMS  MUSIC mode
+// ============================================================
+let MSMOOTH = 0.85;          // lissage BPM musique
+// Autocorrelation config
+const AC_FFT_SIZE   = 4096;  // résolution fréquentielle ×2
+const AC_HOP_RATE   = 20;    // nb de frames par seconde à stocker dans le flux ODF
+const AC_BUF_SEC    = 8;     // secondes de flux mémorisées
+// Calculé au démarrage selon sampleRate
+let   acBufLen      = 0;     // taille du buffer circulaire
+let   acBuf         = null;  // Float32Array buffer circulaire flux spectral
+let   acBufPtr      = 0;     // pointeur écriture
+let   acBufFull     = false;
+let   acPrevMag     = null;  // magnitudes FFT précédentes pour calcul flux
+let   acFrameCount  = 0;     // compteur frames depuis dernier stockage
+let   acHopFrames   = 0;     // nb frames RAF entre deux stockages (calculé au start)
+let   acSmoothedBpm = null;
+let   acLastUpdate  = 0;     // timestamp dernière mise à jour BPM musique
+const acCanvas      = document.getElementById('acorr-canvas');
+const acCtx         = acCanvas.getContext('2d');
+const acConfidence  = document.getElementById('acorr-confidence');
 
 // ============================================================
 // UI REFS
@@ -456,6 +604,10 @@ document.getElementById('refrac').oninput = e => {
   REFRAC = +e.target.value;
   document.getElementById('refrac-val').textContent = REFRAC;
 };
+document.getElementById('msmooth').oninput = e => {
+  MSMOOTH = +e.target.value;
+  document.getElementById('msmooth-val').textContent = MSMOOTH.toFixed(2);
+};
 
 // ============================================================
 // START / STOP
@@ -472,21 +624,37 @@ async function toggle() {
     return;
   }
 
-  ctx = new AudioContext();
+  ctx    = new AudioContext();
   stream = await navigator.mediaDevices.getUserMedia({
     audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
   });
 
   src      = ctx.createMediaStreamSource(stream);
   analyser = ctx.createAnalyser();
-  analyser.fftSize = 2048;
+
+  if (currentMode === 'music') {
+    analyser.fftSize = AC_FFT_SIZE;
+    // Initialiser le buffer autocorrélation
+    acHopFrames   = Math.max(1, Math.round(ctx.sampleRate / analyser.fftSize * (1 / AC_HOP_RATE) * analyser.fftSize));
+    acBufLen      = Math.round(AC_HOP_RATE * AC_BUF_SEC);
+    acBuf         = new Float32Array(acBufLen);
+    acBufPtr      = 0; acBufFull = false;
+    acPrevMag     = new Float32Array(analyser.frequencyBinCount);
+    acFrameCount  = 0;
+    acSmoothedBpm = null; acLastUpdate = 0;
+  } else {
+    analyser.fftSize = 2048;
+  }
+
   src.connect(analyser);
 
   running = true;
   ledPower.classList.add('on');
   btnToggle.textContent = '■ STOP';
   btnToggle.classList.add('running');
-  loop();
+
+  if (currentMode === 'music') loopMusic();
+  else                          loop();
 }
 
 // ============================================================
@@ -648,6 +816,190 @@ function drawWave(buffer) {
   cctx.shadowBlur  = 4;
   cctx.stroke();
   cctx.shadowBlur  = 0;
+}
+
+// ============================================================
+// MUSIC ENGINE  —  Spectral Flux + Autocorrélation
+// ============================================================
+function loopMusic() {
+  if (!running) return;
+  requestAnimationFrame(loopMusic);
+
+  const timeDomain = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(timeDomain);
+
+  const freqBins = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(freqBins);
+
+  // --- VU Meter : énergie large bande ---
+  let rms = 0;
+  for (let i = 0; i < timeDomain.length; i++) rms += timeDomain[i] * timeDomain[i];
+  rms = Math.sqrt(rms / timeDomain.length);
+  const db   = 20 * Math.log10(rms + 1e-9);
+  const norm = Math.max(0, Math.min(1, (db + 50) / 50));
+  vuFill.style.width = (norm * 100) + '%';
+  dbLabel.textContent = isFinite(db) ? db.toFixed(1) + ' dB' : '-∞ dB';
+
+  // --- Oscilloscope ---
+  drawWave(timeDomain);
+
+  // --- Spectral Flux (demi-rectifié : on garde seulement les hausses) ---
+  acFrameCount++;
+  // Stocker une valeur de flux toutes les acHopFrames frames RAF
+  // acHopFrames ≈ 1 (on est à ~60 fps, AC_HOP_RATE=20 → on stocke 1 sur 3)
+  // On recalcule à chaque frame pour la précision mais on push dans le buffer moins souvent
+  let flux = 0;
+  const nBins = analyser.frequencyBinCount;
+  for (let i = 0; i < nBins; i++) {
+    const diff = (freqBins[i] / 255) - acPrevMag[i];
+    if (diff > 0) flux += diff;  // half-wave rectification
+  }
+  flux /= nBins;
+  acPrevMag.set(freqBins.map(v => v / 255));
+
+  // Stocker dans le buffer circulaire à AC_HOP_RATE Hz
+  if (acFrameCount % Math.max(1, Math.round(60 / AC_HOP_RATE)) === 0) {
+    acBuf[acBufPtr] = flux;
+    acBufPtr = (acBufPtr + 1) % acBufLen;
+    if (!acBufFull && acBufPtr === 0) acBufFull = true;
+
+    // Calculer l'autocorrélation et en extraire le BPM
+    const usedLen = acBufFull ? acBufLen : acBufPtr;
+    if (usedLen > AC_HOP_RATE * 2) {  // minimum 2 secondes de données
+      computeAcorrBPM(usedLen);
+    }
+  }
+
+  // Timeout silence
+  const now = performance.now();
+  if (now - acLastUpdate > 4000 && acLastUpdate > 0) {
+    bpmEl.textContent = '--';
+    bpmEl.classList.remove('locked');
+    setUIState('silence');
+    acSmoothedBpm = null;
+  }
+}
+
+function computeAcorrBPM(len) {
+  // Reconstruire le signal linéaire depuis le buffer circulaire
+  const sig = new Float32Array(len);
+  for (let i = 0; i < len; i++) {
+    sig[i] = acBuf[(acBufPtr - len + i + acBufLen) % acBufLen];
+  }
+
+  // Soustraction de la moyenne (centrage)
+  let mean = 0;
+  for (let i = 0; i < len; i++) mean += sig[i];
+  mean /= len;
+  for (let i = 0; i < len; i++) sig[i] -= mean;
+
+  // Plage de lag en samples correspondant à 40–220 BPM
+  // lag_samples = AC_HOP_RATE * 60 / BPM
+  const lagMin = Math.ceil (AC_HOP_RATE * 60 / 220);  // ~5 samples
+  const lagMax = Math.floor(AC_HOP_RATE * 60 / 40);   // ~12 samples à 8s / 20Hz → ok
+
+  if (lagMax >= len) return;  // pas assez de données
+
+  // Autocorrélation normalisée sur la plage d'intérêt
+  const acVals  = new Float32Array(lagMax - lagMin + 1);
+  const acLags  = new Float32Array(lagMax - lagMin + 1);
+  let   norm0   = 0;
+  for (let i = 0; i < len; i++) norm0 += sig[i] * sig[i];
+  if (norm0 < 1e-10) return;
+
+  let maxAc = -Infinity, bestLag = lagMin;
+  for (let lag = lagMin; lag <= lagMax; lag++) {
+    let ac = 0;
+    for (let i = 0; i < len - lag; i++) ac += sig[i] * sig[i + lag];
+    ac /= norm0;
+    const idx = lag - lagMin;
+    acVals[idx] = ac;
+    acLags[idx] = lag;
+    if (ac > maxAc) { maxAc = ac; bestLag = lag; }
+  }
+
+  // Interpolation parabolique pour plus de précision sur le pic
+  const peakIdx = bestLag - lagMin;
+  let   refinedLag = bestLag;
+  if (peakIdx > 0 && peakIdx < acVals.length - 1) {
+    const y0 = acVals[peakIdx - 1];
+    const y1 = acVals[peakIdx];
+    const y2 = acVals[peakIdx + 1];
+    const denom = 2 * (2 * y1 - y0 - y2);
+    if (Math.abs(denom) > 1e-6) {
+      refinedLag = bestLag + (y0 - y2) / denom;
+    }
+  }
+
+  const bpm = AC_HOP_RATE * 60 / refinedLag;
+  if (bpm < 40 || bpm > 220) return;
+
+  // Confiance = valeur du pic normalisée [0..1]
+  // On la compare aussi à la valeur à lag/2 et lag*2 (harmoniques)
+  const confidence = Math.max(0, Math.min(1, maxAc));
+  acConfidence.textContent = (confidence * 100).toFixed(0) + '%';
+
+  if (confidence < 0.05) {
+    setUIState('tracking');
+    return;
+  }
+
+  // Lissage exponentiel
+  acSmoothedBpm = acSmoothedBpm === null
+    ? bpm
+    : MSMOOTH * acSmoothedBpm + (1 - MSMOOTH) * bpm;
+
+  bpmEl.textContent = Math.round(acSmoothedBpm);
+  acLastUpdate = performance.now();
+
+  setUIState(confidence > 0.25 ? 'locked' : 'tracking');
+
+  // Dessiner la courbe d'autocorrélation
+  drawAcorr(acVals, acLags, peakIdx);
+}
+
+function drawAcorr(vals, lags, peakIdx) {
+  const dpr = window.devicePixelRatio || 1;
+  const w   = acCanvas.width  = acCanvas.offsetWidth  * dpr;
+  const h   = acCanvas.height = acCanvas.offsetHeight * dpr;
+
+  acCtx.clearRect(0, 0, w, h);
+
+  // fond grillé
+  acCtx.strokeStyle = '#1a1e24';
+  acCtx.lineWidth   = 1;
+  acCtx.beginPath(); acCtx.moveTo(0, h / 2); acCtx.lineTo(w, h / 2); acCtx.stroke();
+
+  if (vals.length < 2) return;
+
+  const minV = Math.min(...vals);
+  const maxV = Math.max(...vals);
+  const range = maxV - minV || 1;
+
+  // Courbe autocorrélation
+  acCtx.beginPath();
+  for (let i = 0; i < vals.length; i++) {
+    const x = (i / (vals.length - 1)) * w;
+    const y = h - ((vals[i] - minV) / range) * h * 0.9 - h * 0.05;
+    i === 0 ? acCtx.moveTo(x, y) : acCtx.lineTo(x, y);
+  }
+  acCtx.strokeStyle = '#00e5ff88';
+  acCtx.lineWidth   = 1.5 * dpr;
+  acCtx.shadowColor = '#00e5ff';
+  acCtx.shadowBlur  = 3;
+  acCtx.stroke();
+  acCtx.shadowBlur  = 0;
+
+  // Marqueur pic (BPM détecté)
+  const px = (peakIdx / (vals.length - 1)) * w;
+  const py = h - ((vals[peakIdx] - minV) / range) * h * 0.9 - h * 0.05;
+  acCtx.beginPath();
+  acCtx.arc(px, py, 4 * dpr, 0, Math.PI * 2);
+  acCtx.fillStyle = '#39ff8a';
+  acCtx.shadowColor = '#39ff8a';
+  acCtx.shadowBlur  = 8;
+  acCtx.fill();
+  acCtx.shadowBlur  = 0;
 }
 
 // ============================================================
