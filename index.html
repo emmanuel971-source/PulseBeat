@@ -10,7 +10,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:         #211214;
+  --bg:         #311214;
   --panel:      #1a1c20;
   --panel2:     #1e2024;
   --border:     #2e3138;
@@ -545,25 +545,27 @@ const BPM_TIMEOUT = 2500;
 const HIST_COUNT  = 16;
 
 // ============================================================
-// PARAMS  MUSIC mode
+// PARAMS  MUSIC mode — Comb Filter Bank
 // ============================================================
-let MSMOOTH = 0.85;          // lissage BPM musique
-// Autocorrelation config
-const AC_FFT_SIZE   = 4096;  // résolution fréquentielle ×2
-const AC_HOP_RATE   = 20;    // nb de frames par seconde à stocker dans le flux ODF
-const AC_BUF_SEC    = 8;     // secondes de flux mémorisées
-// Calculé au démarrage selon sampleRate
-let   acBufLen      = 0;     // taille du buffer circulaire
-let   acBuf         = null;  // Float32Array buffer circulaire flux spectral
-let   acBufPtr      = 0;     // pointeur écriture
-let   acBufFull     = false;
-let   acPrevMag     = null;  // magnitudes FFT précédentes pour calcul flux
-let   acLastHopTime = 0;     // timestamp réel du dernier stockage dans le buffer
-let   acSmoothedBpm = null;
-let   acLastUpdate  = 0;     // timestamp dernière mise à jour BPM musique
-const acCanvas      = document.getElementById('acorr-canvas');
-const acCtx         = acCanvas.getContext('2d');
-const acConfidence  = document.getElementById('acorr-confidence');
+let MSMOOTH = 0.85;           // lissage BPM final
+
+const CF_BPM_MIN  = 40;
+const CF_BPM_MAX  = 200;
+const CF_COUNT    = CF_BPM_MAX - CF_BPM_MIN + 1;  // 161 oscillateurs
+const CF_WIN_SEC  = 5;        // fenêtre d'accumulation (secondes)
+const CF_FFT_SIZE = 2048;
+
+// État comb filter
+let cfScores     = new Float32Array(CF_COUNT);  // score cumulé par BPM candidat
+let cfPhases     = new Float32Array(CF_COUNT);  // phase [0..1] par oscillateur
+let cfLastTime   = 0;                           // timestamp dernière frame
+let cfWinSamples = 0;                           // nb de frames accumulées
+let cfSmoothedBpm = null;
+let cfLastUpdate  = 0;
+
+const acCanvas   = document.getElementById('acorr-canvas');
+const acCtx      = acCanvas.getContext('2d');
+const acConfidence = document.getElementById('acorr-confidence');
 
 // ============================================================
 // UI REFS
@@ -632,13 +634,13 @@ async function toggle() {
   analyser = ctx.createAnalyser();
 
   if (currentMode === 'music') {
-    analyser.fftSize = AC_FFT_SIZE;
-    acBufLen      = Math.round(AC_HOP_RATE * AC_BUF_SEC);
-    acBuf         = new Float32Array(acBufLen);
-    acBufPtr      = 0; acBufFull = false;
-    acPrevMag     = new Float32Array(analyser.frequencyBinCount);
-    acLastHopTime = 0;
-    acSmoothedBpm = null; acLastUpdate = 0;
+    analyser.fftSize = CF_FFT_SIZE;
+    cfScores.fill(0);
+    cfPhases.fill(0);
+    cfLastTime    = 0;
+    cfWinSamples  = 0;
+    cfSmoothedBpm = null;
+    cfLastUpdate  = 0;
   } else {
     analyser.fftSize = 2048;
   }
@@ -816,19 +818,17 @@ function drawWave(buffer) {
 }
 
 // ============================================================
-// MUSIC ENGINE  —  Spectral Flux + Autocorrélation
+// MUSIC ENGINE — Comb Filter Bank
 // ============================================================
 function loopMusic() {
   if (!running) return;
   requestAnimationFrame(loopMusic);
 
+  const now        = performance.now();
   const timeDomain = new Float32Array(analyser.fftSize);
   analyser.getFloatTimeDomainData(timeDomain);
 
-  const freqBins = new Uint8Array(analyser.frequencyBinCount);
-  analyser.getByteFrequencyData(freqBins);
-
-  // --- VU Meter : énergie large bande ---
+  // --- VU Meter : RMS large bande ---
   let rms = 0;
   for (let i = 0; i < timeDomain.length; i++) rms += timeDomain[i] * timeDomain[i];
   rms = Math.sqrt(rms / timeDomain.length);
@@ -840,165 +840,113 @@ function loopMusic() {
   // --- Oscilloscope ---
   drawWave(timeDomain);
 
-  // --- Spectral Flux (demi-rectifié : on garde seulement les hausses) ---
-  const now = performance.now();
+  // --- Énergie instantanée (RMS) — c'est ce signal que les oscillateurs "écoutent" ---
+  const energy = rms;
 
-  let flux = 0;
-  const nBins = analyser.frequencyBinCount;
-  for (let i = 0; i < nBins; i++) {
-    const diff = (freqBins[i] / 255) - acPrevMag[i];
-    if (diff > 0) flux += diff;  // half-wave rectification
-  }
-  flux /= nBins;
-  acPrevMag.set(freqBins.map(v => v / 255));
+  // --- Init timestamp ---
+  if (cfLastTime === 0) { cfLastTime = now; return; }
+  const deltaMs = now - cfLastTime;
+  cfLastTime = now;
+  if (deltaMs <= 0 || deltaMs > 200) return; // frame aberrante, on ignore
 
-  // Stocker dans le buffer circulaire à AC_HOP_RATE Hz — basé sur le temps réel,
-  // indépendant du frame rate de l'écran (30 / 60 / 90 / 120 Hz)
-  const hopIntervalMs = 1000 / AC_HOP_RATE;
-  if (acLastHopTime === 0) acLastHopTime = now;
+  // --- Avance chaque oscillateur et accumule l'énergie au moment du beat ---
+  for (let i = 0; i < CF_COUNT; i++) {
+    const bpm      = CF_BPM_MIN + i;
+    const periodMs = 60000 / bpm;
 
-  if (now - acLastHopTime >= hopIntervalMs) {
-    acLastHopTime += hopIntervalMs; // avance fixe pour éviter la dérive
-    acBuf[acBufPtr] = flux;
-    acBufPtr = (acBufPtr + 1) % acBufLen;
-    if (!acBufFull && acBufPtr === 0) acBufFull = true;
+    // Avance la phase de cet oscillateur
+    cfPhases[i] += deltaMs / periodMs;
 
-    // Calculer l'autocorrélation et en extraire le BPM
-    const usedLen = acBufFull ? acBufLen : acBufPtr;
-    if (usedLen > AC_HOP_RATE * 2) {  // minimum 2 secondes de données
-      computeAcorrBPM(usedLen);
+    // Si la phase a bouclé → un beat était attendu à cet instant
+    if (cfPhases[i] >= 1) {
+      cfPhases[i] -= 1; // remet en phase sans perdre le résidu
+      // Accumule l'énergie — le bon oscillateur sera en phase avec les vrais beats
+      cfScores[i] += energy;
     }
   }
 
-  // Timeout silence
-  if (now - acLastUpdate > 4000 && acLastUpdate > 0) {
+  cfWinSamples++;
+
+  // --- Toutes les CF_WIN_SEC secondes : lire le gagnant, réinitialiser ---
+  const winFramesTarget = Math.round(CF_WIN_SEC * 1000 / 16.67); // ~300 frames à 60fps
+  if (cfWinSamples >= winFramesTarget) {
+    pickBestBpm();
+    // Réinitialiser scores et phases pour la prochaine fenêtre
+    cfScores.fill(0);
+    cfPhases.fill(0);
+    cfWinSamples = 0;
+  }
+
+  // --- Timeout silence ---
+  if (now - cfLastUpdate > 6000 && cfLastUpdate > 0) {
     bpmEl.textContent = '--';
     bpmEl.classList.remove('locked');
     setUIState('silence');
-    acSmoothedBpm = null;
+    cfSmoothedBpm = null;
   }
 }
 
-function computeAcorrBPM(len) {
-  // Reconstruire le signal linéaire depuis le buffer circulaire
-  const sig = new Float32Array(len);
-  for (let i = 0; i < len; i++) {
-    sig[i] = acBuf[(acBufPtr - len + i + acBufLen) % acBufLen];
+function pickBestBpm() {
+  // Trouver l'oscillateur avec le score maximum
+  let maxScore = -Infinity;
+  let bestIdx  = 0;
+  for (let i = 0; i < CF_COUNT; i++) {
+    if (cfScores[i] > maxScore) { maxScore = cfScores[i]; bestIdx = i; }
   }
 
-  // Soustraction de la moyenne (centrage)
-  let mean = 0;
-  for (let i = 0; i < len; i++) mean += sig[i];
-  mean /= len;
-  for (let i = 0; i < len; i++) sig[i] -= mean;
-
-  // Plage de lag en samples correspondant à 40–220 BPM
-  // lag_samples = AC_HOP_RATE * 60 / BPM
-  const lagMin = Math.ceil (AC_HOP_RATE * 60 / 220);  // ~5 samples
-  const lagMax = Math.floor(AC_HOP_RATE * 60 / 40);   // ~12 samples à 8s / 20Hz → ok
-
-  if (lagMax >= len) return;  // pas assez de données
-
-  // Autocorrélation normalisée sur la plage d'intérêt
-  const acVals  = new Float32Array(lagMax - lagMin + 1);
-  const acLags  = new Float32Array(lagMax - lagMin + 1);
-  let   norm0   = 0;
-  for (let i = 0; i < len; i++) norm0 += sig[i] * sig[i];
-  if (norm0 < 1e-10) return;
-
-  let maxAc = -Infinity, bestLag = lagMin;
-  for (let lag = lagMin; lag <= lagMax; lag++) {
-    let ac = 0;
-    for (let i = 0; i < len - lag; i++) ac += sig[i] * sig[i + lag];
-    ac /= norm0;
-    const idx = lag - lagMin;
-    acVals[idx] = ac;
-    acLags[idx] = lag;
-    if (ac > maxAc) { maxAc = ac; bestLag = lag; }
-  }
-
-  // Interpolation parabolique pour plus de précision sur le pic
-  const peakIdx = bestLag - lagMin;
-  let   refinedLag = bestLag;
-  if (peakIdx > 0 && peakIdx < acVals.length - 1) {
-    const y0 = acVals[peakIdx - 1];
-    const y1 = acVals[peakIdx];
-    const y2 = acVals[peakIdx + 1];
-    const denom = 2 * (2 * y1 - y0 - y2);
-    if (Math.abs(denom) > 1e-6) {
-      refinedLag = bestLag + (y0 - y2) / denom;
-    }
-  }
-
-  const bpm = AC_HOP_RATE * 60 / refinedLag;
-  if (bpm < 40 || bpm > 220) return;
-
-  // Confiance = valeur du pic normalisée [0..1]
-  // On la compare aussi à la valeur à lag/2 et lag*2 (harmoniques)
-  const confidence = Math.max(0, Math.min(1, maxAc));
+  // Score normalisé pour la confiance : comparer le gagnant à la moyenne
+  const avgScore = cfScores.reduce((s, v) => s + v, 0) / CF_COUNT;
+  const confidence = avgScore > 0 ? Math.min(1, (maxScore / avgScore - 1) / 4) : 0;
   acConfidence.textContent = (confidence * 100).toFixed(0) + '%';
 
-  if (confidence < 0.05) {
+  // Dessiner le graphe des scores
+  drawCombScores(cfScores, bestIdx);
+
+  if (confidence < 0.15) {
     setUIState('tracking');
     return;
   }
 
+  const bpm = CF_BPM_MIN + bestIdx;
+
   // Lissage exponentiel
-  acSmoothedBpm = acSmoothedBpm === null
+  cfSmoothedBpm = cfSmoothedBpm === null
     ? bpm
-    : MSMOOTH * acSmoothedBpm + (1 - MSMOOTH) * bpm;
+    : MSMOOTH * cfSmoothedBpm + (1 - MSMOOTH) * bpm;
 
-  bpmEl.textContent = Math.round(acSmoothedBpm);
-  acLastUpdate = performance.now();
-
-  setUIState(confidence > 0.25 ? 'locked' : 'tracking');
-
-  // Dessiner la courbe d'autocorrélation
-  drawAcorr(acVals, acLags, peakIdx);
+  bpmEl.textContent = Math.round(cfSmoothedBpm);
+  cfLastUpdate = performance.now();
+  setUIState(confidence > 0.4 ? 'locked' : 'tracking');
 }
 
-function drawAcorr(vals, lags, peakIdx) {
+function drawCombScores(scores, bestIdx) {
   const dpr = window.devicePixelRatio || 1;
   const w   = acCanvas.width  = acCanvas.offsetWidth  * dpr;
   const h   = acCanvas.height = acCanvas.offsetHeight * dpr;
-
   acCtx.clearRect(0, 0, w, h);
 
-  // fond grillé
-  acCtx.strokeStyle = '#1a1e24';
-  acCtx.lineWidth   = 1;
-  acCtx.beginPath(); acCtx.moveTo(0, h / 2); acCtx.lineTo(w, h / 2); acCtx.stroke();
+  const maxS = Math.max(...scores) || 1;
+  const barW = w / CF_COUNT;
 
-  if (vals.length < 2) return;
-
-  const minV = Math.min(...vals);
-  const maxV = Math.max(...vals);
-  const range = maxV - minV || 1;
-
-  // Courbe autocorrélation
-  acCtx.beginPath();
-  for (let i = 0; i < vals.length; i++) {
-    const x = (i / (vals.length - 1)) * w;
-    const y = h - ((vals[i] - minV) / range) * h * 0.9 - h * 0.05;
-    i === 0 ? acCtx.moveTo(x, y) : acCtx.lineTo(x, y);
+  for (let i = 0; i < CF_COUNT; i++) {
+    const barH = (scores[i] / maxS) * h * 0.9;
+    const x    = i * barW;
+    const y    = h - barH;
+    acCtx.fillStyle = i === bestIdx ? '#39ff8a' : '#00e5ff44';
+    acCtx.fillRect(x, y, Math.max(1, barW - 1), barH);
   }
-  acCtx.strokeStyle = '#00e5ff88';
-  acCtx.lineWidth   = 1.5 * dpr;
-  acCtx.shadowColor = '#00e5ff';
-  acCtx.shadowBlur  = 3;
-  acCtx.stroke();
-  acCtx.shadowBlur  = 0;
 
-  // Marqueur pic (BPM détecté)
-  const px = (peakIdx / (vals.length - 1)) * w;
-  const py = h - ((vals[peakIdx] - minV) / range) * h * 0.9 - h * 0.05;
-  acCtx.beginPath();
-  acCtx.arc(px, py, 4 * dpr, 0, Math.PI * 2);
-  acCtx.fillStyle = '#39ff8a';
-  acCtx.shadowColor = '#39ff8a';
-  acCtx.shadowBlur  = 8;
-  acCtx.fill();
-  acCtx.shadowBlur  = 0;
+  // Halo vert sur le gagnant
+  if (bestIdx >= 0) {
+    const px = (bestIdx + 0.5) * barW;
+    acCtx.beginPath();
+    acCtx.arc(px, h * 0.1, 3 * dpr, 0, Math.PI * 2);
+    acCtx.fillStyle = '#39ff8a';
+    acCtx.shadowColor = '#39ff8a';
+    acCtx.shadowBlur  = 8;
+    acCtx.fill();
+    acCtx.shadowBlur  = 0;
+  }
 }
 
 // ============================================================
