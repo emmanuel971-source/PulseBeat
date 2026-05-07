@@ -558,8 +558,7 @@ let   acBuf         = null;  // Float32Array buffer circulaire flux spectral
 let   acBufPtr      = 0;     // pointeur écriture
 let   acBufFull     = false;
 let   acPrevMag     = null;  // magnitudes FFT précédentes pour calcul flux
-let   acFrameCount  = 0;     // compteur frames depuis dernier stockage
-let   acHopFrames   = 0;     // nb frames RAF entre deux stockages (calculé au start)
+let   acLastHopTime = 0;     // timestamp réel du dernier stockage dans le buffer
 let   acSmoothedBpm = null;
 let   acLastUpdate  = 0;     // timestamp dernière mise à jour BPM musique
 const acCanvas      = document.getElementById('acorr-canvas');
@@ -634,13 +633,11 @@ async function toggle() {
 
   if (currentMode === 'music') {
     analyser.fftSize = AC_FFT_SIZE;
-    // Initialiser le buffer autocorrélation
-    acHopFrames   = Math.max(1, Math.round(ctx.sampleRate / analyser.fftSize * (1 / AC_HOP_RATE) * analyser.fftSize));
     acBufLen      = Math.round(AC_HOP_RATE * AC_BUF_SEC);
     acBuf         = new Float32Array(acBufLen);
     acBufPtr      = 0; acBufFull = false;
     acPrevMag     = new Float32Array(analyser.frequencyBinCount);
-    acFrameCount  = 0;
+    acLastHopTime = 0;
     acSmoothedBpm = null; acLastUpdate = 0;
   } else {
     analyser.fftSize = 2048;
@@ -844,10 +841,8 @@ function loopMusic() {
   drawWave(timeDomain);
 
   // --- Spectral Flux (demi-rectifié : on garde seulement les hausses) ---
-  acFrameCount++;
-  // Stocker une valeur de flux toutes les acHopFrames frames RAF
-  // acHopFrames ≈ 1 (on est à ~60 fps, AC_HOP_RATE=20 → on stocke 1 sur 3)
-  // On recalcule à chaque frame pour la précision mais on push dans le buffer moins souvent
+  const now = performance.now();
+
   let flux = 0;
   const nBins = analyser.frequencyBinCount;
   for (let i = 0; i < nBins; i++) {
@@ -857,8 +852,13 @@ function loopMusic() {
   flux /= nBins;
   acPrevMag.set(freqBins.map(v => v / 255));
 
-  // Stocker dans le buffer circulaire à AC_HOP_RATE Hz
-  if (acFrameCount % Math.max(1, Math.round(60 / AC_HOP_RATE)) === 0) {
+  // Stocker dans le buffer circulaire à AC_HOP_RATE Hz — basé sur le temps réel,
+  // indépendant du frame rate de l'écran (30 / 60 / 90 / 120 Hz)
+  const hopIntervalMs = 1000 / AC_HOP_RATE;
+  if (acLastHopTime === 0) acLastHopTime = now;
+
+  if (now - acLastHopTime >= hopIntervalMs) {
+    acLastHopTime += hopIntervalMs; // avance fixe pour éviter la dérive
     acBuf[acBufPtr] = flux;
     acBufPtr = (acBufPtr + 1) % acBufLen;
     if (!acBufFull && acBufPtr === 0) acBufFull = true;
@@ -871,7 +871,6 @@ function loopMusic() {
   }
 
   // Timeout silence
-  const now = performance.now();
   if (now - acLastUpdate > 4000 && acLastUpdate > 0) {
     bpmEl.textContent = '--';
     bpmEl.classList.remove('locked');
