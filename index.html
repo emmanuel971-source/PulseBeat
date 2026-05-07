@@ -10,7 +10,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:         #311214;
+  --bg:         #411214;
   --panel:      #1a1c20;
   --panel2:     #1e2024;
   --border:     #2e3138;
@@ -556,7 +556,8 @@ const CF_WIN_SEC  = 5;        // fenêtre d'accumulation (secondes)
 const CF_FFT_SIZE = 2048;
 
 // État comb filter
-let cfScores     = new Float32Array(CF_COUNT);  // score cumulé par BPM candidat
+let cfScores     = new Float32Array(CF_COUNT);  // énergie cumulée par BPM candidat
+let cfCounts     = new Float32Array(CF_COUNT);  // nb de boucles par oscillateur
 let cfPhases     = new Float32Array(CF_COUNT);  // phase [0..1] par oscillateur
 let cfLastTime   = 0;                           // timestamp dernière frame
 let cfWinSamples = 0;                           // nb de frames accumulées
@@ -636,6 +637,7 @@ async function toggle() {
   if (currentMode === 'music') {
     analyser.fftSize = CF_FFT_SIZE;
     cfScores.fill(0);
+    cfCounts.fill(0);
     cfPhases.fill(0);
     cfLastTime    = 0;
     cfWinSamples  = 0;
@@ -859,9 +861,9 @@ function loopMusic() {
 
     // Si la phase a bouclé → un beat était attendu à cet instant
     if (cfPhases[i] >= 1) {
-      cfPhases[i] -= 1; // remet en phase sans perdre le résidu
-      // Accumule l'énergie — le bon oscillateur sera en phase avec les vrais beats
+      cfPhases[i] -= 1;
       cfScores[i] += energy;
+      cfCounts[i] += 1;
     }
   }
 
@@ -871,8 +873,9 @@ function loopMusic() {
   const winFramesTarget = Math.round(CF_WIN_SEC * 1000 / 16.67); // ~300 frames à 60fps
   if (cfWinSamples >= winFramesTarget) {
     pickBestBpm();
-    // Réinitialiser scores et phases pour la prochaine fenêtre
+    // Réinitialiser scores, counts et phases pour la prochaine fenêtre
     cfScores.fill(0);
+    cfCounts.fill(0);
     cfPhases.fill(0);
     cfWinSamples = 0;
   }
@@ -887,20 +890,27 @@ function loopMusic() {
 }
 
 function pickBestBpm() {
-  // Trouver l'oscillateur avec le score maximum
+  // Normaliser chaque score par le nombre de boucles de cet oscillateur
+  // → énergie MOYENNE par beat attendu, indépendante du BPM
+  const normalized = new Float32Array(CF_COUNT);
+  for (let i = 0; i < CF_COUNT; i++) {
+    normalized[i] = cfCounts[i] > 0 ? cfScores[i] / cfCounts[i] : 0;
+  }
+
+  // Trouver le gagnant sur les scores normalisés
   let maxScore = -Infinity;
   let bestIdx  = 0;
   for (let i = 0; i < CF_COUNT; i++) {
-    if (cfScores[i] > maxScore) { maxScore = cfScores[i]; bestIdx = i; }
+    if (normalized[i] > maxScore) { maxScore = normalized[i]; bestIdx = i; }
   }
 
-  // Score normalisé pour la confiance : comparer le gagnant à la moyenne
-  const avgScore = cfScores.reduce((s, v) => s + v, 0) / CF_COUNT;
+  // Confiance : rapport pic / moyenne (un pic net = score >> moyenne)
+  const avgScore = normalized.reduce((s, v) => s + v, 0) / CF_COUNT;
   const confidence = avgScore > 0 ? Math.min(1, (maxScore / avgScore - 1) / 4) : 0;
   acConfidence.textContent = (confidence * 100).toFixed(0) + '%';
 
-  // Dessiner le graphe des scores
-  drawCombScores(cfScores, bestIdx);
+  // Dessiner le graphe des scores normalisés
+  drawCombScores(normalized, bestIdx);
 
   if (confidence < 0.15) {
     setUIState('tracking');
