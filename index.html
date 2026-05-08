@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>BPM Detector PRO</title>
+<title>BPM Detector PRO v4</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:         #511214;
+  --bg:         #00403a;
   --panel:      #1a1c20;
   --panel2:     #1e2024;
   --border:     #2e3138;
@@ -38,7 +38,6 @@ html, body {
   padding: 12px 10px 32px;
 }
 
-/* ── RACK SHELL ── */
 .rack {
   width: 100%;
   max-width: 480px;
@@ -51,7 +50,7 @@ html, body {
   flex-direction: column;
 }
 
-/* ── HEADER ── */
+/* HEADER */
 .rack-header {
   background: linear-gradient(180deg, #23262d, #1a1c22);
   border-bottom: 2px solid #0d0e10;
@@ -67,35 +66,16 @@ html, body {
   border: 1px solid #0d0e10;
   flex-shrink: 0;
 }
-.brand {
-  font-family: 'Orbitron', monospace;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  color: var(--text-muted);
-}
-.rack-title {
-  font-family: 'Orbitron', monospace;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 2px;
-  color: var(--text);
-  flex: 1;
-}
+.brand { font-family: 'Orbitron', monospace; font-size: 9px; font-weight: 700; letter-spacing: 4px; color: var(--text-muted); }
+.rack-title { font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 900; letter-spacing: 2px; color: var(--text); flex: 1; }
 .led-power {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: #0a2218;
-  border: 1px solid #061410;
-  transition: background 0.3s, box-shadow 0.3s;
-  flex-shrink: 0;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #0a2218; border: 1px solid #061410;
+  transition: background 0.3s, box-shadow 0.3s; flex-shrink: 0;
 }
-.led-power.on {
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green), 0 0 20px var(--green-glow);
-}
+.led-power.on { background: var(--green); box-shadow: 0 0 8px var(--green), 0 0 20px var(--green-glow); }
 
-/* ── BPM DISPLAY ── */
+/* BPM DISPLAY */
 .bpm-section {
   background: var(--bg);
   border-bottom: 1px solid var(--border);
@@ -105,284 +85,137 @@ html, body {
   justify-content: space-between;
 }
 .bpm-left { display: flex; flex-direction: column; }
-.bpm-label {
-  font-size: 9px;
-  letter-spacing: 4px;
-  color: var(--text-muted);
-  margin-bottom: 2px;
-}
+.bpm-label { font-size: 9px; letter-spacing: 4px; color: var(--text-muted); margin-bottom: 2px; }
 #bpm {
   font-family: 'Orbitron', monospace;
   font-size: clamp(64px, 22vw, 88px);
-  font-weight: 900;
-  line-height: 1;
+  font-weight: 900; line-height: 1;
   color: var(--amber);
   text-shadow: 0 0 24px var(--amber-glow);
   letter-spacing: -2px;
   transition: color 0.2s, text-shadow 0.2s;
 }
-#bpm.locked {
-  color: var(--green);
-  text-shadow: 0 0 24px var(--green-glow);
-}
-.bpm-unit {
-  font-size: 11px;
-  letter-spacing: 3px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
+#bpm.locked { color: var(--green); text-shadow: 0 0 24px var(--green-glow); }
+.bpm-unit { font-size: 11px; letter-spacing: 3px; color: var(--text-muted); margin-top: 2px; }
+
 .state-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  border-radius: 3px;
-  font-family: 'Orbitron', monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  border: 1px solid transparent;
-  transition: all 0.2s;
-  align-self: flex-end;
-  margin-bottom: 4px;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 3px;
+  font-family: 'Orbitron', monospace; font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  border: 1px solid transparent; transition: all 0.2s;
+  align-self: flex-end; margin-bottom: 4px;
 }
 .state-badge.silence { background: #1a1c22; color: var(--text-muted); border-color: var(--border); }
 .state-badge.tracking { background: #1a1800; color: var(--amber); border-color: #3d3000; }
-.state-badge.locked {
-  background: var(--green-dim); color: var(--green); border-color: #0e4028;
-  box-shadow: 0 0 10px var(--green-glow);
-}
+.state-badge.locked { background: var(--green-dim); color: var(--green); border-color: #0e4028; box-shadow: 0 0 10px var(--green-glow); }
 .state-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 .state-badge.locked .state-dot { animation: blink 1s ease-in-out infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-/* ── BEAT FLASH ── */
+/* BEAT FLASH */
 .beat-strip { height: 3px; background: var(--border); flex-shrink: 0; }
 .beat-flash-bar { height: 100%; width: 100%; background: var(--green); box-shadow: 0 0 10px var(--green); opacity: 0; transition: opacity 0.05s; }
 
-/* ── VU + SCOPE : COLONNE ── */
-.meters-col {
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
-}
+/* VU + SCOPE */
+.meters-col { display: flex; flex-direction: column; background: var(--bg); border-bottom: 1px solid var(--border); }
+.vu-wrap { display: flex; align-items: center; gap: 10px; padding: 10px 14px 6px; border-bottom: 1px solid #1a1e24; }
+.vu-label { font-size: 9px; letter-spacing: 3px; color: var(--text-muted); flex-shrink: 0; width: 30px; }
+.vu-bar-h { flex: 1; height: 10px; background: #0d1014; border-radius: 3px; border: 1px solid #1a1e24; overflow: hidden; }
+.vu-fill-h { height: 100%; width: 0%; border-radius: 2px; background: linear-gradient(90deg, var(--cyan) 0%, var(--green) 55%, var(--amber) 80%, var(--red) 100%); transition: width 0.04s; }
+#db-label { font-size: 9px; color: var(--text-muted); flex-shrink: 0; width: 52px; text-align: right; }
 
-/* VU Meter horizontal */
-.vu-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px 6px;
-  border-bottom: 1px solid #1a1e24;
-}
-.vu-label {
-  font-size: 9px; letter-spacing: 3px; color: var(--text-muted);
-  flex-shrink: 0; width: 30px;
-}
-.vu-bar-h {
-  flex: 1; height: 10px;
-  background: #0d1014;
-  border-radius: 3px;
-  border: 1px solid #1a1e24;
-  overflow: hidden;
-  position: relative;
-}
-.vu-fill-h {
-  height: 100%; width: 0%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--cyan) 0%, var(--green) 55%, var(--amber) 80%, var(--red) 100%);
-  transition: width 0.04s;
-}
-#db-label {
-  font-size: 9px; color: var(--text-muted);
-  flex-shrink: 0; width: 52px; text-align: right;
-}
-
-/* Oscilloscope */
-.scope-wrap {
-  padding: 6px 14px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+.scope-wrap { padding: 6px 14px 10px; display: flex; flex-direction: column; gap: 4px; }
 .scope-label { font-size: 9px; letter-spacing: 3px; color: var(--text-muted); }
-#wave {
-  width: 100%; height: 70px; display: block;
-  border-radius: 3px;
-  background: #080a0c;
-  border: 1px solid #1a1e24;
-}
+#wave { width: 100%; height: 70px; display: block; border-radius: 3px; background: #080a0c; border: 1px solid #1a1e24; }
 
-/* ── BEAT GRID ── */
+/* BEAT GRID */
 .history-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 14px;
-  background: var(--panel2);
-  border-bottom: 1px solid var(--border);
-  flex-wrap: nowrap;
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 14px; background: var(--panel2);
+  border-bottom: 1px solid var(--border); flex-wrap: nowrap;
 }
-.history-label {
-  font-size: 9px; letter-spacing: 2px; color: var(--text-muted);
-  margin-left: auto; flex-shrink: 0;
-}
-.history-dot {
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  background: var(--border);
-  flex-shrink: 0;
-  transition: background 0.2s, box-shadow 0.2s;
-}
-.history-dot.active {
-  background: var(--amber);
-  box-shadow: 0 0 5px var(--amber-glow);
-}
+.history-label { font-size: 9px; letter-spacing: 2px; color: var(--text-muted); margin-left: auto; flex-shrink: 0; }
+.history-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.2s, box-shadow 0.2s; }
+.history-dot.active { background: var(--amber); box-shadow: 0 0 5px var(--amber-glow); }
 
-/* ── CONTROLS : colonne propre ── */
-.controls-panel {
-  background: var(--panel2);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.ctrl-group { display: flex; flex-direction: column; gap: 6px; }
-.ctrl-label {
-  font-size: 9px; letter-spacing: 3px; color: var(--text-muted);
-  display: flex; justify-content: space-between;
-}
-.ctrl-val { color: var(--amber); }
-
-input[type=range] {
-  -webkit-appearance: none;
-  width: 100%; height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  outline: none; cursor: pointer;
-}
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 20px; height: 20px;   /* plus grand pour doigt */
-  border-radius: 50%;
-  background: var(--amber);
-  box-shadow: 0 0 6px var(--amber-glow);
-  border: 2px solid var(--bg);
-  cursor: pointer;
-}
-
-/* ── MODE SELECTOR ── */
+/* MODE SELECTOR */
 .mode-panel {
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  padding: 10px 14px; display: flex; flex-direction: column; gap: 7px;
 }
-.mode-label {
-  font-size: 9px; letter-spacing: 3px; color: var(--text-muted);
-}
-.mode-btns {
-  display: flex;
-  gap: 8px;
-}
+.mode-label { font-size: 9px; letter-spacing: 3px; color: var(--text-muted); }
+.mode-btns { display: flex; gap: 8px; }
 .mode-btn {
-  flex: 1;
-  padding: 9px 8px;
-  font-family: 'Orbitron', monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.18s;
-  -webkit-tap-highlight-color: transparent;
+  flex: 1; padding: 9px 8px;
+  font-family: 'Orbitron', monospace; font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  border-radius: 4px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-muted);
+  cursor: pointer; transition: all 0.18s; -webkit-tap-highlight-color: transparent;
 }
 .mode-btn:active { opacity: 0.7; }
-.mode-btn.active-tap {
-  background: #1a1800;
-  color: var(--amber);
-  border-color: #3d3000;
-  box-shadow: 0 0 10px #ffb34730;
-}
-.mode-btn.active-music {
-  background: #001a2e;
-  color: var(--cyan);
-  border-color: #003d5c;
-  box-shadow: 0 0 10px #00e5ff30;
-}
+.mode-btn.active-tap { background: #1a1800; color: var(--amber); border-color: #3d3000; box-shadow: 0 0 10px #ffb34730; }
+.mode-btn.active-music { background: #001a2e; color: var(--cyan); border-color: #003d5c; box-shadow: 0 0 10px #00e5ff30; }
+.mode-btn.blocked { animation: shake 0.3s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
 
-/* ── MUSIC MODE : panneau d'état autocorrélation ── */
-.acorr-panel {
-  display: none;
-  background: var(--bg);
+/* MUSIC PANEL */
+.music-panel {
+  display: none; background: var(--bg);
   border-bottom: 1px solid var(--border);
-  padding: 8px 14px 10px;
-  flex-direction: column;
-  gap: 5px;
+  padding: 8px 14px 10px; flex-direction: column; gap: 5px;
 }
-.acorr-panel.visible { display: flex; }
-.acorr-label { font-size: 9px; letter-spacing: 3px; color: var(--text-muted); }
-#acorr-canvas {
-  width: 100%; height: 48px; display: block;
-  border-radius: 3px;
-  background: #080a0c;
-  border: 1px solid #1a1e24;
-}
-.acorr-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 9px;
-  color: var(--text-muted);
-}
+.music-panel.visible { display: flex; }
+.music-panel-label { font-size: 9px; letter-spacing: 3px; color: var(--text-muted); }
+#acorr-canvas { width: 100%; height: 48px; display: block; border-radius: 3px; background: #080a0c; border: 1px solid #1a1e24; }
+.music-info { display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted); }
 #acorr-confidence { color: var(--cyan); }
 
-/* contrôles spécifiques MUSIC (masqués en mode TAP) */
+/* CONTROLS */
+.controls-panel {
+  background: var(--panel2); border-bottom: 1px solid var(--border);
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 12px;
+}
+.ctrl-group { display: flex; flex-direction: column; gap: 6px; }
+.ctrl-label { font-size: 9px; letter-spacing: 3px; color: var(--text-muted); display: flex; justify-content: space-between; }
+.ctrl-val { color: var(--amber); }
+.ctrl-tap-only { display: flex; }
+.ctrl-tap-only.hidden { display: none; }
 .ctrl-music-only { display: none; }
 .ctrl-music-only.visible { display: flex; }
 
-/* ── BOUTONS ── */
-.btn-panel {
-  padding: 12px 14px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  background: var(--panel);
+input[type=range] {
+  -webkit-appearance: none; width: 100%; height: 4px;
+  background: var(--border); border-radius: 2px; outline: none; cursor: pointer;
 }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--amber); box-shadow: 0 0 6px var(--amber-glow);
+  border: 2px solid var(--bg); cursor: pointer;
+}
+
+/* BUTTONS */
+.btn-panel { padding: 12px 14px; display: flex; gap: 10px; align-items: center; background: var(--panel); }
 #btn-toggle {
   flex: 1; padding: 14px 16px;
-  font-family: 'Orbitron', monospace;
-  font-size: 12px; font-weight: 700; letter-spacing: 3px;
+  font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700; letter-spacing: 3px;
   border: none; border-radius: 5px; cursor: pointer;
-  background: var(--green-dim); color: var(--green);
-  border: 1px solid #1a4030;
-  transition: all 0.2s;
-  -webkit-tap-highlight-color: transparent;
+  background: var(--green-dim); color: var(--green); border: 1px solid #1a4030;
+  transition: all 0.2s; -webkit-tap-highlight-color: transparent;
 }
 #btn-toggle:active { opacity: 0.8; }
 #btn-toggle.running { background: var(--red-dim); color: var(--red); border-color: #4d0010; }
 #btn-reset {
-  padding: 14px 14px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 11px; letter-spacing: 2px;
+  padding: 14px 14px; font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 2px;
   border: 1px solid var(--border); border-radius: 5px;
   cursor: pointer; background: transparent; color: var(--text-muted);
-  transition: all 0.2s;
-  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s; -webkit-tap-highlight-color: transparent;
 }
 #btn-reset:active { color: var(--text); }
 
-/* ── FOOTER ── */
+/* FOOTER */
 .rack-footer {
   background: linear-gradient(180deg, #16181e, #111214);
-  border-top: 1px solid var(--border);
-  padding: 7px 14px;
+  border-top: 1px solid var(--border); padding: 7px 14px;
   display: flex; justify-content: space-between;
 }
 .rack-footer span { font-size: 9px; letter-spacing: 2px; color: var(--text-muted); }
@@ -417,10 +250,10 @@ input[type=range]::-webkit-slider-thumb {
   <!-- BEAT FLASH STRIP -->
   <div class="beat-strip"><div class="beat-flash-bar" id="beat-flash"></div></div>
 
-  <!-- VU + SCOPE en colonne -->
+  <!-- VU + SCOPE -->
   <div class="meters-col">
     <div class="vu-wrap">
-      <div class="vu-label">BASS</div>
+      <div class="vu-label" id="vu-label">BASS</div>
       <div class="vu-bar-h"><div class="vu-fill-h" id="vu-fill"></div></div>
       <div id="db-label">-∞ dB</div>
     </div>
@@ -444,136 +277,61 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 
-  <!-- AUTOCORRELATION VISUALIZER (music mode only) -->
-  <div class="acorr-panel" id="acorr-panel">
-    <div class="acorr-label">AUTOCORRÉLATION · FLUX SPECTRAL</div>
+  <!-- MUSIC PANEL (autocorrelation graph) -->
+  <div class="music-panel" id="music-panel">
+    <div class="music-panel-label">AUTOCORRÉLATION · FLUX SPECTRAL</div>
     <canvas id="acorr-canvas"></canvas>
-    <div class="acorr-info">
+    <div class="music-info">
       <span>ANALYSE EN COURS…</span>
       <span>CONFIANCE : <span id="acorr-confidence">--</span></span>
+    </div>
+    <div class="ctrl-group" style="margin-top:6px">
+      <div class="ctrl-label">SEUIL LOCK <span class="ctrl-val" id="lock-thresh-val">0.18</span></div>
+      <input type="range" id="lock-thresh" min="0.05" max="0.50" step="0.01" value="0.18">
     </div>
   </div>
 
   <!-- CONTROLS -->
   <div class="controls-panel">
-    <div class="ctrl-group" id="ctrl-sens">
+    <div class="ctrl-group ctrl-tap-only" id="ctrl-sens">
       <div class="ctrl-label">SENSIBILITÉ <span class="ctrl-val" id="sens-val">1.8</span></div>
       <input type="range" id="sens" min="1.2" max="3" step="0.1" value="1.8">
     </div>
-    <div class="ctrl-group" id="ctrl-smooth">
+    <div class="ctrl-group ctrl-tap-only" id="ctrl-smooth">
       <div class="ctrl-label">LISSAGE BPM <span class="ctrl-val" id="smooth-val">0.75</span></div>
       <input type="range" id="smooth" min="0.5" max="0.95" step="0.01" value="0.75">
     </div>
-    <div class="ctrl-group" id="ctrl-refrac">
+    <div class="ctrl-group ctrl-tap-only" id="ctrl-refrac">
       <div class="ctrl-label">REFRACTORY (ms) <span class="ctrl-val" id="refrac-val">180</span></div>
       <input type="range" id="refrac" min="100" max="400" step="10" value="180">
     </div>
-    <!-- Contrôle MUSIC uniquement -->
-    <div class="ctrl-group ctrl-music-only" id="ctrl-acorr-smooth">
-      <div class="ctrl-label">LISSAGE BPM MUSIQUE <span class="ctrl-val" id="msmooth-val">0.85</span></div>
+    <div class="ctrl-group ctrl-music-only" id="ctrl-msmooth">
+      <div class="ctrl-label">LISSAGE MUSIQUE <span class="ctrl-val" id="msmooth-val">0.85</span></div>
       <input type="range" id="msmooth" min="0.5" max="0.97" step="0.01" value="0.85">
     </div>
   </div>
 
-  <!-- BOUTONS -->
+  <!-- BUTTONS -->
   <div class="btn-panel">
     <button id="btn-toggle" onclick="toggle()">▶ START</button>
-    <button id="btn-reset" onclick="resetState()">RESET</button>
+    <button id="btn-reset"  onclick="resetState()">RESET</button>
   </div>
 
   <!-- FOOTER -->
   <div class="rack-footer">
-    <span id="footer-mode-label">BASS ONSET DETECTION</span>
-    <span>v3.0</span>
+    <span id="footer-label">BASS ONSET · MEDIAN FILTERED</span>
+    <span>v4.0</span>
   </div>
 
 </div>
 
 <script>
 // ============================================================
-// AUDIO
+// AUDIO CONTEXT
 // ============================================================
 let ctx, analyser, src, stream;
 let running = false;
-
-// ============================================================
-// MODE  ('tap' | 'music')
-// ============================================================
 let currentMode = 'tap';
-
-function setMode(m) {
-  if (running) return; // pas de changement en cours de run
-  currentMode = m;
-
-  const isTap   = m === 'tap';
-  document.getElementById('btn-mode-tap').className   = 'mode-btn' + (isTap   ? ' active-tap'   : '');
-  document.getElementById('btn-mode-music').className = 'mode-btn' + (!isTap  ? ' active-music'  : '');
-
-  // panneaux
-  document.getElementById('acorr-panel').classList.toggle('visible', !isTap);
-
-  // contrôles TAP visibles/cachés
-  ['ctrl-sens','ctrl-smooth','ctrl-refrac'].forEach(id => {
-    document.getElementById(id).style.display = isTap ? '' : 'none';
-  });
-  // contrôle MUSIC
-  document.getElementById('ctrl-acorr-smooth').classList.toggle('visible', !isTap);
-
-  // footer
-  document.getElementById('footer-mode-label').textContent =
-    isTap ? 'BASS ONSET DETECTION' : 'SPECTRAL FLUX · AUTOCORRÉLATION';
-}
-
-// ============================================================
-// STATE  (TAP mode — inchangé)
-// ============================================================
-let energyHistory = [];
-let onsetHistory  = [];
-let beatTimes     = [];
-let lastBeat      = 0;
-let lastOnsetTime = 0;
-let smoothedBpm   = null;
-let flashTimeout  = null;
-
-// ============================================================
-// PARAMS
-// ============================================================
-let SENS   = 1.8;
-let SMOOTH = 0.75;
-let REFRAC = 180;
-const BPM_TIMEOUT = 2500;
-const HIST_COUNT  = 16;
-
-// ============================================================
-// PARAMS  MUSIC mode — Comb Filter Bank dual-band
-// ============================================================
-let MSMOOTH = 0.85;           // lissage BPM final
-
-const CF_BPM_MIN  = 40;
-const CF_BPM_MAX  = 200;
-const CF_COUNT    = CF_BPM_MAX - CF_BPM_MIN + 1;  // 161 oscillateurs
-const CF_WIN_SEC  = 5;        // fenêtre d'accumulation (secondes)
-const CF_FFT_SIZE = 2048;
-
-// Historique pour seuil adaptatif (même approche que mode TAP)
-const CF_HIST_LEN = 43;       // ~0.7s à 60fps
-let cfHistBass    = new Float32Array(CF_HIST_LEN);
-let cfHistMid     = new Float32Array(CF_HIST_LEN);
-let cfHistPtr     = 0;
-let cfPrevBass    = 0;         // énergie basse frame précédente
-let cfPrevMid     = 0;         // énergie mid frame précédente
-
-// État comb filter
-let cfScores      = new Float32Array(CF_COUNT);  // score cosinus cumulé
-let cfPhases      = new Float32Array(CF_COUNT);  // phase [0..1] par oscillateur
-let cfLastTime    = 0;                           // timestamp dernière frame
-let cfWinMs       = 0;                           // ms accumulées dans la fenêtre
-let cfSmoothedBpm = null;
-let cfLastUpdate  = 0;
-
-const acCanvas   = document.getElementById('acorr-canvas');
-const acCtx      = acCanvas.getContext('2d');
-const acConfidence = document.getElementById('acorr-confidence');
 
 // ============================================================
 // UI REFS
@@ -581,6 +339,7 @@ const acConfidence = document.getElementById('acorr-confidence');
 const bpmEl      = document.getElementById('bpm');
 const dbLabel    = document.getElementById('db-label');
 const vuFill     = document.getElementById('vu-fill');
+const vuLabel    = document.getElementById('vu-label');
 const stateBadge = document.getElementById('state-badge');
 const stateText  = document.getElementById('state-text');
 const beatFlash  = document.getElementById('beat-flash');
@@ -589,34 +348,98 @@ const btnToggle  = document.getElementById('btn-toggle');
 const histRow    = document.getElementById('history-row');
 const canvas     = document.getElementById('wave');
 const cctx       = canvas.getContext('2d');
+const acCanvas   = document.getElementById('acorr-canvas');
+const acCtx      = acCanvas.getContext('2d');
+const acConfEl   = document.getElementById('acorr-confidence');
+const footerLabel= document.getElementById('footer-label');
 
-// Build beat grid dots (avant le label)
-const histLabel = histRow.querySelector('.history-label');
-const histDots  = [];
-for (let i = 0; i < HIST_COUNT; i++) {
-  const d = document.createElement('div');
-  d.className = 'history-dot';
-  histRow.insertBefore(d, histLabel);
-  histDots.push(d);
+// ============================================================
+// BEAT GRID
+// ============================================================
+const HIST_COUNT = 16;
+const histDots   = [];
+(function initGrid() {
+  const label = histRow.querySelector('.history-label');
+  for (let i = 0; i < HIST_COUNT; i++) {
+    const d = document.createElement('div');
+    d.className = 'history-dot';
+    histRow.insertBefore(d, label);
+    histDots.push(d);
+  }
+})();
+let beatGridPtr = 0;
+
+function updateBeatGrid() {
+  histDots[beatGridPtr % HIST_COUNT].classList.add('active');
+  histDots[(beatGridPtr + 1) % HIST_COUNT].classList.remove('active');
+  beatGridPtr = (beatGridPtr + 1) % HIST_COUNT;
 }
 
-// Controls
-document.getElementById('sens').oninput = e => {
-  SENS = +e.target.value;
-  document.getElementById('sens-val').textContent = SENS.toFixed(1);
-};
-document.getElementById('smooth').oninput = e => {
-  SMOOTH = +e.target.value;
-  document.getElementById('smooth-val').textContent = SMOOTH.toFixed(2);
-};
-document.getElementById('refrac').oninput = e => {
-  REFRAC = +e.target.value;
-  document.getElementById('refrac-val').textContent = REFRAC;
-};
-document.getElementById('msmooth').oninput = e => {
-  MSMOOTH = +e.target.value;
-  document.getElementById('msmooth-val').textContent = MSMOOTH.toFixed(2);
-};
+// ============================================================
+// TAP MODE STATE & PARAMS
+// ============================================================
+let energyHistory = [], onsetHistory = [], beatTimes = [];
+let lastBeat = 0, lastOnsetTime = 0, smoothedBpm = null, flashTimeout = null;
+
+let SENS   = 1.8;
+let SMOOTH = 0.75;
+let REFRAC = 180;
+const TAP_TIMEOUT = 2500;
+
+// ============================================================
+// MUSIC MODE STATE & PARAMS  (Autocorrélation sur flux spectral)
+// ============================================================
+let MSMOOTH     = 0.85;
+let LOCK_THRESH = 0.18;
+
+const AC_FFT_SIZE = 4096;
+const AC_HOP_RATE = 100;   // samples/sec → 1 sample tous les 10ms
+const AC_BUF_SEC  = 8;     // 8s de mémoire = 800 samples
+const FLUX_GATE   = 0.02;
+
+const WEIGHT_BASS = 1.5, WEIGHT_MID = 0.5, WEIGHT_HIGH = 1.2;
+
+let acBufLen = 0, acBuf = null, acBufPtr = 0, acBufFull = false;
+let acPrevMag = null, acSmoothedBpm = null, acLastUpdate = 0;
+let acFluxSmooth = 0, acLastSampleTime = 0;
+let _musTimeDomain = null, _musFreqBins = null;
+let _tapTimeDomain = null, _tapFreqBins = null;
+
+// ============================================================
+// CONTROLS
+// ============================================================
+document.getElementById('sens').oninput        = e => { SENS        = +e.target.value; document.getElementById('sens-val').textContent        = SENS.toFixed(1); };
+document.getElementById('smooth').oninput      = e => { SMOOTH      = +e.target.value; document.getElementById('smooth-val').textContent      = SMOOTH.toFixed(2); };
+document.getElementById('refrac').oninput      = e => { REFRAC      = +e.target.value; document.getElementById('refrac-val').textContent      = REFRAC.toFixed(0); };
+document.getElementById('msmooth').oninput     = e => { MSMOOTH     = +e.target.value; document.getElementById('msmooth-val').textContent     = MSMOOTH.toFixed(2); };
+document.getElementById('lock-thresh').oninput = e => { LOCK_THRESH = +e.target.value; document.getElementById('lock-thresh-val').textContent = LOCK_THRESH.toFixed(2); };
+
+// ============================================================
+// MODE
+// ============================================================
+function setMode(m) {
+  if (running) {
+    const id  = m === 'tap' ? 'btn-mode-tap' : 'btn-mode-music';
+    const btn = document.getElementById(id);
+    btn.classList.add('blocked');
+    setTimeout(() => btn.classList.remove('blocked'), 350);
+    return;
+  }
+  currentMode = m;
+  const isTap = m === 'tap';
+
+  document.getElementById('btn-mode-tap').className   = 'mode-btn' + (isTap  ? ' active-tap'   : '');
+  document.getElementById('btn-mode-music').className = 'mode-btn' + (!isTap ? ' active-music'  : '');
+  document.getElementById('music-panel').classList.toggle('visible', !isTap);
+  document.querySelectorAll('.ctrl-tap-only').forEach(el => el.classList.toggle('hidden', !isTap));
+  document.querySelectorAll('.ctrl-music-only').forEach(el => el.classList.toggle('visible', !isTap));
+
+  vuLabel.textContent   = isTap ? 'BASS' : 'FLUX';
+  footerLabel.textContent = isTap
+    ? 'BASS ONSET · MEDIAN FILTERED'
+    : 'AUTOCORRÉLATION · SPECTRAL FLUX';
+  resetState();
+}
 
 // ============================================================
 // START / STOP
@@ -633,37 +456,45 @@ async function toggle() {
     return;
   }
 
-  ctx    = new AudioContext();
-  stream = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-  });
+  try {
+    ctx    = new AudioContext();
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+    });
+  } catch (err) {
+    const msg = err.name === 'NotAllowedError' ? 'ACCÈS MICRO REFUSÉ' : 'ERREUR MICRO : ' + err.message;
+    bpmEl.textContent   = '!';
+    dbLabel.textContent = msg.substring(0, 14);
+    setUIState('silence');
+    console.error('[BPM] getUserMedia error:', err);
+    return;
+  }
 
   src      = ctx.createMediaStreamSource(stream);
   analyser = ctx.createAnalyser();
 
   if (currentMode === 'music') {
-    analyser.fftSize = CF_FFT_SIZE;
-    cfScores.fill(0);
-    cfPhases.fill(0);
-    cfHistBass.fill(0); cfHistMid.fill(0); cfHistPtr = 0;
-    cfPrevBass    = 0;  cfPrevMid   = 0;
-    cfLastTime    = 0;
-    cfWinMs       = 0;
-    cfSmoothedBpm = null;
-    cfLastUpdate  = 0;
+    analyser.fftSize = AC_FFT_SIZE;
+    acBufLen         = Math.floor(AC_HOP_RATE * AC_BUF_SEC);
+    acBuf            = new Float32Array(acBufLen);
+    acBufPtr = 0; acBufFull = false;
+    acPrevMag        = new Float32Array(analyser.frequencyBinCount);
+    _musTimeDomain   = new Float32Array(analyser.fftSize);
+    _musFreqBins     = new Float32Array(analyser.frequencyBinCount);
+    acSmoothedBpm    = null; acLastUpdate = 0; acFluxSmooth = 0;
+    acLastSampleTime = performance.now();
   } else {
     analyser.fftSize = 2048;
+    _tapTimeDomain   = new Float32Array(analyser.fftSize);
+    _tapFreqBins     = new Uint8Array(analyser.frequencyBinCount);
   }
 
   src.connect(analyser);
-
   running = true;
   ledPower.classList.add('on');
   btnToggle.textContent = '■ STOP';
   btnToggle.classList.add('running');
-
-  if (currentMode === 'music') loopMusic();
-  else                          loop();
+  currentMode === 'music' ? loopMusic() : loopTap();
 }
 
 // ============================================================
@@ -671,83 +502,72 @@ async function toggle() {
 // ============================================================
 function resetState() {
   energyHistory = []; onsetHistory = []; beatTimes = [];
-  lastBeat = 0; lastOnsetTime = 0; smoothedBpm = null;
+  lastBeat = 0; lastOnsetTime = 0; smoothedBpm = null; acSmoothedBpm = null;
   bpmEl.textContent = '--';
   bpmEl.classList.remove('locked');
-  setUIState('silence');
+  vuFill.style.width = '0%';
+  dbLabel.textContent = '-∞ dB';
+  beatGridPtr = 0;
   histDots.forEach(d => d.classList.remove('active'));
+  setUIState('silence');
 }
 
 // ============================================================
-// MAIN LOOP
+// TAP / CLAP LOOP  (meilleur algo de oscillateurs.html)
 // ============================================================
-function loop() {
+function loopTap() {
   if (!running) return;
-  requestAnimationFrame(loop);
+  requestAnimationFrame(loopTap);
 
-  const timeDomain = new Float32Array(analyser.fftSize);
-  analyser.getFloatTimeDomainData(timeDomain);
+  analyser.getFloatTimeDomainData(_tapTimeDomain);
+  analyser.getByteFrequencyData(_tapFreqBins);
 
-  // -- BASS ENERGY (bins < ~200 Hz) --
-  const freqBins = new Uint8Array(analyser.frequencyBinCount);
-  analyser.getByteFrequencyData(freqBins);
-
-  const nyquist = ctx.sampleRate / 2;
-  const binHz   = nyquist / analyser.frequencyBinCount;
+  // Energie basse fréquence (< 200 Hz)
+  const binHz  = (ctx.sampleRate / 2) / analyser.frequencyBinCount;
   const bassMax = Math.round(200 / binHz);
-
   let bassSum = 0;
-  for (let i = 0; i < bassMax; i++) bassSum += freqBins[i];
+  for (let i = 0; i < bassMax; i++) bassSum += _tapFreqBins[i];
   let bassEnergy = bassSum / bassMax / 255;
 
-  // Lissage léger (réactif)
+  // Léger lissage de l'énergie (anti-bruit sans trop lisser)
   if (energyHistory.length > 0) {
     bassEnergy = 0.4 * energyHistory.at(-1) + 0.6 * bassEnergy;
   }
   energyHistory.push(bassEnergy);
   if (energyHistory.length > 300) energyHistory.shift();
 
-  // -- VU METER horizontal --
-  const db   = 20 * Math.log10(bassEnergy + 1e-9);
-  const norm  = Math.max(0, Math.min(1, (db + 50) / 50));
-  vuFill.style.width = (norm * 100) + '%';
-  dbLabel.textContent = isFinite(db) ? db.toFixed(1) + ' dB' : '-∞ dB';
+  // VU Meter
+  updateVU(bassEnergy);
 
-  // -- ONSET --
+  // Onset = dérivée de l'énergie
   const diff = bassEnergy - (energyHistory.at(-2) || bassEnergy);
   onsetHistory.push(diff);
   if (onsetHistory.length > 60) onsetHistory.shift();
 
-  const mean      = avg(onsetHistory);
-  const sd        = stddev(onsetHistory, mean);
-  const threshold = mean + SENS * sd;
-  const now       = performance.now();
+  const threshold = avg(onsetHistory) + SENS * stddev(onsetHistory, avg(onsetHistory));
+  const now = performance.now();
 
-  if (diff > threshold && now - lastBeat > REFRAC) {
-    triggerBeat(now);
-  }
+  if (diff > threshold && now - lastBeat > REFRAC) triggerBeat(now);
 
-  // -- TIMEOUT SILENCE --
-  if (now - lastOnsetTime > BPM_TIMEOUT && lastOnsetTime > 0) {
-    resetState();
-  }
+  // Timeout silence
+  if (now - lastOnsetTime > TAP_TIMEOUT && lastOnsetTime > 0) resetState();
 
-  drawWave(timeDomain);
+  drawWave(_tapTimeDomain);
 }
 
 // ============================================================
-// BEAT
+// BEAT TRIGGER  (meilleur algo de oscillateurs.html — médiane filtrée)
 // ============================================================
 function triggerBeat(now) {
   lastBeat = lastOnsetTime = now;
-
   clearTimeout(flashTimeout);
   beatFlash.style.opacity = '1';
   flashTimeout = setTimeout(() => { beatFlash.style.opacity = '0'; }, 80);
 
+  // Feedback visuel instantané (1 intervalle) — réactivité
   if (beatTimes.length >= 1) {
-    const interval   = now - beatTimes.at(-1);
-    const instantBpm = 60000 / interval;
+    const interval    = now - beatTimes.at(-1);
+    const instantBpm  = 60000 / interval;
     if (instantBpm > 40 && instantBpm < 220) {
       bpmEl.textContent = Math.round(instantBpm);
     }
@@ -756,21 +576,22 @@ function triggerBeat(now) {
   beatTimes.push(now);
   if (beatTimes.length > 24) beatTimes.shift();
 
-  const active = Math.min(beatTimes.length, HIST_COUNT);
-  histDots.forEach((d, i) => d.classList.toggle('active', i < active));
-
-  computeBPM();
+  updateBeatGrid();
+  computeTapBPM();
 }
 
 // ============================================================
-// BPM STABLE
+// COMPUTE TAP BPM  (médiane + filtre outliers + lissage expo)
+// FIX : fusionne la médiane de oscillateurs + lissage de autocorrelation
 // ============================================================
-function computeBPM() {
+function computeTapBPM() {
   if (beatTimes.length < 6) return;
 
-  let intervals = [];
+  const intervals = [];
   for (let i = 1; i < beatTimes.length; i++) intervals.push(beatTimes[i] - beatTimes[i - 1]);
 
+  // Filtre par médiane : on garde seulement les intervalles proches de la médiane
+  // (élimine les faux onsets et les doubles-détections)
   const med      = median(intervals);
   const filtered = intervals.filter(v => v > med * 0.7 && v < med * 1.3);
   if (filtered.length < 4) return;
@@ -779,251 +600,201 @@ function computeBPM() {
   const bpm    = 60000 / avgInt;
   if (bpm < 40 || bpm > 220) return;
 
+  // Lissage exponentiel
   smoothedBpm = smoothedBpm === null ? bpm : SMOOTH * smoothedBpm + (1 - SMOOTH) * bpm;
   bpmEl.textContent = Math.round(smoothedBpm);
 
+  // Stabilité = coefficient de variation des intervalles filtrés
   const stability = stddev(filtered, avgInt) / avgInt;
-  setUIState(stability < 0.08 ? 'locked' : 'tracking');
+  setUIState(stability < 0.06 ? 'locked' : 'tracking');
 }
 
 // ============================================================
-// UI STATE
+// MUSIC LOOP  (Autocorrélation sur flux spectral multi-bandes)
 // ============================================================
-function setUIState(state) {
-  stateBadge.className = 'state-badge ' + state;
-  stateText.textContent = state.toUpperCase();
-  bpmEl.classList.toggle('locked', state === 'locked');
+function loopMusic() {
+  if (!running) return;
+  requestAnimationFrame(loopMusic);
+
+  analyser.getFloatTimeDomainData(_musTimeDomain);
+  analyser.getFloatFrequencyData(_musFreqBins);
+
+  // Flux spectral multi-bandes (pondéré)
+  const nBins   = analyser.frequencyBinCount;
+  const nyquist = ctx.sampleRate / 2;
+  let fluxB = 0, fluxM = 0, fluxH = 0, cB = 0, cM = 0, cH = 0;
+
+  for (let i = 0; i < nBins; i++) {
+    const hz  = (i * nyquist) / nBins;
+    const mag = Math.max(0, (_musFreqBins[i] + 100) / 100);
+    const d   = mag - acPrevMag[i];
+    acPrevMag[i] = mag;
+    if (d > 0) {
+      if      (hz <= 150)  { fluxB += d; cB++; }
+      else if (hz <= 1000) { fluxM += d; cM++; }
+      else if (hz <= 4000) { fluxH += d; cH++; }
+    }
+  }
+
+  const totalFlux = ((fluxB/(cB||1))*WEIGHT_BASS) + ((fluxM/(cM||1))*WEIGHT_MID) + ((fluxH/(cH||1))*WEIGHT_HIGH);
+  const finalFlux = totalFlux > FLUX_GATE ? totalFlux : 0;
+  acFluxSmooth    = 0.5 * acFluxSmooth + 0.5 * finalFlux;
+
+  updateVU(Math.min(acFluxSmooth / 2, 1));
+
+  const now = performance.now();
+  if (now - acLastSampleTime >= (1000 / AC_HOP_RATE)) {
+    acLastSampleTime    = now;
+    acBuf[acBufPtr]     = acFluxSmooth;
+    acBufPtr            = (acBufPtr + 1) % acBufLen;
+    if (!acBufFull && acBufPtr === 0) acBufFull = true;
+
+    const available = acBufFull ? acBufLen : acBufPtr;
+    const lagMax    = Math.floor(AC_HOP_RATE * 60 / 60); // lag pour 60 BPM = 100
+    if (available > lagMax + 10) computeAcorrBPM(available);
+  }
+
+  drawWave(_musTimeDomain);
 }
 
 // ============================================================
-// WAVEFORM
+// AUTOCORRÉLATION  — FIX : normalisation corrigée (pas de amplification des grands lags)
 // ============================================================
+function computeAcorrBPM(len) {
+  const sig  = new Float32Array(len);
+  let mean   = 0;
+  for (let i = 0; i < len; i++) { sig[i] = acBuf[(acBufPtr - len + i + acBufLen) % acBufLen]; mean += sig[i]; }
+  mean /= len;
+  for (let i = 0; i < len; i++) sig[i] -= mean;
+
+  // Plage de lags : 60 BPM (lag=100) → 180 BPM (lag=33)
+  const lagMin = Math.ceil(AC_HOP_RATE * 60 / 180);
+  const lagMax = Math.floor(AC_HOP_RATE * 60 / 60);
+
+  // Norme au lag 0 (énergie totale du signal)
+  let norm0 = 0;
+  for (let i = 0; i < len; i++) norm0 += sig[i] * sig[i];
+  if (norm0 < 1e-8) return;
+
+  // FIX CRITIQUE : on normalise par la géométrie réelle à chaque lag
+  // (produit des normes des deux sous-séquences) → pas d'amplification des grands lags
+  const acVals = [];
+  for (let lag = lagMin; lag <= lagMax; lag++) {
+    let ac = 0, n1 = 0, n2 = 0;
+    const L = len - lag;
+    for (let i = 0; i < L; i++) {
+      ac += sig[i] * sig[i + lag];
+      n1 += sig[i] * sig[i];
+      n2 += sig[i + lag] * sig[i + lag];
+    }
+    // Normalisation par les normes réelles → valeur dans [-1, 1]
+    const denom = Math.sqrt(n1 * n2);
+    acVals.push(denom > 1e-12 ? ac / denom : 0);
+  }
+
+  // Détection des pics locaux
+  const peaks = [];
+  for (let i = 1; i < acVals.length - 1; i++) {
+    if (acVals[i] > acVals[i-1] && acVals[i] > acVals[i+1] && acVals[i] > 0.05) {
+      const bpm = (AC_HOP_RATE * 60) / (lagMin + i);
+      peaks.push({ bpm, score: acVals[i], lagIdx: i });
+    }
+  }
+
+  if (peaks.length === 0) return;
+  peaks.sort((a, b) => b.score - a.score);
+
+  // Préférer un BPM dans la plage musicale courante si possible
+  let best = peaks[0];
+  for (const p of peaks) {
+    if (p.bpm >= 80 && p.bpm <= 160 && p.score > best.score * 0.75) { best = p; break; }
+  }
+
+  const confidence = Math.max(0, best.score);
+  acConfEl.textContent = (confidence * 100).toFixed(0) + '%';
+
+  const ds      = confidence > LOCK_THRESH ? MSMOOTH : 0.92;
+  acSmoothedBpm = acSmoothedBpm === null ? best.bpm : (ds * acSmoothedBpm + (1 - ds) * best.bpm);
+  bpmEl.textContent = Math.round(acSmoothedBpm);
+  acLastUpdate  = performance.now();
+  setUIState(confidence > LOCK_THRESH ? 'locked' : 'tracking');
+  drawAcorrGraph(acVals, best.lagIdx);
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function setUIState(s) {
+  stateBadge.className  = 'state-badge ' + s;
+  stateText.textContent = s.toUpperCase();
+  bpmEl.classList.toggle('locked', s === 'locked');
+}
+
+function updateVU(norm) {
+  const pct = Math.min(norm * 100, 100);
+  vuFill.style.width = pct + '%';
+  if (norm <= 0) {
+    dbLabel.textContent = '-∞ dB';
+  } else {
+    const db = 20 * Math.log10(norm);
+    dbLabel.textContent = db.toFixed(1) + ' dB';
+  }
+}
+
 function drawWave(buffer) {
   const dpr = window.devicePixelRatio || 1;
   const w   = canvas.width  = canvas.offsetWidth  * dpr;
   const h   = canvas.height = canvas.offsetHeight * dpr;
-
   cctx.clearRect(0, 0, w, h);
-
-  // ligne centrale
-  cctx.strokeStyle = '#1a1e24';
-  cctx.lineWidth   = 1;
-  cctx.beginPath();
-  cctx.moveTo(0, h / 2); cctx.lineTo(w, h / 2);
-  cctx.stroke();
-
-  // waveform
+  // Ligne centrale
+  cctx.strokeStyle = '#1a1e24'; cctx.lineWidth = 1;
+  cctx.beginPath(); cctx.moveTo(0, h/2); cctx.lineTo(w, h/2); cctx.stroke();
+  // Waveform
   cctx.beginPath();
   for (let i = 0; i < buffer.length; i++) {
     const x = (i / buffer.length) * w;
     const y = (buffer[i] * 0.5 + 0.5) * h;
     i === 0 ? cctx.moveTo(x, y) : cctx.lineTo(x, y);
   }
-  cctx.strokeStyle = '#00e5ff88';
-  cctx.lineWidth   = 1.5 * dpr;
-  cctx.shadowColor = '#00e5ff';
-  cctx.shadowBlur  = 4;
-  cctx.stroke();
-  cctx.shadowBlur  = 0;
+  cctx.strokeStyle = '#00e5ff'; cctx.lineWidth = 1.5 * dpr;
+  cctx.shadowColor = '#00e5ff'; cctx.shadowBlur = 4;
+  cctx.stroke(); cctx.shadowBlur = 0;
 }
 
-// ============================================================
-// MUSIC ENGINE — Comb Filter Bank dual-band onset
-// ============================================================
-function loopMusic() {
-  if (!running) return;
-  requestAnimationFrame(loopMusic);
-
-  const now      = performance.now();
-  const freqData = new Uint8Array(analyser.frequencyBinCount);
-  analyser.getByteFrequencyData(freqData);
-
-  const timeDomain = new Float32Array(analyser.fftSize);
-  analyser.getFloatTimeDomainData(timeDomain);
-
-  // --- VU Meter RMS large bande ---
-  let rms = 0;
-  for (let i = 0; i < timeDomain.length; i++) rms += timeDomain[i] * timeDomain[i];
-  rms = Math.sqrt(rms / timeDomain.length);
-  const db   = 20 * Math.log10(rms + 1e-9);
-  const norm = Math.max(0, Math.min(1, (db + 50) / 50));
-  vuFill.style.width = (norm * 100) + '%';
-  dbLabel.textContent = isFinite(db) ? db.toFixed(1) + ' dB' : '-∞ dB';
-
-  // --- Oscilloscope ---
-  drawWave(timeDomain);
-
-  // --- Init timestamp ---
-  if (cfLastTime === 0) { cfLastTime = now; return; }
-  const deltaMs = now - cfLastTime;
-  cfLastTime = now;
-  if (deltaMs <= 0 || deltaMs > 200) return;
-
-  // ----------------------------------------------------------------
-  // CALCUL DES DEUX FLUX D'ÉNERGIE PAR BANDE
-  // bins FFT : sampleRate/fftSize Hz par bin → à 44100Hz/2048 ≈ 21.5 Hz/bin
-  // basses   : 60–200 Hz  → bins  3..9
-  // mids-hi  : 2000–8000 Hz → bins 93..372
-  // ----------------------------------------------------------------
-  const binHz   = (analyser.context ? analyser.context.sampleRate : 44100) / CF_FFT_SIZE;
-  const bassLo  = Math.round( 60   / binHz);
-  const bassHi  = Math.round( 200  / binHz);
-  const midLo   = Math.round( 2000 / binHz);
-  const midHi   = Math.min(Math.round(8000 / binHz), analyser.frequencyBinCount - 1);
-
-  let eBass = 0, eMid = 0;
-  for (let i = bassLo; i <= bassHi; i++) eBass += freqData[i];
-  for (let i = midLo;  i <= midHi;  i++) eMid  += freqData[i];
-  eBass /= (bassHi - bassLo + 1) * 255;
-  eMid  /= (midHi  - midLo  + 1) * 255;
-
-  // Onset = hausse d'énergie (half-wave rectified)
-  const onsetBass = Math.max(0, eBass - cfPrevBass);
-  const onsetMid  = Math.max(0, eMid  - cfPrevMid);
-  cfPrevBass = eBass;
-  cfPrevMid  = eMid;
-
-  // Seuil adaptatif par bande : mean + 1.5×std sur historique glissant
-  cfHistBass[cfHistPtr] = onsetBass;
-  cfHistMid [cfHistPtr] = onsetMid;
-  cfHistPtr = (cfHistPtr + 1) % CF_HIST_LEN;
-
-  let meanB = 0, meanM = 0;
-  for (let i = 0; i < CF_HIST_LEN; i++) { meanB += cfHistBass[i]; meanM += cfHistMid[i]; }
-  meanB /= CF_HIST_LEN; meanM /= CF_HIST_LEN;
-
-  let stdB = 0, stdM = 0;
-  for (let i = 0; i < CF_HIST_LEN; i++) {
-    stdB += (cfHistBass[i] - meanB) ** 2;
-    stdM += (cfHistMid [i] - meanM) ** 2;
-  }
-  stdB = Math.sqrt(stdB / CF_HIST_LEN);
-  stdM = Math.sqrt(stdM / CF_HIST_LEN);
-
-  const threshBass = meanB + 1.5 * stdB;
-  const threshMid  = meanM + 1.5 * stdM;
-
-  const isOnsetBass = onsetBass > threshBass && onsetBass > 0.01;
-  const isOnsetMid  = onsetMid  > threshMid  && onsetMid  > 0.01;
-
-  // Signal combiné : OU des deux bandes, amplitude = max des deux onsets normalisés
-  const hasOnset = isOnsetBass || isOnsetMid;
-  const onsetAmp = Math.max(
-    isOnsetBass ? onsetBass / (threshBass + 1e-9) : 0,
-    isOnsetMid  ? onsetMid  / (threshMid  + 1e-9) : 0
-  );
-
-  // ----------------------------------------------------------------
-  // AVANCE LES PHASES + SCORE COSINUS si onset détecté
-  // ----------------------------------------------------------------
-  for (let i = 0; i < CF_COUNT; i++) {
-    const bpm      = CF_BPM_MIN + i;
-    const periodMs = 60000 / bpm;
-    cfPhases[i] = (cfPhases[i] + deltaMs / periodMs) % 1;
-
-    if (hasOnset) {
-      // cos(phase×2π) : +1 si en phase, -1 si en contretemps
-      // On pondère par l'amplitude de l'onset pour donner plus de poids aux beats forts
-      cfScores[i] += Math.cos(cfPhases[i] * 2 * Math.PI) * onsetAmp;
-    }
-  }
-
-  // Accumulation temporelle basée sur le temps réel (pas les frames)
-  cfWinMs += deltaMs;
-  if (cfWinMs >= CF_WIN_SEC * 1000) {
-    pickBestBpm();
-    cfScores.fill(0);
-    cfPhases.fill(0);
-    cfWinMs = 0;
-  }
-
-  // --- Timeout silence ---
-  if (now - cfLastUpdate > 6000 && cfLastUpdate > 0) {
-    bpmEl.textContent = '--';
-    bpmEl.classList.remove('locked');
-    setUIState('silence');
-    cfSmoothedBpm = null;
-  }
-}
-
-function pickBestBpm() {
-  // Les scores cosinus peuvent être négatifs (oscillateur en contretemps)
-  // Le gagnant est celui avec le score le plus élevé
-  let maxScore = -Infinity;
-  let bestIdx  = 0;
-  for (let i = 0; i < CF_COUNT; i++) {
-    if (cfScores[i] > maxScore) { maxScore = cfScores[i]; bestIdx = i; }
-  }
-
-  // Confiance : écart du gagnant par rapport à la moyenne, normalisé par l'écart-type
-  let mean = 0;
-  for (let i = 0; i < CF_COUNT; i++) mean += cfScores[i];
-  mean /= CF_COUNT;
-  let std = 0;
-  for (let i = 0; i < CF_COUNT; i++) std += (cfScores[i] - mean) ** 2;
-  std = Math.sqrt(std / CF_COUNT);
-
-  // z-score du gagnant : combien d'écarts-types au-dessus de la moyenne ?
-  // Un z-score > 2 = pic net = bonne confiance
-  const zScore     = std > 0 ? (maxScore - mean) / std : 0;
-  const confidence = Math.max(0, Math.min(1, zScore / 4));
-  acConfidence.textContent = (confidence * 100).toFixed(0) + '%';
-
-  // Dessiner le graphe
-  drawCombScores(cfScores, bestIdx);
-
-  if (confidence < 0.15) {
-    setUIState('tracking');
-    return;
-  }
-
-  const bpm = CF_BPM_MIN + bestIdx;
-
-  // Lissage exponentiel
-  cfSmoothedBpm = cfSmoothedBpm === null
-    ? bpm
-    : MSMOOTH * cfSmoothedBpm + (1 - MSMOOTH) * bpm;
-
-  bpmEl.textContent = Math.round(cfSmoothedBpm);
-  cfLastUpdate = performance.now();
-  setUIState(confidence > 0.4 ? 'locked' : 'tracking');
-}
-
-function drawCombScores(scores, bestIdx) {
+function drawAcorrGraph(vals, pIdx) {
   const dpr = window.devicePixelRatio || 1;
   const w   = acCanvas.width  = acCanvas.offsetWidth  * dpr;
   const h   = acCanvas.height = acCanvas.offsetHeight * dpr;
   acCtx.clearRect(0, 0, w, h);
 
-  const maxS = Math.max(...scores) || 1;
-  const barW = w / CF_COUNT;
-
-  for (let i = 0; i < CF_COUNT; i++) {
-    const barH = (scores[i] / maxS) * h * 0.9;
-    const x    = i * barW;
-    const y    = h - barH;
-    acCtx.fillStyle = i === bestIdx ? '#39ff8a' : '#00e5ff44';
-    acCtx.fillRect(x, y, Math.max(1, barW - 1), barH);
+  let minV = vals[0], maxV = vals[0];
+  for (let i = 1; i < vals.length; i++) {
+    if (vals[i] < minV) minV = vals[i];
+    if (vals[i] > maxV) maxV = vals[i];
   }
+  const range = maxV - minV || 1;
 
-  // Halo vert sur le gagnant
-  if (bestIdx >= 0) {
-    const px = (bestIdx + 0.5) * barW;
-    acCtx.beginPath();
-    acCtx.arc(px, h * 0.1, 3 * dpr, 0, Math.PI * 2);
-    acCtx.fillStyle = '#39ff8a';
-    acCtx.shadowColor = '#39ff8a';
-    acCtx.shadowBlur  = 8;
-    acCtx.fill();
-    acCtx.shadowBlur  = 0;
+  acCtx.beginPath();
+  for (let i = 0; i < vals.length; i++) {
+    const x = (i / (vals.length - 1)) * w;
+    const y = h - ((vals[i] - minV) / range) * h * 0.9 - h * 0.05;
+    i === 0 ? acCtx.moveTo(x, y) : acCtx.lineTo(x, y);
   }
+  acCtx.strokeStyle = '#00e5ff'; acCtx.lineWidth = 1.5; acCtx.stroke();
+
+  const px = (pIdx / (vals.length - 1)) * w;
+  const py = h - ((vals[pIdx] - minV) / range) * h * 0.9 - h * 0.05;
+  acCtx.beginPath(); acCtx.arc(px, py, 4 * dpr, 0, Math.PI * 2);
+  acCtx.fillStyle = '#39ff8a';
+  acCtx.shadowColor = '#39ff8a'; acCtx.shadowBlur = 8;
+  acCtx.fill(); acCtx.shadowBlur = 0;
 }
 
 // ============================================================
 // MATH
 // ============================================================
-function avg(a)       { return a.reduce((s, v) => s + v, 0) / a.length; }
-function stddev(a, m) { return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); }
+function avg(a)      { return a.length ? a.reduce((s, v) => s + v, 0) / a.length : 0; }
+function stddev(a,m) { return a.length ? Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length) : 0; }
 function median(a) {
   const s = [...a].sort((x, y) => x - y);
   const m = Math.floor(s.length / 2);
