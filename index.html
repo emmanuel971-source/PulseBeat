@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>BPM Detector PRO v4</title>
+<title>BPM Detector PRO v5</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
 <style>
@@ -229,7 +229,7 @@ input[type=range]::-webkit-slider-thumb {
   <div class="rack-header">
     <div class="screw"></div>
     <span class="brand">STUDIO</span>
-    <span class="rack-title">BPM DETECTOR PRO</span>
+    <span class="rack-title">BPM DETECTOR PROJECT</span>
     <div class="led-power" id="led-power"></div>
     <div class="screw"></div>
   </div>
@@ -387,14 +387,14 @@ let REFRAC = 180;
 const TAP_TIMEOUT = 2500;
 
 // ============================================================
-// MUSIC MODE STATE & PARAMS  (Autocorrélation sur flux spectral)
+// MUSIC MODE STATE & PARAMS
 // ============================================================
 let MSMOOTH     = 0.85;
 let LOCK_THRESH = 0.18;
 
 const AC_FFT_SIZE = 4096;
-const AC_HOP_RATE = 100;   // samples/sec → 1 sample tous les 10ms
-const AC_BUF_SEC  = 8;     // 8s de mémoire = 800 samples
+const AC_HOP_RATE = 100;
+const AC_BUF_SEC  = 8;
 const FLUX_GATE   = 0.02;
 
 const WEIGHT_BASS = 1.5, WEIGHT_MID = 0.5, WEIGHT_HIGH = 1.2;
@@ -404,6 +404,9 @@ let acPrevMag = null, acSmoothedBpm = null, acLastUpdate = 0;
 let acFluxSmooth = 0, acLastSampleTime = 0;
 let _musTimeDomain = null, _musFreqBins = null;
 let _tapTimeDomain = null, _tapFreqBins = null;
+
+// FIX : référence setInterval pour l'accumulation buffer
+let acSampleInterval = null;
 
 // ============================================================
 // CONTROLS
@@ -434,7 +437,7 @@ function setMode(m) {
   document.querySelectorAll('.ctrl-tap-only').forEach(el => el.classList.toggle('hidden', !isTap));
   document.querySelectorAll('.ctrl-music-only').forEach(el => el.classList.toggle('visible', !isTap));
 
-  vuLabel.textContent   = isTap ? 'BASS' : 'FLUX';
+  vuLabel.textContent     = isTap ? 'BASS' : 'FLUX';
   footerLabel.textContent = isTap
     ? 'BASS ONSET · MEDIAN FILTERED'
     : 'AUTOCORRÉLATION · SPECTRAL FLUX';
@@ -446,6 +449,9 @@ function setMode(m) {
 // ============================================================
 async function toggle() {
   if (running) {
+    // FIX : on arrête le setInterval avant tout
+    clearInterval(acSampleInterval);
+    acSampleInterval = null;
     stream.getTracks().forEach(t => t.stop());
     ctx.close();
     running = false;
@@ -494,7 +500,13 @@ async function toggle() {
   ledPower.classList.add('on');
   btnToggle.textContent = '■ STOP';
   btnToggle.classList.add('running');
-  currentMode === 'music' ? loopMusic() : loopTap();
+
+  if (currentMode === 'music') {
+    loopMusic();
+    startAcSampleInterval(); // FIX : setInterval découplé du rAF
+  } else {
+    loopTap();
+  }
 }
 
 // ============================================================
@@ -513,7 +525,7 @@ function resetState() {
 }
 
 // ============================================================
-// TAP / CLAP LOOP  (meilleur algo de oscillateurs.html)
+// TAP / CLAP LOOP
 // ============================================================
 function loopTap() {
   if (!running) return;
@@ -522,24 +534,20 @@ function loopTap() {
   analyser.getFloatTimeDomainData(_tapTimeDomain);
   analyser.getByteFrequencyData(_tapFreqBins);
 
-  // Energie basse fréquence (< 200 Hz)
   const binHz  = (ctx.sampleRate / 2) / analyser.frequencyBinCount;
   const bassMax = Math.round(200 / binHz);
   let bassSum = 0;
   for (let i = 0; i < bassMax; i++) bassSum += _tapFreqBins[i];
   let bassEnergy = bassSum / bassMax / 255;
 
-  // Léger lissage de l'énergie (anti-bruit sans trop lisser)
   if (energyHistory.length > 0) {
     bassEnergy = 0.4 * energyHistory.at(-1) + 0.6 * bassEnergy;
   }
   energyHistory.push(bassEnergy);
   if (energyHistory.length > 300) energyHistory.shift();
 
-  // VU Meter
   updateVU(bassEnergy);
 
-  // Onset = dérivée de l'énergie
   const diff = bassEnergy - (energyHistory.at(-2) || bassEnergy);
   onsetHistory.push(diff);
   if (onsetHistory.length > 60) onsetHistory.shift();
@@ -549,14 +557,13 @@ function loopTap() {
 
   if (diff > threshold && now - lastBeat > REFRAC) triggerBeat(now);
 
-  // Timeout silence
   if (now - lastOnsetTime > TAP_TIMEOUT && lastOnsetTime > 0) resetState();
 
   drawWave(_tapTimeDomain);
 }
 
 // ============================================================
-// BEAT TRIGGER  (meilleur algo de oscillateurs.html — médiane filtrée)
+// BEAT TRIGGER
 // ============================================================
 function triggerBeat(now) {
   lastBeat = lastOnsetTime = now;
@@ -564,10 +571,9 @@ function triggerBeat(now) {
   beatFlash.style.opacity = '1';
   flashTimeout = setTimeout(() => { beatFlash.style.opacity = '0'; }, 80);
 
-  // Feedback visuel instantané (1 intervalle) — réactivité
   if (beatTimes.length >= 1) {
-    const interval    = now - beatTimes.at(-1);
-    const instantBpm  = 60000 / interval;
+    const interval   = now - beatTimes.at(-1);
+    const instantBpm = 60000 / interval;
     if (instantBpm > 40 && instantBpm < 220) {
       bpmEl.textContent = Math.round(instantBpm);
     }
@@ -581,8 +587,7 @@ function triggerBeat(now) {
 }
 
 // ============================================================
-// COMPUTE TAP BPM  (médiane + filtre outliers + lissage expo)
-// FIX : fusionne la médiane de oscillateurs + lissage de autocorrelation
+// COMPUTE TAP BPM
 // ============================================================
 function computeTapBPM() {
   if (beatTimes.length < 6) return;
@@ -590,8 +595,6 @@ function computeTapBPM() {
   const intervals = [];
   for (let i = 1; i < beatTimes.length; i++) intervals.push(beatTimes[i] - beatTimes[i - 1]);
 
-  // Filtre par médiane : on garde seulement les intervalles proches de la médiane
-  // (élimine les faux onsets et les doubles-détections)
   const med      = median(intervals);
   const filtered = intervals.filter(v => v > med * 0.7 && v < med * 1.3);
   if (filtered.length < 4) return;
@@ -600,17 +603,16 @@ function computeTapBPM() {
   const bpm    = 60000 / avgInt;
   if (bpm < 40 || bpm > 220) return;
 
-  // Lissage exponentiel
   smoothedBpm = smoothedBpm === null ? bpm : SMOOTH * smoothedBpm + (1 - SMOOTH) * bpm;
   bpmEl.textContent = Math.round(smoothedBpm);
 
-  // Stabilité = coefficient de variation des intervalles filtrés
   const stability = stddev(filtered, avgInt) / avgInt;
   setUIState(stability < 0.06 ? 'locked' : 'tracking');
 }
 
 // ============================================================
-// MUSIC LOOP  (Autocorrélation sur flux spectral multi-bandes)
+// MUSIC LOOP  — rAF pour waveform + calcul flux uniquement
+// FIX : plus d'accumulation buffer ici
 // ============================================================
 function loopMusic() {
   if (!running) return;
@@ -619,7 +621,6 @@ function loopMusic() {
   analyser.getFloatTimeDomainData(_musTimeDomain);
   analyser.getFloatFrequencyData(_musFreqBins);
 
-  // Flux spectral multi-bandes (pondéré)
   const nBins   = analyser.frequencyBinCount;
   const nyquist = ctx.sampleRate / 2;
   let fluxB = 0, fluxM = 0, fluxH = 0, cB = 0, cM = 0, cH = 0;
@@ -641,24 +642,29 @@ function loopMusic() {
   acFluxSmooth    = 0.5 * acFluxSmooth + 0.5 * finalFlux;
 
   updateVU(Math.min(acFluxSmooth / 2, 1));
-
-  const now = performance.now();
-  if (now - acLastSampleTime >= (1000 / AC_HOP_RATE)) {
-    acLastSampleTime    = now;
-    acBuf[acBufPtr]     = acFluxSmooth;
-    acBufPtr            = (acBufPtr + 1) % acBufLen;
-    if (!acBufFull && acBufPtr === 0) acBufFull = true;
-
-    const available = acBufFull ? acBufLen : acBufPtr;
-    const lagMax    = Math.floor(AC_HOP_RATE * 60 / 60); // lag pour 60 BPM = 100
-    if (available > lagMax + 10) computeAcorrBPM(available);
-  }
-
   drawWave(_musTimeDomain);
 }
 
 // ============================================================
-// AUTOCORRÉLATION  — FIX : normalisation corrigée (pas de amplification des grands lags)
+// FIX : setInterval découplé — accumulation buffer à 100 Hz précis
+// ============================================================
+function startAcSampleInterval() {
+  acSampleInterval = setInterval(() => {
+    if (!running) return;
+
+    acBuf[acBufPtr] = acFluxSmooth;
+    acBufPtr        = (acBufPtr + 1) % acBufLen;
+    if (!acBufFull && acBufPtr === 0) acBufFull = true;
+
+    const available = acBufFull ? acBufLen : acBufPtr;
+    const lagMax    = Math.floor(AC_HOP_RATE * 60 / 60);
+    if (available > lagMax + 10) computeAcorrBPM(available);
+
+  }, 1000 / AC_HOP_RATE); // 10ms
+}
+
+// ============================================================
+// AUTOCORRÉLATION
 // ============================================================
 function computeAcorrBPM(len) {
   const sig  = new Float32Array(len);
@@ -667,17 +673,13 @@ function computeAcorrBPM(len) {
   mean /= len;
   for (let i = 0; i < len; i++) sig[i] -= mean;
 
-  // Plage de lags : 60 BPM (lag=100) → 180 BPM (lag=33)
   const lagMin = Math.ceil(AC_HOP_RATE * 60 / 180);
   const lagMax = Math.floor(AC_HOP_RATE * 60 / 60);
 
-  // Norme au lag 0 (énergie totale du signal)
   let norm0 = 0;
   for (let i = 0; i < len; i++) norm0 += sig[i] * sig[i];
   if (norm0 < 1e-8) return;
 
-  // FIX CRITIQUE : on normalise par la géométrie réelle à chaque lag
-  // (produit des normes des deux sous-séquences) → pas d'amplification des grands lags
   const acVals = [];
   for (let lag = lagMin; lag <= lagMax; lag++) {
     let ac = 0, n1 = 0, n2 = 0;
@@ -687,12 +689,10 @@ function computeAcorrBPM(len) {
       n1 += sig[i] * sig[i];
       n2 += sig[i + lag] * sig[i + lag];
     }
-    // Normalisation par les normes réelles → valeur dans [-1, 1]
     const denom = Math.sqrt(n1 * n2);
     acVals.push(denom > 1e-12 ? ac / denom : 0);
   }
 
-  // Détection des pics locaux
   const peaks = [];
   for (let i = 1; i < acVals.length - 1; i++) {
     if (acVals[i] > acVals[i-1] && acVals[i] > acVals[i+1] && acVals[i] > 0.05) {
@@ -704,7 +704,6 @@ function computeAcorrBPM(len) {
   if (peaks.length === 0) return;
   peaks.sort((a, b) => b.score - a.score);
 
-  // Préférer un BPM dans la plage musicale courante si possible
   let best = peaks[0];
   for (const p of peaks) {
     if (p.bpm >= 80 && p.bpm <= 160 && p.score > best.score * 0.75) { best = p; break; }
@@ -746,10 +745,8 @@ function drawWave(buffer) {
   const w   = canvas.width  = canvas.offsetWidth  * dpr;
   const h   = canvas.height = canvas.offsetHeight * dpr;
   cctx.clearRect(0, 0, w, h);
-  // Ligne centrale
   cctx.strokeStyle = '#1a1e24'; cctx.lineWidth = 1;
   cctx.beginPath(); cctx.moveTo(0, h/2); cctx.lineTo(w, h/2); cctx.stroke();
-  // Waveform
   cctx.beginPath();
   for (let i = 0; i < buffer.length; i++) {
     const x = (i / buffer.length) * w;
