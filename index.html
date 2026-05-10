@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>BPM Detector PRO v4</title>
+<title>BPM Detector PRO v5</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
 <style>
@@ -105,9 +105,9 @@ html, body {
   border: 1px solid transparent; transition: all 0.2s;
   align-self: flex-end; margin-bottom: 4px;
 }
-.state-badge.silence { background: #1a1c22; color: var(--text-muted); border-color: var(--border); }
+.state-badge.silence  { background: #1a1c22; color: var(--text-muted); border-color: var(--border); }
 .state-badge.tracking { background: #1a1800; color: var(--amber); border-color: #3d3000; }
-.state-badge.locked { background: var(--green-dim); color: var(--green); border-color: #0e4028; box-shadow: 0 0 10px var(--green-glow); }
+.state-badge.locked   { background: var(--green-dim); color: var(--green); border-color: #0e4028; box-shadow: 0 0 10px var(--green-glow); }
 .state-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 .state-badge.locked .state-dot { animation: blink 1s ease-in-out infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
@@ -153,8 +153,8 @@ html, body {
   cursor: pointer; transition: all 0.18s; -webkit-tap-highlight-color: transparent;
 }
 .mode-btn:active { opacity: 0.7; }
-.mode-btn.active-tap { background: #1a1800; color: var(--amber); border-color: #3d3000; box-shadow: 0 0 10px #ffb34730; }
-.mode-btn.active-music { background: #001a2e; color: var(--cyan); border-color: #003d5c; box-shadow: 0 0 10px #00e5ff30; }
+.mode-btn.active-tap   { background: #1a1800; color: var(--amber); border-color: #3d3000; box-shadow: 0 0 10px #ffb34730; }
+.mode-btn.active-music { background: #001a2e; color: var(--cyan);  border-color: #003d5c; box-shadow: 0 0 10px #00e5ff30; }
 .mode-btn.blocked { animation: shake 0.3s ease; }
 @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
 
@@ -166,7 +166,9 @@ html, body {
 }
 .music-panel.visible { display: flex; }
 .music-panel-label { font-size: 9px; letter-spacing: 3px; color: var(--text-muted); }
-#acorr-canvas { width: 100%; height: 48px; display: block; border-radius: 3px; background: #080a0c; border: 1px solid #1a1e24; }
+#acorr-canvas   { width: 100%; height: 48px; display: block; border-radius: 3px; background: #080a0c; border: 1px solid #1a1e24; }
+#novelty-canvas { width: 100%; height: 48px; display: block; border-radius: 3px; background: #080a0c; border: 1px solid #1a1e24; margin-top: 8px; }
+
 .music-info { display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted); }
 #acorr-confidence { color: var(--cyan); }
 
@@ -277,18 +279,29 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 
-  <!-- MUSIC PANEL (autocorrelation graph) -->
+  <!-- MUSIC PANEL -->
   <div class="music-panel" id="music-panel">
-    <div class="music-panel-label">AUTOCORRÉLATION · FLUX SPECTRAL</div>
+    <div class="music-panel-label">ONSET VISUALIZER · CLICK TRACK</div>
     <canvas id="acorr-canvas"></canvas>
     <div class="music-info">
-      <span>ANALYSE EN COURS…</span>
-      <span>CONFIANCE : <span id="acorr-confidence">--</span></span>
+      <span id="onset-count-label">ONSETS: 0</span>
+      <span>DERNIER: <span id="onset-interval">-- ms</span></span>
     </div>
     <div class="ctrl-group" style="margin-top:6px">
-      <div class="ctrl-label">SEUIL LOCK <span class="ctrl-val" id="lock-thresh-val">0.18</span></div>
-      <input type="range" id="lock-thresh" min="0.05" max="0.50" step="0.01" value="0.18">
+      <div class="ctrl-label">SEUIL K <span class="ctrl-val" id="k-thresh-val">2.8</span></div>
+      <input type="range" id="k-thresh" min="1.0" max="8.0" step="0.1" value="2.8">
     </div>
+    <div class="ctrl-group" style="margin-top:4px">
+      <div class="ctrl-label">RÉFRACTAIRE ms <span class="ctrl-val" id="refrac-ms-val">180</span></div>
+      <input type="range" id="refrac-ms" min="80" max="500" step="10" value="180">
+    </div>
+    <div class="ctrl-group" style="margin-top:4px">
+      <div class="ctrl-label">PLANCHER <span class="ctrl-val" id="floor-slow-val">0.015</span></div>
+      <input type="range" id="floor-slow" min="0.002" max="0.060" step="0.001" value="0.015">
+    </div>
+    <!-- FIX #1 : canvas déclaré en HTML (cohérent avec le CSS #novelty-canvas) -->
+    <div class="music-panel-label" style="margin-top:8px">NOVELTY CURVE</div>
+    <canvas id="novelty-canvas"></canvas>
   </div>
 
   <!-- CONTROLS -->
@@ -320,7 +333,7 @@ input[type=range]::-webkit-slider-thumb {
   <!-- FOOTER -->
   <div class="rack-footer">
     <span id="footer-label">BASS ONSET · MEDIAN FILTERED</span>
-    <span>v4.0</span>
+    <span>v5.0</span>
   </div>
 
 </div>
@@ -353,6 +366,42 @@ const acCanvas    = document.getElementById('acorr-canvas');
 const acCtx       = acCanvas.getContext('2d');
 const acConfEl    = document.getElementById('acorr-confidence');
 const footerLabel = document.getElementById('footer-label');
+
+// FIX #1 : novelty canvas déclaré en HTML — on le récupère simplement ici.
+const noveltyCanvas = document.getElementById('novelty-canvas');
+const nCtx          = noveltyCanvas.getContext('2d');
+
+// ==================== MULTI-BAND ====================
+// Note : band.weight est la SEULE pondération spectrale.
+// calculateNovelty() n'en rajoute PAS (fix double-weighting).
+const BANDS = [
+  { name: 'KICK',  low: 30,   high: 220,  weight: 1.7, color: '#ff4655' },
+  { name: 'LOW',   low: 220,  high: 650,  weight: 1.0, color: '#ffb347' },
+  { name: 'MID',   low: 650,  high: 2800, weight: 1.3, color: '#00e5ff' },
+  { name: 'HIGH',  low: 2800, high: 9000, weight: 1.6, color: '#39ff8a' }
+];
+
+let bandPrevMags     = null;
+let isCalibrating    = false;
+let calibrationStart = 0;
+const CALIBRATION_DURATION = 4200;
+let fluxBuffer    = [];
+let lastAutoAdapt = 0;
+const AUTO_ADAPT_INTERVAL = 2500;
+
+// === NOVELTY CURVE ===
+// Historique horodaté sur une fenêtre glissante de 8 secondes.
+let noveltyHistory      = [];   // [{ time, value }, ...]
+const NOVELTY_WIN_MS    = 8000;
+
+// FIX #4 : détection incrémentale — on retient le timestamp du dernier point examiné.
+let noveltyLastPeakTime = 0;
+
+// BPM via novelty
+let noveltyBeatTimes  = [];
+let noveltySmoothedBpm = null;
+const NOVELTY_BPM_MIN  = 60;
+const NOVELTY_BPM_MAX  = 200;
 
 // ============================================================
 // BEAT GRID
@@ -394,19 +443,22 @@ let MSMOOTH     = 0.85;
 let LOCK_THRESH = 0.18;
 
 const AC_FFT_SIZE = 4096;
-const AC_HOP_RATE = 100;
 const FLUX_GATE   = 0.02;
 
-const WEIGHT_BASS = 1.5, WEIGHT_MID = 0.5, WEIGHT_HIGH = 1.2;
-
-// État music mode — côté thread principal
-let acPrevMag      = null;
-let acFluxSmooth   = 0;
-let acSmoothedBpm  = null;   // ← lissage exponentiel conservé de la v1
-let _musTimeDomain = null;
-let _musFreqBins   = null;
-let _tapTimeDomain = null;
-let _tapFreqBins   = null;
+let acPrevMag    = null;
+let acFluxSmooth = 0;
+let acFluxOnset  = 0;
+let K_THRESH     = 2.8;
+let REFRAC_MS    = 180;
+let FLOOR_SLOW   = 0.015;
+let onsetVisBuffer  = [];
+let lastOnsetMs     = 0;
+let onsetCountTotal = 0;
+let acSmoothedBpm   = null;
+let _musTimeDomain  = null;
+let _musFreqBins    = null;
+let _tapTimeDomain  = null;
+let _tapFreqBins    = null;
 
 // Worker
 let bpmWorker        = null;
@@ -415,82 +467,176 @@ let acSampleInterval = null;
 // ============================================================
 // CONTROLS
 // ============================================================
-document.getElementById('sens').oninput        = e => { SENS        = +e.target.value; document.getElementById('sens-val').textContent        = SENS.toFixed(1); };
-document.getElementById('smooth').oninput      = e => { SMOOTH      = +e.target.value; document.getElementById('smooth-val').textContent      = SMOOTH.toFixed(2); };
-document.getElementById('refrac').oninput      = e => { REFRAC      = +e.target.value; document.getElementById('refrac-val').textContent      = REFRAC.toFixed(0); };
-document.getElementById('msmooth').oninput     = e => { MSMOOTH     = +e.target.value; document.getElementById('msmooth-val').textContent     = MSMOOTH.toFixed(2); };
-document.getElementById('lock-thresh').oninput = e => { 
-  LOCK_THRESH = +e.target.value; 
-  document.getElementById('lock-thresh-val').textContent = LOCK_THRESH.toFixed(2); 
-  
-  // AJOUTE CECI : Envoie le nouveau seuil au worker en temps réel
-  if (bpmWorker && currentMode === 'music') {
-    bpmWorker.postMessage({ type: 'config', threshold: LOCK_THRESH });
-  }
+document.getElementById('sens').oninput    = e => { SENS   = +e.target.value; document.getElementById('sens-val').textContent   = SENS.toFixed(1); };
+document.getElementById('smooth').oninput  = e => { SMOOTH = +e.target.value; document.getElementById('smooth-val').textContent = SMOOTH.toFixed(2); };
+document.getElementById('refrac').oninput  = e => { REFRAC = +e.target.value; document.getElementById('refrac-val').textContent = REFRAC.toFixed(0); };
+document.getElementById('msmooth').oninput = e => { MSMOOTH= +e.target.value; document.getElementById('msmooth-val').textContent= MSMOOTH.toFixed(2); };
+
+function sendWorkerParams() {
+  if (bpmWorker) bpmWorker.postMessage({ type:'params', k: K_THRESH, refracMs: REFRAC_MS, floorSlow: FLOOR_SLOW });
+}
+document.getElementById('k-thresh').oninput = e => {
+  K_THRESH = +e.target.value;
+  document.getElementById('k-thresh-val').textContent = K_THRESH.toFixed(1);
+  sendWorkerParams();
+};
+document.getElementById('refrac-ms').oninput = e => {
+  REFRAC_MS = +e.target.value;
+  document.getElementById('refrac-ms-val').textContent = REFRAC_MS.toFixed(0);
+  sendWorkerParams();
+};
+document.getElementById('floor-slow').oninput = e => {
+  FLOOR_SLOW = +e.target.value;
+  document.getElementById('floor-slow-val').textContent = FLOOR_SLOW.toFixed(3);
+  sendWorkerParams();
 };
 
 // ============================================================
 // WORKER INLINE (Blob)
-// Le Worker fait UNIQUEMENT le calcul lourd : autocorr multi-fenêtres + vote
-// Il retourne le meilleur BPM candidat brut + confidence + acVals pour le graphe
-// Le lissage exponentiel final reste dans le thread principal (comme en v1)
 // ============================================================
-// Remplace toute la fonction createBpmWorker() existante par celle-ci :
-function createTransientWorker() {
+function createBpmWorker() {
   const code = `
-let lastEnergy = 0;
-let threshold = 0.05; // Sensibilité du déclenchement
-let lastClickTime = 0;
+const BANDS = ${JSON.stringify(BANDS.map(b => ({ name: b.name })))};
+let states = BANDS.map(() => ({ prev:0, floorSlow:0, lastOnsetTime:0, k:3.5, onsets:[] }));
+
+let calibrationData = [];
+let isCalibrated    = false;
 
 self.onmessage = function(e) {
-  if (e.data.type === 'config') {
-    threshold = e.data.threshold;
+  const { type } = e.data;
+
+  if (type === 'calibrate') {
+    calibrationData = e.data.data;
+    runCalibration();
+    isCalibrated = true;
     return;
   }
-  if (e.data.type === 'reset') {
-    lastEnergy = 0;
-    lastClickTime = 0;
-    return;
+
+  if (type === 'sample') {
+    if (!isCalibrated) return;
+    const { bandFluxes, time } = e.data;
+    if (!Array.isArray(bandFluxes)) return;
+    processSample(bandFluxes, time);
   }
 
-  const audioData = e.data.buffer;
-  if (!audioData) return;
-
-  // 1. Calcul de l'énergie RMS du buffer
-  let sum = 0;
-  for (let i = 0; i < audioData.length; i++) {
-    sum += audioData[i] * audioData[i];
+  if (type === 'reset') {
+    states = BANDS.map(() => ({ prev:0, floorSlow:0, lastOnsetTime:0, k:3.5, onsets:[] }));
+    calibrationData = [];
+    isCalibrated    = false;
   }
-  let currentEnergy = Math.sqrt(sum / audioData.length);
-
-  // 2. Calcul de la dérivée (la pente)
-  let flux = currentEnergy - lastEnergy;
-
-  // 3. Détection de transitoire avec Cooldown (~150ms)
-  const now = Date.now();
-  if (flux > threshold && (now - lastClickTime > 150)) {
-    lastClickTime = now;
-    // On envoie le top au main thread !
-    self.postMessage({ type: 'CLICK', timestamp: now, flux: flux });
-  }
-  
-  lastEnergy = currentEnergy;
 };
+
+function processSample(bandFluxes, time) {
+  for (let b = 0; b < BANDS.length; b++) {
+    const flux = bandFluxes[b] || 0;
+    const s    = states[b];
+
+    const rise = Math.max(0, flux - s.prev);
+    s.prev = flux;
+
+    s.floorSlow = 0.008 * rise + 0.992 * s.floorSlow;
+    const threshold = Math.max(s.floorSlow * s.k, 0.006);
+
+    if (rise > threshold && time - s.lastOnsetTime > 130) {
+      const interval = s.onsets.length ? time - s.onsets.at(-1).time : null;
+      s.onsets.push({ time, interval });
+      if (s.onsets.length > 120) s.onsets.shift();
+
+      self.postMessage({
+        type:     'onset',
+        band:     b,
+        time:     time,
+        strength: rise / (s.floorSlow || 1),
+        kUsed:    s.k,
+        interval: interval
+      });
+      s.lastOnsetTime = time;
+    }
+  }
+}
+
+function runCalibration() {
+  console.log("[WORKER] Calibration sur", calibrationData.length, "échantillons");
+  for (let b = 0; b < BANDS.length; b++) {
+    const bestK = findBestKForBand(b);
+    states[b].k = bestK;
+    console.log(\`[CALIB] \${BANDS[b].name} → K = \${bestK.toFixed(2)}\`);
+  }
+}
+
+function findBestKForBand(bandIdx) {
+  let bestK = 3.5, bestScore = -Infinity;
+
+  for (let kTest = 2.2; kTest <= 7.5; kTest += 0.25) {
+    const onsets = simulateOnsets(bandIdx, kTest);
+    if (onsets.length < 10) continue;
+
+    const intervals = [];
+    for (let i = 1; i < onsets.length; i++) {
+      const iv = onsets[i] - onsets[i-1];
+      if (iv > 60) intervals.push(iv);
+    }
+    if (intervals.length < 6) continue;
+
+    const mean       = avg(intervals);
+    const regularity = 1 / (stddev(intervals) / mean + 0.07);
+    const density    = onsets.length / (calibrationData.length / 100);
+    const score      = regularity * Math.pow(density, 0.6) * (kTest * 0.85);
+
+    if (score > bestScore) { bestScore = score; bestK = kTest; }
+  }
+  return Math.max(2.8, Math.min(7.0, bestK));
+}
+
+function simulateOnsets(bandIdx, kTest) {
+  const onsets = [];
+  let prev = 0, floorSlow = 0, last = -999;
+
+  for (let i = 0; i < calibrationData.length; i++) {
+    const flux  = calibrationData[i].bandFluxes[bandIdx] || 0;
+    const rise  = Math.max(0, flux - prev);
+    prev        = flux;
+    floorSlow   = 0.008 * rise + 0.992 * floorSlow;
+    const thresh = Math.max(floorSlow * kTest, 0.006);
+
+    if (rise > thresh && i - last > 12) {
+      onsets.push(calibrationData[i].time);
+      last = i;
+    }
+  }
+  return onsets;
+}
+
+function avg(a)    { return a.reduce((s,v)=>s+v,0)/a.length || 1; }
+function stddev(a) {
+  if (a.length < 2) return 1;
+  const m = avg(a);
+  return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/a.length);
+}
   `;
 
-  const blob = new Blob([code], { type: 'application/javascript' });
+  const blob   = new Blob([code], { type: 'application/javascript' });
   const worker = new Worker(URL.createObjectURL(blob));
 
-  // Quand le worker détecte un impact...
   worker.onmessage = function(e) {
-    if (e.data.type === 'CLICK') {
-      // ... on déclenche simplement la logique TAP existante !
-      triggerBeat(e.data.timestamp);
-    }
+    if (e.data.type !== 'onset') return;
+    const { band, time, strength } = e.data;
+
+    onsetVisBuffer.push({ time, strength, band });
+    if (onsetVisBuffer.length > 500) onsetVisBuffer.shift();
+
+    lastOnsetMs = time;
+    onsetCountTotal++;
+    document.getElementById('onset-count-label').textContent = `ONSETS: ${onsetCountTotal}`;
+
+    // En mode music, le Worker pilote uniquement le flash/grille.
+    // L'affichage BPM est géré exclusivement par computeNoveltyBPM().
+    triggerBeatFlash(time);
   };
 
   return worker;
 }
+
 // ============================================================
 // MODE
 // ============================================================
@@ -505,8 +651,8 @@ function setMode(m) {
   currentMode = m;
   const isTap = m === 'tap';
 
-  document.getElementById('btn-mode-tap').className   = 'mode-btn' + (isTap  ? ' active-tap'  : '');
-  document.getElementById('btn-mode-music').className = 'mode-btn' + (!isTap ? ' active-music' : '');
+  document.getElementById('btn-mode-tap').className   = 'mode-btn' + (isTap  ? ' active-tap'   : '');
+  document.getElementById('btn-mode-music').className = 'mode-btn' + (!isTap ? ' active-music'  : '');
   document.getElementById('music-panel').classList.toggle('visible', !isTap);
   document.querySelectorAll('.ctrl-tap-only').forEach(el  => el.classList.toggle('hidden',  !isTap));
   document.querySelectorAll('.ctrl-music-only').forEach(el => el.classList.toggle('visible', !isTap));
@@ -514,7 +660,7 @@ function setMode(m) {
   vuLabel.textContent     = isTap ? 'BASS' : 'FLUX';
   footerLabel.textContent = isTap
     ? 'BASS ONSET · MEDIAN FILTERED'
-    : 'AUTOCORRÉLATION · MULTI-WINDOW · VOTE';
+    : 'NOVELTY CURVE · PEAK DETECTION · MULTI-BAND';
   resetState();
 }
 
@@ -553,56 +699,25 @@ async function toggle() {
   src      = ctx.createMediaStreamSource(stream);
   analyser = ctx.createAnalyser();
 
-// Dans la fonction toggle(), remplace le bloc "if (currentMode === 'music') { ... } else { ... }" par :
-
-if (currentMode === 'music') {
-    analyser.fftSize = 2048;
-    _musTimeDomain = new Float32Array(analyser.fftSize);
-    
-    // 1. LE PRÉAMPLI (Nouveau !)
-    // On booste le signal entrant pour compenser la distance des enceintes
-    const preAmp = ctx.createGain();
-    preAmp.gain.value = 4.0; // Multiplie le volume par 4 (tu peux augmenter jusqu'à 10 si besoin)
-
-    // 2. L'ANTI-COMPRESSEUR (Nettoyage)
-    const hpFilter = ctx.createBiquadFilter();
-    hpFilter.type = "highpass";
-    hpFilter.frequency.value = 150; 
-
-    const shelfFilter = ctx.createBiquadFilter();
-    shelfFilter.type = "highshelf";
-    shelfFilter.frequency.value = 3000;
-    shelfFilter.gain.value = 15; // On booste encore plus les aigus pour bien choper les clics
-
-    const dummyMute = ctx.createGain();
-    dummyMute.gain.value = 0;
-
-    const processor = ctx.createScriptProcessor(1024, 1, 1);
-    bpmWorker = createTransientWorker(); 
-
-    // 3. CHAÎNAGE MIS À JOUR (On inclut le preAmp)
-    src.connect(preAmp);
-    preAmp.connect(hpFilter);
-    hpFilter.connect(shelfFilter);
-    shelfFilter.connect(analyser); // L'analyseur verra le signal boosté et filtré !
-    shelfFilter.connect(processor);
-    processor.connect(dummyMute);
-    dummyMute.connect(ctx.destination);
-
-    processor.onaudioprocess = (e) => {
-      // 4. LA SÉCURITÉ ANTI-CRASH (On vérifie que le worker existe et qu'on est en route)
-      if (!running || !bpmWorker) return; 
-
-      const inputData = e.inputBuffer.getChannelData(0);
-      bpmWorker.postMessage({ type: 'process', buffer: new Float32Array(inputData) });
-    };
-
+  if (currentMode === 'music') {
+    acFluxOnset  = 0;
+    analyser.fftSize = AC_FFT_SIZE;
+    _musTimeDomain   = new Float32Array(analyser.fftSize);
+    _musFreqBins     = new Float32Array(analyser.frequencyBinCount);
+    acPrevMag        = null;
+    bandPrevMags     = null;
+    acFluxSmooth     = 0;
+    acSmoothedBpm    = null;
+    isCalibrating    = true;
+    calibrationStart = performance.now();
+    fluxBuffer       = [];
+    bpmWorker        = createBpmWorker();
   } else {
     analyser.fftSize = 2048;
     _tapTimeDomain   = new Float32Array(analyser.fftSize);
     _tapFreqBins     = new Uint8Array(analyser.frequencyBinCount);
-    src.connect(analyser);
   }
+
   src.connect(analyser);
   running = true;
   ledPower.classList.add('on');
@@ -614,11 +729,23 @@ if (currentMode === 'music') {
 
 // ============================================================
 // RESET
+// FIX #2 : on nettoie aussi tout l'état novelty.
 // ============================================================
 function resetState() {
   energyHistory = []; onsetHistory = []; beatTimes = [];
   lastBeat = 0; lastOnsetTime = 0; smoothedBpm = null; acSmoothedBpm = null;
+
+  isCalibrating = false;
+  fluxBuffer    = [];
+
+  // Novelty — état complet remis à zéro
+  noveltyHistory      = [];
+  noveltyBeatTimes    = [];
+  noveltySmoothedBpm  = null;
+  noveltyLastPeakTime = 0;   // FIX #4 : curseur incrémental réinitialisé
+
   if (bpmWorker) bpmWorker.postMessage({ type: 'reset' });
+
   bpmEl.textContent = '--';
   bpmEl.classList.remove('locked');
   vuFill.style.width  = '0%';
@@ -626,6 +753,12 @@ function resetState() {
   beatGridPtr = 0;
   histDots.forEach(d => d.classList.remove('active'));
   setUIState('silence');
+
+  onsetVisBuffer  = []; lastOnsetMs = 0; onsetCountTotal = 0;
+  const oci = document.getElementById('onset-count-label');
+  const oii = document.getElementById('onset-interval');
+  if (oci) oci.textContent = 'ONSETS: 0';
+  if (oii) oii.textContent = '-- ms';
 }
 
 // ============================================================
@@ -666,79 +799,368 @@ function loopTap() {
 }
 
 // ============================================================
-// BEAT TRIGGER
+// BEAT TRIGGER (mode TAP)
+// triggerBeat = flash + grille + calcul BPM TAP.
+//
+// FIX #6 : en mode MUSIC, le Worker appelle triggerBeatFlash()
+// qui ne fait QUE le flash/grille, sans toucher au BPM display.
 // ============================================================
 function triggerBeat(now) {
   lastBeat = lastOnsetTime = now;
+
   clearTimeout(flashTimeout);
   beatFlash.style.opacity = '1';
-  flashTimeout = setTimeout(() => { beatFlash.style.opacity = '0'; }, 80);
-
-  if (beatTimes.length >= 1) {
-    const interval   = now - beatTimes.at(-1);
-    const instantBpm = 60000 / interval;
-    if (instantBpm > 40 && instantBpm < 220) bpmEl.textContent = Math.round(instantBpm);
-  }
+  flashTimeout = setTimeout(() => { beatFlash.style.opacity = '0'; }, 70);
 
   beatTimes.push(now);
-  if (beatTimes.length > 24) beatTimes.shift();
+  if (beatTimes.length > 32) beatTimes.shift();
 
   updateBeatGrid();
   computeTapBPM();
 }
 
-// ============================================================
-// COMPUTE TAP BPM
-// ============================================================
-function computeTapBPM() {
-  if (beatTimes.length < 6) return;
-
-  const intervals = [];
-  for (let i = 1; i < beatTimes.length; i++) intervals.push(beatTimes[i] - beatTimes[i - 1]);
-
-  const med      = median(intervals);
-  const filtered = intervals.filter(v => v > med * 0.7 && v < med * 1.3);
-  if (filtered.length < 4) return;
-
-  const avgInt = avg(filtered);
-  const bpm    = 60000 / avgInt;
-  if (bpm < 40 || bpm > 220) return;
-
-  smoothedBpm       = smoothedBpm === null ? bpm : SMOOTH * smoothedBpm + (1 - SMOOTH) * bpm;
-  bpmEl.textContent = Math.round(smoothedBpm);
-
-  const stability = stddev(filtered, avgInt) / avgInt;
-  setUIState(stability < 0.06 ? 'locked' : 'tracking');
+// Version "flash only" utilisée par le Worker en mode MUSIC.
+function triggerBeatFlash(now) {
+  clearTimeout(flashTimeout);
+  beatFlash.style.opacity = '1';
+  flashTimeout = setTimeout(() => { beatFlash.style.opacity = '0'; }, 70);
+  updateBeatGrid();
 }
 
 // ============================================================
-// MUSIC LOOP — rAF pour waveform + calcul flux uniquement
+// COMPUTE TAP BPM (mode TAP uniquement)
+// FIX #6 : plus appelé par le Worker en mode MUSIC.
+// ============================================================
+function computeTapBPM() {
+  if (beatTimes.length < 8) return;
+
+  const intervals = [];
+  for (let i = 1; i < beatTimes.length; i++) {
+    const iv = beatTimes[i] - beatTimes[i-1];
+    if (iv > 80) intervals.push(iv);
+  }
+  if (intervals.length < 6) return;
+
+  const med      = median(intervals);
+  const filtered = intervals.filter(v => v > med * 0.65 && v < med * 1.45);
+  if (filtered.length < 5) return;
+
+  const avgInt = avg(filtered);
+  const bpm    = 60000 / avgInt;
+  if (bpm < 50 || bpm > 200) return;
+
+  smoothedBpm = smoothedBpm === null ? bpm : 0.78 * smoothedBpm + 0.22 * bpm;
+  bpmEl.textContent = Math.round(smoothedBpm);
+
+  const stability = stddev(filtered, avgInt) / avgInt;
+  const isLocked  = stability < 0.085 && filtered.length > 12;
+  setUIState(isLocked ? 'locked' : 'tracking');
+}
+
+// ============================================================
+// MUSIC LOOP
+// FIX #1 : un seul updateNoveltyBuffer() et drawNoveltyCurve() par frame.
 // ============================================================
 function loopMusic() {
   if (!running) return;
   requestAnimationFrame(loopMusic);
 
+  const now = performance.now();   // déclaré en tête, utilisé partout
+
   analyser.getFloatTimeDomainData(_musTimeDomain);
-  
-  // On calcule juste l'énergie RMS pour faire bouger le VU-mètre
-  let sum = 0;
-  for(let i=0; i<_musTimeDomain.length; i++) {
-    sum += _musTimeDomain[i] * _musTimeDomain[i];
+  analyser.getFloatFrequencyData(_musFreqBins);
+
+  const nBins   = analyser.frequencyBinCount;
+  const nyquist = ctx.sampleRate / 2;
+  const bandFluxes = new Array(BANDS.length).fill(0);
+
+  if (!bandPrevMags) {
+    bandPrevMags = BANDS.map(() => new Float32Array(nBins));
   }
-  let rms = Math.sqrt(sum / _musTimeDomain.length);
-  
-  updateVU(rms * 2); // Ajustement visuel
+
+  for (let b = 0; b < BANDS.length; b++) {
+    const band = BANDS[b];
+    let flux = 0, count = 0;
+
+    for (let i = 0; i < nBins; i++) {
+      const hz  = (i * nyquist) / nBins;
+      if (hz < band.low || hz > band.high) continue;
+      const mag = Math.max(0, (_musFreqBins[i] + 100) / 100);
+      const d   = mag - bandPrevMags[b][i];
+      bandPrevMags[b][i] = mag;
+      if (d > 0) { flux += d; count++; }
+    }
+    bandFluxes[b] = count ? (flux / count) * band.weight : 0;
+  }
+
+  const totalFlux = bandFluxes.reduce((a, b) => a + b, 0);
+  acFluxSmooth    = 0.5 * acFluxSmooth + 0.5 * totalFlux;
+  acFluxOnset     = 0.18 * acFluxOnset + 0.82 * totalFlux;
+
+  // === NOVELTY — un seul appel de chaque fonction par frame ===
+  const novelty = calculateNovelty(bandFluxes);
+  updateNoveltyBuffer(novelty, now);   // FIX #1 : now passé en param (plus de double appel)
+  detectNoveltyPeaks(now);             // FIX #4 : incrémental
+
+  // FIX #7 : LOCKED seulement si on a assez de beats détectés
+const newBpm = computeNoveltyBPM();
+if (newBpm !== null) {
+  bpmEl.textContent = newBpm;
+  // LOCKED si on a aussi confirmation par les pics individuels
+  const confirmedByPeaks = noveltyBeatTimes.length >= 6;
+  setUIState(confirmedByPeaks ? 'locked' : 'tracking');
+} else if (totalFlux > 0.01) {
+  setUIState('tracking');
+}
+
+  // Affichages — un seul passage
+  updateVU(Math.min(acFluxSmooth / 3.5, 1));
   drawWave(_musTimeDomain);
+  drawOnsetViz();
+  drawNoveltyCurve();   // FIX #1 : un seul appel
+
+  // Calibration / envoi Worker
+  if (isCalibrating) {
+    fluxBuffer.push({ time: now, bandFluxes: [...bandFluxes] });
+    if (now - calibrationStart > CALIBRATION_DURATION) {
+      isCalibrating = false;
+      console.log("%c[CALIB] Terminée — analyse K en cours…", "color:#39ff8a;font-weight:bold");
+      if (bpmWorker) bpmWorker.postMessage({ type: 'calibrate', data: fluxBuffer });
+      fluxBuffer = [];
+    }
+  } else if (bpmWorker) {
+    bpmWorker.postMessage({ type: 'sample', bandFluxes, time: now });
+    // FIX #8 : autoAdaptK() est un stub vide → on ne l'envoie plus.
+  }
 }
 
 // ============================================================
-// setInterval découplé — envoie chaque sample au Worker à 100 Hz précis
+// NOVELTY
 // ============================================================
-function startAcSampleInterval() {
-  acSampleInterval = setInterval(() => {
-    if (!running || !bpmWorker) return;
-    bpmWorker.postMessage({ type: 'sample', flux: acFluxSmooth });
-  }, 1000 / AC_HOP_RATE); // 10ms
+
+// FIX #3 : calculateNovelty() reçoit des bandFluxes déjà pondérés
+// par band.weight dans loopMusic(). On fait une simple somme —
+// pas de deuxième couche de poids pour éviter le double-weighting.
+function calculateNovelty(bandFluxes) {
+  return bandFluxes[0] + bandFluxes[1] + bandFluxes[2] + bandFluxes[3];
+}
+
+// FIX #1 : now est passé en paramètre (évite un second performance.now()).
+function updateNoveltyBuffer(novelty, now) {
+  noveltyHistory.push({ time: now, value: novelty });
+  const cutoff = now - NOVELTY_WIN_MS;
+  while (noveltyHistory.length > 0 && noveltyHistory[0].time < cutoff) {
+    noveltyHistory.shift();
+  }
+}
+
+// FIX #5 : variable locale `first` au lieu du hack nCtx.currentPoint.
+function drawNoveltyCurve() {
+  const dpr = window.devicePixelRatio || 1;
+  const w   = noveltyCanvas.width  = noveltyCanvas.offsetWidth  * dpr;
+  const h   = noveltyCanvas.height = noveltyCanvas.offsetHeight * dpr;
+  nCtx.clearRect(0, 0, w, h);
+
+  if (noveltyHistory.length < 10) return;
+
+  const now = performance.now();
+
+  let minV = Infinity, maxV = -Infinity;
+  for (const p of noveltyHistory) {
+    if (p.value < minV) minV = p.value;
+    if (p.value > maxV) maxV = p.value;
+  }
+  if (maxV - minV < 0.001) maxV = minV + 0.01;
+
+  nCtx.strokeStyle = '#39ff8a';
+  nCtx.lineWidth   = 2.8 * dpr;
+  nCtx.shadowColor = '#39ff8a';
+  nCtx.shadowBlur  = 8;
+  nCtx.beginPath();
+
+  let first = true;   // FIX #5 : booléen local, propre et robuste
+  for (const p of noveltyHistory) {
+    const x = ((p.time - (now - NOVELTY_WIN_MS)) / NOVELTY_WIN_MS) * w;
+    if (x < 0 || x > w) continue;
+    const y = h * 0.92 - ((p.value - minV) / (maxV - minV)) * (h * 0.82);
+    if (first) { nCtx.moveTo(x, y); first = false; }
+    else        { nCtx.lineTo(x, y); }
+  }
+
+  nCtx.stroke();
+  nCtx.shadowBlur = 0;
+
+  // Ligne de référence (baseline)
+  nCtx.strokeStyle = '#ffffff22';
+  nCtx.lineWidth   = 1 * dpr;
+  nCtx.beginPath();
+  nCtx.moveTo(0, h * 0.92);
+  nCtx.lineTo(w, h * 0.92);
+  nCtx.stroke();
+}
+
+// FIX #4 : détection incrémentale par timestamp.
+// ============================================================
+// PEAK DETECTION — seuil adaptatif + fenêtre ±4 frames
+// ============================================================
+function detectNoveltyPeaks(now) {
+  if (noveltyHistory.length < 10) return;
+  const minInterval = 200; // ms
+
+  // Seuil adaptatif : moyenne + 1.2 × écart-type sur la fenêtre courante
+  const vals = noveltyHistory.map(p => p.value);
+  const mean = vals.reduce((s, v) => s + v, 0) / vals.length;
+  const std  = Math.sqrt(vals.reduce((s, v) => s + (v - mean) ** 2, 0) / vals.length);
+  const adaptiveThreshold = mean + 1.2 * std;
+
+  // Fenêtre ±4 frames au lieu de ±1
+  const WIN = 4;
+  for (let i = WIN; i < noveltyHistory.length - WIN; i++) {
+    const curr = noveltyHistory[i];
+    if (curr.time <= noveltyLastPeakTime) continue;
+
+    // Vérifier que curr est le max local dans la fenêtre
+    let isMax = true;
+    for (let k = 1; k <= WIN; k++) {
+      if (noveltyHistory[i - k].value >= curr.value ||
+          noveltyHistory[i + k].value >= curr.value) {
+        isMax = false;
+        break;
+      }
+    }
+
+    if (isMax && curr.value > adaptiveThreshold) {
+      if (noveltyBeatTimes.length === 0 ||
+          curr.time - noveltyBeatTimes.at(-1) > minInterval) {
+        noveltyBeatTimes.push(curr.time);
+        if (noveltyBeatTimes.length > 32) noveltyBeatTimes.shift();
+      }
+    }
+  }
+
+  if (noveltyHistory.length > WIN + 1) {
+    noveltyLastPeakTime = noveltyHistory[noveltyHistory.length - WIN - 1].time;
+  }
+}
+
+// ============================================================
+// BPM PAR AUTOCORRÉLATION SUR LA NOVELTY CURVE
+// Prononce un résultat après ~4-5 s, s'affine ensuite.
+// ============================================================
+function computeNoveltyBPM() {
+  // Attendre au moins 4 secondes de données
+  if (noveltyHistory.length < 50) return null;
+  const span = noveltyHistory.at(-1).time - noveltyHistory[0].time;
+  if (span < 4000) return null;
+
+  // Rééchantillonner sur une grille fixe de 10ms
+const BIN_MS = 20; 
+const WIN_MS = Math.min(span, 8000);
+  const N      = Math.floor(WIN_MS / BIN_MS);
+  const now    = noveltyHistory.at(-1).time;
+  const bins   = new Float32Array(N);
+
+  for (const p of noveltyHistory) {
+    const age = now - p.time;
+    if (age > WIN_MS) continue;
+    const idx = N - 1 - Math.floor(age / BIN_MS);
+    if (idx >= 0 && idx < N) bins[idx] = Math.max(bins[idx], p.value);
+  }
+
+  // Autocorrélation pour les lags correspondant à 60-180 BPM
+  const lagMin = Math.floor(60000 / 180 / BIN_MS); // ~33 bins (333ms)
+  const lagMax = Math.ceil (60000 /  60 / BIN_MS); // 100 bins (1000ms)
+
+  let bestLag = -1, bestCorr = -Infinity;
+
+  for (let lag = lagMin; lag <= lagMax; lag++) {
+    let corr = 0;
+    const count = N - lag;
+    for (let i = 0; i < count; i++) {
+      corr += bins[i] * bins[i + lag];
+    }
+    corr /= count;
+
+    // Bonus pour les harmoniques (demi-temps, double-temps)
+    // → favorise le BPM "naturel" sur ses multiples
+    if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
+  }
+
+  if (bestLag < 0 || bestCorr < 1e-6) return null;
+
+  let bpm = 60000 / (bestLag * BIN_MS);
+
+  // Ramener dans 60-180 BPM
+  while (bpm > 180) bpm /= 2;
+  while (bpm < 60)  bpm *= 2;
+
+  if (bpm < 60 || bpm > 180) return null;
+
+  // Vérification de cohérence avec les beat times détectés
+  // (si on a des pics, on vérifie que l'autocorr est compatible)
+if (noveltyBeatTimes.length >= 4) {
+    const intervals = [];
+    for (let i = 1; i < noveltyBeatTimes.length; i++) {
+      const iv = noveltyBeatTimes[i] - noveltyBeatTimes[i-1];
+      if (iv > 200 && iv < 1500) intervals.push(iv);
+    }
+    if (intervals.length >= 3) {
+      const medIv  = median(intervals);
+      const bpmPeak = 60000 / medIv;
+      
+      // On aligne les tempos sur la même "octave" AVANT de moyenner
+      if (Math.abs(bpm - bpmPeak) < 15) {
+        bpm = (bpm + bpmPeak) / 2;
+      } else if (Math.abs(bpm * 2 - bpmPeak) < 15) {
+        // L'autocorr a trouvé le demi-tempo
+        bpm = (bpm * 2 + bpmPeak) / 2; 
+      } else if (Math.abs(bpm - bpmPeak * 2) < 15) {
+        // L'autocorr a trouvé le double-tempo
+        bpm = (bpm + (bpmPeak * 2)) / 2; 
+      }
+    }
+  }
+
+  noveltySmoothedBpm = noveltySmoothedBpm === null
+    ? bpm
+    : 0.80 * noveltySmoothedBpm + 0.20 * bpm;
+
+  return Math.round(noveltySmoothedBpm);
+}
+
+// ============================================================
+// ONSET VIZ (canvas acorr partagé)
+// ============================================================
+function drawOnsetViz() {
+  const dpr = window.devicePixelRatio || 1;
+  const w   = acCanvas.width  = acCanvas.offsetWidth  * dpr;
+  const h   = acCanvas.height = acCanvas.offsetHeight * dpr;
+  acCtx.clearRect(0, 0, w, h);
+
+  const now    = performance.now();
+  const WIN_MS = 5000;
+
+  BANDS.forEach((band, i) => {
+    const y = h * (0.2 + i * 0.2);
+    acCtx.strokeStyle = band.color + '22';
+    acCtx.beginPath();
+    acCtx.moveTo(0, y); acCtx.lineTo(w, y);
+    acCtx.stroke();
+  });
+
+  for (const o of onsetVisBuffer) {
+    const x = ((o.time - (now - WIN_MS)) / WIN_MS) * w;
+    if (x < 0 || x > w) continue;
+
+    const bandIdx  = o.band || 0;
+    const baseY    = h * (0.25 + bandIdx * 0.2);
+    const barH     = Math.min(h * 0.18, Math.log1p(o.strength * 4) * h * 0.25);
+
+    acCtx.globalAlpha = Math.pow(Math.max(0, 1 - (now - o.time) / WIN_MS), 0.5);
+    acCtx.fillStyle   = BANDS[bandIdx].color;
+    acCtx.fillRect(x - 1.5, baseY - barH, 3, barH);
+  }
+  acCtx.globalAlpha = 1;
 }
 
 // ============================================================
@@ -772,37 +1194,6 @@ function drawWave(buffer) {
   cctx.strokeStyle = '#00e5ff'; cctx.lineWidth = 1.5 * dpr;
   cctx.shadowColor = '#00e5ff'; cctx.shadowBlur = 4;
   cctx.stroke(); cctx.shadowBlur = 0;
-}
-
-function drawAcorrGraph(vals, pIdx) {
-  const dpr = window.devicePixelRatio || 1;
-  const w   = acCanvas.width  = acCanvas.offsetWidth  * dpr;
-  const h   = acCanvas.height = acCanvas.offsetHeight * dpr;
-  acCtx.clearRect(0, 0, w, h);
-
-  let minV = vals[0], maxV = vals[0];
-  for (let i = 1; i < vals.length; i++) {
-    if (vals[i] < minV) minV = vals[i];
-    if (vals[i] > maxV) maxV = vals[i];
-  }
-  const range = maxV - minV || 1;
-
-  acCtx.beginPath();
-  for (let i = 0; i < vals.length; i++) {
-    const x = (i / (vals.length - 1)) * w;
-    const y = h - ((vals[i] - minV) / range) * h * 0.9 - h * 0.05;
-    i === 0 ? acCtx.moveTo(x, y) : acCtx.lineTo(x, y);
-  }
-  acCtx.strokeStyle = '#00e5ff'; acCtx.lineWidth = 1.5; acCtx.stroke();
-
-  if (pIdx >= 0 && pIdx < vals.length) {
-    const px = (pIdx / (vals.length - 1)) * w;
-    const py = h - ((vals[pIdx] - minV) / range) * h * 0.9 - h * 0.05;
-    acCtx.beginPath(); acCtx.arc(px, py, 4 * dpr, 0, Math.PI * 2);
-    acCtx.fillStyle   = '#39ff8a';
-    acCtx.shadowColor = '#39ff8a'; acCtx.shadowBlur = 8;
-    acCtx.fill(); acCtx.shadowBlur = 0;
-  }
 }
 
 // ============================================================
