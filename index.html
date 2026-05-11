@@ -217,94 +217,51 @@ html, body {
 .state-badge.tracking .state-dot { animation: blink .7s ease-in-out infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.10} }
 
-/* ── BEAT STRIP ── */
-.beat-strip { height: 3px; background: var(--deep); flex-shrink: 0; }
-.beat-flash-bar {
-  height: 100%; width: 100%;
-  background: var(--mint);
-  box-shadow: 0 0 14px var(--mint);
-  opacity: 0;
-  transition: opacity .05s;
-}
-
-/* ── VU ── */
-.meters-col {
-  display: flex; flex-direction: column;
+/* ── DEBUG PANEL ── */
+.debug-panel {
   background: var(--deep);
+  padding: 10px 16px 12px;
   border-bottom: 1px solid var(--lo);
   position: relative;
+  display: none;
+  flex-direction: column; gap: 5px;
 }
-.meters-col::before {
+.debug-panel.visible { display: flex; }
+.debug-panel::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
+  top: 0; left: 0; right: 0; height: 1px;
   background: var(--hi);
-  z-index: 1;
 }
-.vu-wrap {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px 12px;
+.debug-label {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 4px; color: var(--gold);
+  margin-bottom: 2px;
 }
-.vu-label {
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 3px;
-  color: var(--label-sub);
-  flex-shrink: 0; width: 34px;
+.debug-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
 }
-.vu-bar-h {
-  flex: 1; height: 8px;
-  background: var(--inset);
+.debug-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 10px;
+}
+.debug-key { color: var(--label-sub); letter-spacing: 1px; }
+.debug-val { font-family: 'Orbitron', monospace; font-size: 10px; color: var(--ice); }
+.debug-val.warn { color: var(--gold); }
+.debug-val.bad  { color: var(--red); }
+.debug-btn {
+  align-self: flex-end;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  padding: 4px 10px;
   border-radius: 4px;
   border: 1px solid var(--mid);
-  overflow: hidden;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.85);
-}
-.vu-fill-h {
-  height: 100%; width: 0%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--ice) 0%, var(--mint) 55%, var(--gold) 82%, var(--red) 100%);
-  transition: width .04s;
-}
-#db-label {
-  font-size: 9px; font-weight: 700;
-  color: var(--label-sub);
-  flex-shrink: 0; width: 56px;
-  text-align: right; letter-spacing: 1px;
-}
-/* ── BEAT GRID ── */
-.history-row {
-  display: flex; align-items: center; gap: 5px;
-  padding: 10px 16px;
-  background: var(--face);
-  flex-wrap: nowrap;
-  border-bottom: 1px solid var(--lo);
-  position: relative;
-}
-.history-row::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: var(--hi);
-}
-.history-label {
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 3px;
+  background: transparent;
   color: var(--label-dim);
-  margin-left: auto; flex-shrink: 0;
-}
-.history-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--mid);
-  border: 1px solid rgba(255,255,255,0.04);
-  flex-shrink: 0;
-  transition: background .15s, box-shadow .15s;
-}
-.history-dot.active {
-  background: var(--gold);
-  box-shadow: 0 0 6px var(--gold-glow);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ── MODE SELECTOR ── */
@@ -466,21 +423,27 @@ html, body {
     </div>
   </div>
 
-  <!-- BEAT FLASH STRIP -->
-  <div class="beat-strip"><div class="beat-flash-bar" id="beat-flash"></div></div>
+  <!-- BEAT FLASH STRIP — supprimé -->
+  <!-- VU / FLUX BAR — supprimé -->
+  <!-- BEAT GRID / DOTS — supprimé -->
 
-  <!-- VU -->
-  <div class="meters-col">
-    <div class="vu-wrap">
-      <div class="vu-label" id="vu-label">BASS</div>
-      <div class="vu-bar-h"><div class="vu-fill-h" id="vu-fill"></div></div>
-      <div id="db-label">-∞ dB</div>
+  <!-- DEBUG PANEL -->
+  <div class="debug-panel" id="debug-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="debug-label">⬡ DIAGNOSTIC</div>
+      <button class="debug-btn" onclick="toggleDebug()">FERMER</button>
     </div>
-  </div>
-
-  <!-- BEAT GRID -->
-  <div class="history-row" id="history-row">
-    <div class="history-label">BEAT GRID</div>
+    <div class="debug-grid">
+      <div class="debug-row"><span class="debug-key">PEAKS</span><span class="debug-val" id="dbg-peaks">0</span></div>
+      <div class="debug-row"><span class="debug-key">CONFIRM</span><span class="debug-val" id="dbg-confirm">—</span></div>
+      <div class="debug-row"><span class="debug-key">CANDIDATE</span><span class="debug-val" id="dbg-candidate">—</span></div>
+      <div class="debug-row"><span class="debug-key">GATE</span><span class="debug-val" id="dbg-gate">0 ms</span></div>
+      <div class="debug-row"><span class="debug-key">MODE</span><span class="debug-val" id="dbg-gatemode">—</span></div>
+      <div class="debug-row"><span class="debug-key">CALIB</span><span class="debug-val" id="dbg-calib">—</span></div>
+      <div class="debug-row"><span class="debug-key">SPAN</span><span class="debug-val" id="dbg-span">0 s</span></div>
+      <div class="debug-row"><span class="debug-key">RAW BPM</span><span class="debug-val" id="dbg-raw">—</span></div>
+      <div class="debug-row"><span class="debug-key">SMOOTH</span><span class="debug-val" id="dbg-smooth">—</span></div>
+    </div>
   </div>
 
   <!-- MODE SELECTOR -->
@@ -502,6 +465,7 @@ html, body {
   <div class="btn-panel">
     <button id="btn-toggle" onclick="toggle()">▶  START</button>
     <button id="btn-reset"  onclick="resetState()">RESET</button>
+    <button id="btn-debug"  onclick="toggleDebug()" style="padding:17px 14px;font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;border:1px solid var(--mid);border-radius:8px;background:transparent;color:var(--label-dim);cursor:pointer;-webkit-tap-highlight-color:transparent;">DBG</button>
   </div>
 
   <!-- FOOTER -->
@@ -525,17 +489,25 @@ let currentMode = 'tap';
 // UI REFS
 // ============================================================
 const bpmEl       = document.getElementById('bpm');
-const dbLabel     = document.getElementById('db-label');
-const vuFill      = document.getElementById('vu-fill');
-const vuLabel     = document.getElementById('vu-label');
 const stateBadge  = document.getElementById('state-badge');
 const stateText   = document.getElementById('state-text');
-const beatFlash   = document.getElementById('beat-flash');
 const ledPower    = document.getElementById('led-power');
 const btnToggle   = document.getElementById('btn-toggle');
-const histRow     = document.getElementById('history-row');
 const noveltyCanvas = document.getElementById('novelty-canvas');
 const nCtx          = noveltyCanvas.getContext('2d');
+
+// Debug refs
+const dbgPanel     = document.getElementById('debug-panel');
+const dbgPeaks     = document.getElementById('dbg-peaks');
+const dbgConfirm   = document.getElementById('dbg-confirm');
+const dbgCandidate = document.getElementById('dbg-candidate');
+const dbgGate      = document.getElementById('dbg-gate');
+const dbgGateMode  = document.getElementById('dbg-gatemode');
+const dbgCalib     = document.getElementById('dbg-calib');
+const dbgSpan      = document.getElementById('dbg-span');
+const dbgRaw       = document.getElementById('dbg-raw');
+const dbgSmooth    = document.getElementById('dbg-smooth');
+let debugVisible   = false;
 
 // ============================================================
 // MULTI-BAND CONFIG
@@ -562,77 +534,43 @@ let noveltySmoothedBpm  = null;
 const NOVELTY_BPM_MIN   = 60;
 const NOVELTY_BPM_MAX   = 200;
 
-// ── CONFIRMATION GATE ──
+// ── CONFIRMATION GATE ASYMÉTRIQUE ──
+// Accrochage rapide : affiche dès que le candidat tient LOCK_MS
+// Remplacement lent : pour changer le BPM affiché, il faut CHANGE_MS de stabilité
 let confirmedBpm       = null;
 let candidateBpm       = null;
 let candidateFirstSeen = 0;
-const CONFIRM_WINDOW_MS = 2500;
-const CONFIRM_TOLERANCE = 2;
+const LOCK_MS          = 500;   // délai avant 1er affichage
+const CHANGE_MS        = 2000;  // délai pour remplacer un BPM déjà affiché
+const CONFIRM_TOLERANCE = 20;    // ±2 BPM = même candidat
 
 // ── SILENCE DETECTION ──
 let silenceStartTime     = 0;
 const SILENCE_TIMEOUT_MS = 2000;
 
-// ============================================================
-// BEAT GRID
-// ============================================================
-const HIST_COUNT = 16;
-const histDots   = [];
-(function initGrid() {
-  const label = histRow.querySelector('.history-label');
-  for (let i = 0; i < HIST_COUNT; i++) {
-    const d = document.createElement('div');
-    d.className = 'history-dot';
-    histRow.insertBefore(d, label);
-    histDots.push(d);
-  }
-})();
-let beatGridPtr = 0;
+// ── MÉTRONOME (simplifié — plus de flash ni de dots) ──
+let metronomeInterval = null;
+let metronomeBpm      = null;
 
-function updateBeatGrid() {
-  histDots[beatGridPtr % HIST_COUNT].classList.add('active');
-  histDots[(beatGridPtr + 1) % HIST_COUNT].classList.remove('active');
-  beatGridPtr = (beatGridPtr + 1) % HIST_COUNT;
+function startMetronome(bpm) {
+  if (bpm === metronomeBpm && metronomeInterval !== null) return;
+  stopMetronome();
+  metronomeBpm = bpm;
+  metronomeInterval = setInterval(_metronomeTick, 60000 / bpm);
 }
+
+function stopMetronome() {
+  if (metronomeInterval !== null) { clearInterval(metronomeInterval); metronomeInterval = null; }
+  metronomeBpm = null;
+}
+
+function _metronomeTick() { /* plus rien à animer */ }
 
 // ============================================================
 // TAP MODE STATE & PARAMS
 // ============================================================
 let energyHistory = [], onsetHistory = [], beatTimes = [];
 let lastBeat = 0, lastOnsetTime = 0, smoothedBpm = null, flashTimeout = null;
-
-// ── MÉTRONOME CALÉ SUR BPM ──
-let metronomeInterval = null;
-let metronomeBpm      = null;
-
-function startMetronome(bpm) {
-  if (bpm === metronomeBpm && metronomeInterval !== null) return; // déjà calé
-  stopMetronome();
-  metronomeBpm = bpm;
-  const periodMs = 60000 / bpm;
-  // Première pulsation immédiate, puis périodique
-  _metronomeTick();
-  metronomeInterval = setInterval(_metronomeTick, periodMs);
-}
-
-function stopMetronome() {
-  if (metronomeInterval !== null) {
-    clearInterval(metronomeInterval);
-    metronomeInterval = null;
-  }
-  metronomeBpm = null;
-}
-
-function _metronomeTick() {
-  // flash bar
-  clearTimeout(flashTimeout);
-  beatFlash.style.opacity = '1';
-  flashTimeout = setTimeout(() => { beatFlash.style.opacity = '0'; }, 80);
-  // beat grid
-  histDots[beatGridPtr % HIST_COUNT].classList.add('active');
-  histDots[(beatGridPtr + 1) % HIST_COUNT].classList.remove('active');
-  beatGridPtr = (beatGridPtr + 1) % HIST_COUNT;
-}
 
 let SENS   = 1.8;
 let REFRAC = 180;
@@ -648,8 +586,6 @@ let FLOOR_SLOW     = 0.015;
 let acPrevMag      = null;
 let acFluxSmooth   = 0;
 let acFluxOnset    = 0;
-let acSmoothedBpm  = null;
-let acFluxPeak     = 0.01;   // peak-hold dynamique pour normaliser la barre FLUX
 let lastOnsetMs     = 0;
 let onsetCountTotal = 0;
 let _musFreqBins    = null;
@@ -788,7 +724,6 @@ function setMode(m) {
   document.getElementById('btn-mode-tap').className   = 'mode-btn' + (isTap  ? ' active-tap'   : '');
   document.getElementById('btn-mode-music').className = 'mode-btn' + (!isTap ? ' active-music'  : '');
   document.getElementById('music-panel').classList.toggle('visible', !isTap);
-  vuLabel.textContent = isTap ? 'BASS' : 'FLUX';
   resetState();
 }
 
@@ -837,8 +772,8 @@ try {
   stream = await navigator.mediaDevices.getUserMedia(constraints);
 } catch (err) {
     const msg = err.name === 'NotAllowedError' ? 'ACCÈS MICRO REFUSÉ' : 'ERREUR : ' + err.message;
-    bpmEl.textContent   = '!';
-    dbLabel.textContent = msg.substring(0, 14);
+    bpmEl.textContent = '!';
+    bpmEl.title = msg;
     setUIState('silence');
     return;
   }
@@ -851,7 +786,6 @@ try {
     acPrevMag        = null;
     bandPrevMags     = null;
     acFluxSmooth     = 0;
-    acSmoothedBpm    = null;
     isCalibrating    = true;
     calibrationStart = performance.now();
     fluxBuffer       = [];
@@ -879,7 +813,7 @@ if (currentMode === 'music') {
 // ============================================================
 function resetState() {
   energyHistory = []; onsetHistory = []; beatTimes = [];
-  lastBeat = 0; lastOnsetTime = 0; smoothedBpm = null; acSmoothedBpm = null;
+  lastBeat = 0; lastOnsetTime = 0; smoothedBpm = null;
   isCalibrating = false;
   fluxBuffer    = [];
 
@@ -887,7 +821,6 @@ function resetState() {
   noveltyBeatTimes    = [];
   noveltySmoothedBpm  = null;
   noveltyLastPeakTime = 0;
-  acFluxPeak          = 0.01;
 
   // Gate + silence
   confirmedBpm = null; candidateBpm = null; candidateFirstSeen = 0;
@@ -898,10 +831,6 @@ function resetState() {
 
   bpmEl.textContent = '--';
   bpmEl.classList.remove('locked', 'dim', 'pulsing');
-  vuFill.style.width  = '0%';
-  dbLabel.textContent = '-∞ dB';
-  beatGridPtr = 0;
-  histDots.forEach(d => d.classList.remove('active'));
   setUIState('silence');
 
   lastOnsetMs = 0; onsetCountTotal = 0;
@@ -928,7 +857,7 @@ function loopTap() {
   energyHistory.push(bassEnergy);
   if (energyHistory.length > 300) energyHistory.shift();
 
-  updateVU(bassEnergy);
+  acFluxSmooth = 0.5 * acFluxSmooth + 0.5 * bassEnergy;
 
   const diff = bassEnergy - (energyHistory.at(-2) || bassEnergy);
   onsetHistory.push(diff);
@@ -949,13 +878,6 @@ function triggerBeat(now) {
   beatTimes.push(now);
   if (beatTimes.length > 32) beatTimes.shift();
   computeTapBPM();
-  // Flash bar + dots uniquement si BPM affiché
-  if (bpmEl.textContent !== '--') {
-    clearTimeout(flashTimeout);
-    beatFlash.style.opacity = '1';
-    flashTimeout = setTimeout(() => { beatFlash.style.opacity = '0'; }, 70);
-    updateBeatGrid();
-  }
 }
 
 function triggerBeatFlash(now) {
@@ -1034,6 +956,7 @@ function processMusic() {
   detectNoveltyPeaks(now);
 
   // 4. Détection de silence et logique de confirmation du BPM
+  let newBpm = null;
   if (totalFlux < 0.01) {
     if (silenceStartTime === 0) silenceStartTime = now;
     if (now - silenceStartTime > SILENCE_TIMEOUT_MS) {
@@ -1048,14 +971,27 @@ function processMusic() {
       bpmEl.classList.remove('dim');
     }
 
-    const newBpm = computeNoveltyBPM();
+    newBpm = computeNoveltyBPM();
     if (newBpm !== null) {
-      const consistent = candidateBpm !== null && Math.abs(newBpm - candidateBpm) <= CONFIRM_TOLERANCE;
-      if (consistent) {
-        if (now - candidateFirstSeen >= CONFIRM_WINDOW_MS) confirmedBpm = candidateBpm;
-      } else {
-        candidateBpm = newBpm;
-        candidateFirstSeen = now;
+      const sameCandidate = candidateBpm !== null && Math.abs(newBpm - candidateBpm) <= CONFIRM_TOLERANCE;
+
+      if (!sameCandidate) {
+        // Nouveau candidat — repart le compteur seulement si différent du BPM déjà affiché
+        const sameAsConfirmed = confirmedBpm !== null && Math.abs(newBpm - confirmedBpm) <= CONFIRM_TOLERANCE;
+        if (!sameAsConfirmed) {
+          candidateBpm = newBpm;
+          candidateFirstSeen = now;
+        }
+      }
+
+      // Délai à appliquer : court si rien n'est affiché, long pour remplacer
+      const requiredMs = confirmedBpm === null ? LOCK_MS : CHANGE_MS;
+      const candidateAge = now - candidateFirstSeen;
+
+      if (sameCandidate || (candidateBpm !== null && Math.abs(newBpm - candidateBpm) <= CONFIRM_TOLERANCE)) {
+        if (candidateAge >= requiredMs) {
+          confirmedBpm = candidateBpm;
+        }
       }
 
       if (confirmedBpm !== null) {
@@ -1072,11 +1008,7 @@ function processMusic() {
     }
   }
 
-  // 5. Normalisation pour le VU-mètre
-  if (acFluxSmooth > acFluxPeak) acFluxPeak = acFluxSmooth;
-  else acFluxPeak = acFluxPeak * 0.9995 + acFluxSmooth * 0.0005;
-
-  // 6. Gestion du Calibration et du Worker
+  // 5. Calibration et Worker
   if (isCalibrating) {
     fluxBuffer.push({ time: now, bandFluxes: [...bandFluxes] });
     if (now - calibrationStart > CALIBRATION_DURATION) {
@@ -1087,17 +1019,54 @@ function processMusic() {
   } else if (bpmWorker) {
     bpmWorker.postMessage({ type: 'sample', bandFluxes, time: now });
   }
+
+  // 6. Debug (seulement si panneau visible)
+  if (debugVisible) updateDebug(now, newBpm);
 }
 
 function renderMusic() {
   if (!running) return;
   requestAnimationFrame(renderMusic);
-
-  // Mise à jour de la barre de volume
-  updateVU(Math.min(acFluxSmooth / Math.max(acFluxPeak * 0.75, 0.001), 1));
-
-  // Seule la novelty curve est conservée
   drawNoveltyCurve();
+}
+
+// ============================================================
+// DEBUG
+// ============================================================
+function toggleDebug() {
+  debugVisible = !debugVisible;
+  dbgPanel.classList.toggle('visible', debugVisible);
+}
+
+function colorClass(el, val, warnThresh, badThresh) {
+  el.classList.remove('warn', 'bad');
+  if (val >= badThresh)  el.classList.add('bad');
+  else if (val >= warnThresh) el.classList.add('warn');
+}
+
+function updateDebug(now, rawBpm) {
+  const span = noveltyHistory.length > 1
+    ? (noveltyHistory.at(-1).time - noveltyHistory[0].time) / 1000
+    : 0;
+  const requiredMs = confirmedBpm === null ? LOCK_MS : CHANGE_MS;
+  const gateAge    = candidateBpm !== null ? Math.round(now - candidateFirstSeen) : 0;
+  const gateLeft   = Math.max(0, requiredMs - gateAge);
+
+  dbgPeaks.textContent     = noveltyBeatTimes.length;
+  dbgConfirm.textContent   = confirmedBpm !== null ? confirmedBpm + ' BPM' : '—';
+  dbgCandidate.textContent = candidateBpm !== null ? candidateBpm + ' BPM' : '—';
+  dbgGate.textContent      = candidateBpm !== null ? gateLeft + ' ms' : '—';
+  dbgGateMode.textContent  = confirmedBpm === null ? 'LOCK ' + LOCK_MS + 'ms' : 'CHANGE ' + CHANGE_MS + 'ms';
+  dbgCalib.textContent     = isCalibrating
+    ? Math.round(now - calibrationStart) + ' / ' + CALIBRATION_DURATION + ' ms'
+    : 'OK';
+  dbgSpan.textContent      = span.toFixed(1) + ' s';
+  dbgRaw.textContent       = rawBpm !== null && rawBpm !== undefined ? rawBpm + ' BPM' : '—';
+  dbgSmooth.textContent    = noveltySmoothedBpm !== null ? noveltySmoothedBpm.toFixed(1) : '—';
+
+  colorClass(dbgGate, gateLeft, requiredMs * 0.5, requiredMs * 0.9);
+  colorClass(dbgPeaks, 4 - noveltyBeatTimes.length, 1, 3);
+  colorClass(dbgSpan, 4 - span, 0.5, 2);
 }
 
 
@@ -1256,12 +1225,6 @@ function setUIState(s) {
   stateBadge.className  = 'state-badge ' + s;
   stateText.textContent = s.toUpperCase();
   bpmEl.classList.toggle('locked', s === 'locked');
-}
-
-function updateVU(norm) {
-  const pct = Math.min(norm * 100, 100);
-  vuFill.style.width  = pct + '%';
-  dbLabel.textContent = norm <= 0 ? '-∞ dB' : (20 * Math.log10(norm)).toFixed(1) + ' dB';
 }
 
 // ============================================================
