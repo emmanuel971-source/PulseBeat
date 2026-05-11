@@ -227,7 +227,7 @@ html, body {
   transition: opacity .05s;
 }
 
-/* ── VU + SCOPE ── */
+/* ── VU ── */
 .meters-col {
   display: flex; flex-direction: column;
   background: var(--deep);
@@ -244,8 +244,7 @@ html, body {
 }
 .vu-wrap {
   display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px 8px;
-  border-bottom: 1px solid rgba(0,0,0,0.40);
+  padding: 12px 16px 12px;
 }
 .vu-label {
   font-size: 10px; font-weight: 700;
@@ -273,16 +272,6 @@ html, body {
   flex-shrink: 0; width: 56px;
   text-align: right; letter-spacing: 1px;
 }
-.scope-wrap { padding: 8px 16px 12px; display: flex; flex-direction: column; gap: 5px; }
-.scope-label { font-size: 10px; font-weight: 700; letter-spacing: 4px; color: var(--label-sub); }
-#wave {
-  width: 100%; height: 62px; display: block;
-  border-radius: 4px;
-  background: var(--inset);
-  border: 1px solid var(--mid);
-  box-shadow: inset 0 1px 6px rgba(0,0,0,0.80);
-}
-
 /* ── BEAT GRID ── */
 .history-row {
   display: flex; align-items: center; gap: 5px;
@@ -385,16 +374,14 @@ html, body {
   font-size: 10px; font-weight: 700;
   letter-spacing: 4px; color: var(--label-sub);
 }
-#acorr-canvas, #novelty-canvas {
+#novelty-canvas {
   width: 100%; display: block;
   border-radius: 4px;
   background: var(--inset);
   border: 1px solid var(--mid);
   box-shadow: inset 0 1px 6px rgba(0,0,0,0.80);
+  height: 56px;
 }
-#acorr-canvas   { height: 48px; }
-#novelty-canvas { height: 44px; margin-top: 8px; }
-#acorr-confidence { color: var(--ice); }
 
 /* ── BUTTONS ── */
 .btn-panel {
@@ -482,16 +469,12 @@ html, body {
   <!-- BEAT FLASH STRIP -->
   <div class="beat-strip"><div class="beat-flash-bar" id="beat-flash"></div></div>
 
-  <!-- VU + SCOPE -->
+  <!-- VU -->
   <div class="meters-col">
     <div class="vu-wrap">
       <div class="vu-label" id="vu-label">BASS</div>
       <div class="vu-bar-h"><div class="vu-fill-h" id="vu-fill"></div></div>
       <div id="db-label">-∞ dB</div>
-    </div>
-    <div class="scope-wrap">
-      <div class="scope-label">WAVEFORM</div>
-      <canvas id="wave"></canvas>
     </div>
   </div>
 
@@ -509,11 +492,9 @@ html, body {
     </div>
   </div>
 
-  <!-- MUSIC PANEL — visualiseurs uniquement, sans sliders -->
+  <!-- MUSIC PANEL — novelty curve uniquement -->
   <div class="music-panel" id="music-panel">
-    <div class="music-panel-label">MULTI-BAND VISUALIZER</div>
-    <canvas id="acorr-canvas"></canvas>
-    <div class="music-panel-label" style="margin-top:6px">ENERGY CURVE</div>
+    <div class="music-panel-label">ENERGY CURVE</div>
     <canvas id="novelty-canvas"></canvas>
   </div>
 
@@ -526,7 +507,7 @@ html, body {
   <!-- FOOTER -->
   <div class="rack-footer">
     <span id="footer-label">MULTI-BAND · NOVELTY CURVE · AUTOCORR</span>
-    <span>v7.0</span>
+    <span>v9.0</span>
   </div>
 
 </div>
@@ -553,12 +534,6 @@ const beatFlash   = document.getElementById('beat-flash');
 const ledPower    = document.getElementById('led-power');
 const btnToggle   = document.getElementById('btn-toggle');
 const histRow     = document.getElementById('history-row');
-const canvas      = document.getElementById('wave');
-const cctx        = canvas.getContext('2d');
-const acCanvas    = document.getElementById('acorr-canvas');
-const acCtx       = acCanvas.getContext('2d');
-const acConfEl    = document.getElementById('acorr-confidence');
-const footerLabel = document.getElementById('footer-label');
 const noveltyCanvas = document.getElementById('novelty-canvas');
 const nCtx          = noveltyCanvas.getContext('2d');
 
@@ -675,12 +650,9 @@ let acFluxSmooth   = 0;
 let acFluxOnset    = 0;
 let acSmoothedBpm  = null;
 let acFluxPeak     = 0.01;   // peak-hold dynamique pour normaliser la barre FLUX
-let onsetVisBuffer  = [];
 let lastOnsetMs     = 0;
 let onsetCountTotal = 0;
-let _musTimeDomain  = null;
 let _musFreqBins    = null;
-let _tapTimeDomain  = null;
 let _tapFreqBins    = null;
 let bpmWorker       = null;
 let acSampleInterval = null;
@@ -793,12 +765,9 @@ function stddev(a) {
   const worker = new Worker(URL.createObjectURL(blob));
   worker.onmessage = function(e) {
     if (e.data.type !== 'onset') return;
-    const { band, time, strength } = e.data;
-    onsetVisBuffer.push({ time, strength, band });
-    if (onsetVisBuffer.length > 500) onsetVisBuffer.shift();
-    lastOnsetMs = time;
+    lastOnsetMs = e.data.time;
     onsetCountTotal++;
-    triggerBeatFlash(time);
+    triggerBeatFlash(e.data.time);
   };
   return worker;
 }
@@ -819,10 +788,7 @@ function setMode(m) {
   document.getElementById('btn-mode-tap').className   = 'mode-btn' + (isTap  ? ' active-tap'   : '');
   document.getElementById('btn-mode-music').className = 'mode-btn' + (!isTap ? ' active-music'  : '');
   document.getElementById('music-panel').classList.toggle('visible', !isTap);
-  vuLabel.textContent     = isTap ? 'BASS' : 'FLUX';
-  footerLabel.textContent = isTap
-    ? 'BASS ONSET · MEDIAN FILTERED'
-    : 'MULTI-BAND · NOVELTY CURVE · AUTOCORR';
+  vuLabel.textContent = isTap ? 'BASS' : 'FLUX';
   resetState();
 }
 
@@ -832,10 +798,8 @@ function setMode(m) {
 
 function resizeCanvases() {
   const dpr = window.devicePixelRatio || 1;
-  [canvas, acCanvas, noveltyCanvas].forEach(c => {
-    c.width = c.offsetWidth * dpr;
-    c.height = c.offsetHeight * dpr;
-  });
+  noveltyCanvas.width  = noveltyCanvas.offsetWidth  * dpr;
+  noveltyCanvas.height = noveltyCanvas.offsetHeight * dpr;
 }
 
 async function toggle() {
@@ -883,7 +847,6 @@ try {
   if (currentMode === 'music') {
     acFluxOnset    = 0;
     analyser.fftSize = AC_FFT_SIZE;
-    _musTimeDomain   = new Float32Array(analyser.fftSize);
     _musFreqBins     = new Float32Array(analyser.frequencyBinCount);
     acPrevMag        = null;
     bandPrevMags     = null;
@@ -895,7 +858,6 @@ try {
     bpmWorker        = createBpmWorker();
   } else {
     analyser.fftSize = 2048;
-    _tapTimeDomain   = new Float32Array(analyser.fftSize);
     _tapFreqBins     = new Uint8Array(analyser.frequencyBinCount);
   }
   src.connect(analyser);
@@ -942,7 +904,7 @@ function resetState() {
   histDots.forEach(d => d.classList.remove('active'));
   setUIState('silence');
 
-  onsetVisBuffer  = []; lastOnsetMs = 0; onsetCountTotal = 0;
+  lastOnsetMs = 0; onsetCountTotal = 0;
 }
 
 // ============================================================
@@ -952,7 +914,6 @@ function loopTap() {
   if (!running) return;
   requestAnimationFrame(loopTap);
 
-  analyser.getFloatTimeDomainData(_tapTimeDomain);
   analyser.getByteFrequencyData(_tapFreqBins);
 
   const binHz   = (ctx.sampleRate / 2) / analyser.frequencyBinCount;
@@ -978,8 +939,6 @@ function loopTap() {
 
   if (diff > threshold && now - lastBeat > REFRAC) triggerBeat(now);
   if (now - lastOnsetTime > TAP_TIMEOUT && lastOnsetTime > 0) resetState();
-
-  drawWave(_tapTimeDomain);
 }
 
 // ============================================================
@@ -1041,7 +1000,6 @@ function processMusic() {
   const now = performance.now();
 
   // 1. Captation des données brutes
-  analyser.getFloatTimeDomainData(_musTimeDomain);
   analyser.getFloatFrequencyData(_musFreqBins);
 
   const nBins      = analyser.frequencyBinCount;
@@ -1138,9 +1096,7 @@ function renderMusic() {
   // Mise à jour de la barre de volume
   updateVU(Math.min(acFluxSmooth / Math.max(acFluxPeak * 0.75, 0.001), 1));
 
-  // Dessin des courbes (les Canvas)
-  drawWave(_musTimeDomain);
-  drawOnsetViz();
+  // Seule la novelty curve est conservée
   drawNoveltyCurve();
 }
 
@@ -1294,36 +1250,6 @@ function computeNoveltyBPM() {
 }
 
 // ============================================================
-// ONSET VIZ
-// ============================================================
-function drawOnsetViz() {
-  const dpr = window.devicePixelRatio || 1;
-const w = acCanvas.width;
-const h = acCanvas.height
-  acCtx.clearRect(0, 0, w, h);
-  const now    = performance.now();
-  const WIN_MS = 5000;
-  BANDS.forEach((band, i) => {
-    const y = h * (0.2 + i * 0.2);
-    acCtx.strokeStyle = band.color + '22';
-    acCtx.beginPath();
-    acCtx.moveTo(0, y); acCtx.lineTo(w, y);
-    acCtx.stroke();
-  });
-  for (const o of onsetVisBuffer) {
-    const x = ((o.time - (now - WIN_MS)) / WIN_MS) * w;
-    if (x < 0 || x > w) continue;
-    const bandIdx = o.band || 0;
-    const baseY   = h * (0.25 + bandIdx * 0.2);
-    const barH    = Math.min(h * 0.18, Math.log1p(o.strength * 4) * h * 0.25);
-    acCtx.globalAlpha = Math.pow(Math.max(0, 1 - (now - o.time) / WIN_MS), 0.5);
-    acCtx.fillStyle   = BANDS[bandIdx].color;
-    acCtx.fillRect(x - 1.5, baseY - barH, 3, barH);
-  }
-  acCtx.globalAlpha = 1;
-}
-
-// ============================================================
 // UI HELPERS
 // ============================================================
 function setUIState(s) {
@@ -1336,27 +1262,6 @@ function updateVU(norm) {
   const pct = Math.min(norm * 100, 100);
   vuFill.style.width  = pct + '%';
   dbLabel.textContent = norm <= 0 ? '-∞ dB' : (20 * Math.log10(norm)).toFixed(1) + ' dB';
-}
-
-function drawWave(buffer) {
-  const dpr = window.devicePixelRatio || 1;
-const w = canvas.width;
-const h = canvas.height;
-  cctx.clearRect(0, 0, w, h);
-  cctx.strokeStyle = '#1a2030'; cctx.lineWidth = 1;
-  cctx.beginPath(); cctx.moveTo(0, h/2); cctx.lineTo(w, h/2); cctx.stroke();
-  cctx.beginPath();
-  for (let i = 0; i < buffer.length; i++) {
-    const x = (i / buffer.length) * w;
-    const y = (buffer[i] * 0.5 + 0.5) * h;
-    i === 0 ? cctx.moveTo(x, y) : cctx.lineTo(x, y);
-  }
-  cctx.strokeStyle = '#5dbbf5';
-  cctx.lineWidth   = 1.5 * dpr;
-  cctx.shadowColor = '#5dbbf5';
-  // cctx.shadowBlur  = 4;
-  cctx.stroke();
- // cctx.shadowBlur  = 0;
 }
 
 // ============================================================
