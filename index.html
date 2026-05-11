@@ -829,6 +829,15 @@ function setMode(m) {
 // ============================================================
 // START / STOP
 // ============================================================
+
+function resizeCanvases() {
+  const dpr = window.devicePixelRatio || 1;
+  [canvas, acCanvas, noveltyCanvas].forEach(c => {
+    c.width = c.offsetWidth * dpr;
+    c.height = c.offsetHeight * dpr;
+  });
+}
+
 async function toggle() {
   if (running) {
     clearInterval(acSampleInterval);
@@ -844,12 +853,25 @@ async function toggle() {
     resetState();
     return;
   }
-  try {
-    ctx    = new AudioContext();
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-    });
-  } catch (err) {
+try {
+  ctx = new AudioContext();
+  
+  // Contraintes spécifiques pour ignorer les traitements "GSM" du smartphone
+  const constraints = {
+    audio: {
+      echoCancellation: { ideal: false },
+      noiseSuppression: { ideal: false },
+      autoGainControl: { ideal: false },
+      // Paramètres spécifiques à Chrome/Android
+      googEchoCancellation: false,
+      googAutoGainControl: false,
+      googNoiseSuppression: false,
+      googHighpassFilter: false 
+    }
+  };
+
+  stream = await navigator.mediaDevices.getUserMedia(constraints);
+} catch (err) {
     const msg = err.name === 'NotAllowedError' ? 'ACCÈS MICRO REFUSÉ' : 'ERREUR : ' + err.message;
     bpmEl.textContent   = '!';
     dbLabel.textContent = msg.substring(0, 14);
@@ -881,7 +903,13 @@ async function toggle() {
   ledPower.classList.add('on');
   btnToggle.textContent = '■  STOP';
   btnToggle.classList.add('running');
-  currentMode === 'music' ? loopMusic() : loopTap();
+if (currentMode === 'music') {
+    resizeCanvases(); // Prépare la taille des canvas une seule fois
+    processMusic();   // Lance la boucle de calcul (le cœur du BPM)
+    renderMusic();    // Lance la boucle d'affichage (le dessin)
+  } else {
+    loopTap();        // Mode TAP classique
+  }
 }
 
 // ============================================================
@@ -1004,12 +1032,15 @@ function computeTapBPM() {
 // ============================================================
 // MUSIC LOOP
 // ============================================================
-function loopMusic() {
+function processMusic() {
   if (!running) return;
-  requestAnimationFrame(loopMusic);
+
+  // On planifie immédiatement le prochain passage (50 Hz constant)
+  setTimeout(processMusic, 20);
 
   const now = performance.now();
 
+  // 1. Captation des données brutes
   analyser.getFloatTimeDomainData(_musTimeDomain);
   analyser.getFloatFrequencyData(_musFreqBins);
 
@@ -1021,6 +1052,7 @@ function loopMusic() {
     bandPrevMags = BANDS.map(() => new Float32Array(nBins));
   }
 
+  // 2. Calcul des flux multi-bandes
   for (let b = 0; b < BANDS.length; b++) {
     const band = BANDS[b];
     let flux = 0, count = 0;
@@ -1038,11 +1070,12 @@ function loopMusic() {
   const totalFlux = bandFluxes.reduce((a, b) => a + b, 0);
   acFluxSmooth    = 0.5 * acFluxSmooth + 0.5 * totalFlux;
 
+  // 3. Novelty Curve et détection de pics
   const novelty = calculateNovelty(bandFluxes);
   updateNoveltyBuffer(novelty, now);
   detectNoveltyPeaks(now);
 
-  // ── SILENCE DETECTION ──
+  // 4. Détection de silence et logique de confirmation du BPM
   if (totalFlux < 0.01) {
     if (silenceStartTime === 0) silenceStartTime = now;
     if (now - silenceStartTime > SILENCE_TIMEOUT_MS) {
@@ -1057,49 +1090,35 @@ function loopMusic() {
       bpmEl.classList.remove('dim');
     }
 
-    // ── CONFIRMATION GATE ──
     const newBpm = computeNoveltyBPM();
     if (newBpm !== null) {
-      const consistent =
-        candidateBpm !== null && Math.abs(newBpm - candidateBpm) <= CONFIRM_TOLERANCE;
-
+      const consistent = candidateBpm !== null && Math.abs(newBpm - candidateBpm) <= CONFIRM_TOLERANCE;
       if (consistent) {
-        if (now - candidateFirstSeen >= CONFIRM_WINDOW_MS) {
-          confirmedBpm = candidateBpm;
-        }
+        if (now - candidateFirstSeen >= CONFIRM_WINDOW_MS) confirmedBpm = candidateBpm;
       } else {
-        candidateBpm       = newBpm;
+        candidateBpm = newBpm;
         candidateFirstSeen = now;
       }
 
       if (confirmedBpm !== null) {
-        // BPM confirmé — affichage stable + métronome
         bpmEl.textContent = confirmedBpm;
         bpmEl.classList.remove('pulsing', 'dim');
-        const confirmedByPeaks = noveltyBeatTimes.length >= 6;
-        setUIState(confirmedByPeaks ? 'locked' : 'tracking');
+        setUIState(noveltyBeatTimes.length >= 6 ? 'locked' : 'tracking');
         startMetronome(confirmedBpm);
       } else {
-        // En attente de confirmation — on pulse les tirets, métronome off
         bpmEl.textContent = '--';
         bpmEl.classList.add('pulsing');
-        bpmEl.classList.remove('locked', 'dim');
         setUIState('tracking');
         stopMetronome();
       }
-    } else {
-      setUIState('tracking');
     }
   }
 
-  // Normalisation dynamique : peak-hold avec decay lent → barre toujours lisible
+  // 5. Normalisation pour le VU-mètre
   if (acFluxSmooth > acFluxPeak) acFluxPeak = acFluxSmooth;
-  else acFluxPeak = acFluxPeak * 0.9995 + acFluxSmooth * 0.0005; // decay très lent
-  updateVU(Math.min(acFluxSmooth / Math.max(acFluxPeak * 0.75, 0.001), 1));
-  drawWave(_musTimeDomain);
-  drawOnsetViz();
-  drawNoveltyCurve();
+  else acFluxPeak = acFluxPeak * 0.9995 + acFluxSmooth * 0.0005;
 
+  // 6. Gestion du Calibration et du Worker
   if (isCalibrating) {
     fluxBuffer.push({ time: now, bandFluxes: [...bandFluxes] });
     if (now - calibrationStart > CALIBRATION_DURATION) {
@@ -1111,6 +1130,20 @@ function loopMusic() {
     bpmWorker.postMessage({ type: 'sample', bandFluxes, time: now });
   }
 }
+
+function renderMusic() {
+  if (!running) return;
+  requestAnimationFrame(renderMusic);
+
+  // Mise à jour de la barre de volume
+  updateVU(Math.min(acFluxSmooth / Math.max(acFluxPeak * 0.75, 0.001), 1));
+
+  // Dessin des courbes (les Canvas)
+  drawWave(_musTimeDomain);
+  drawOnsetViz();
+  drawNoveltyCurve();
+}
+
 
 // ============================================================
 // NOVELTY
@@ -1129,8 +1162,8 @@ function updateNoveltyBuffer(novelty, now) {
 
 function drawNoveltyCurve() {
   const dpr = window.devicePixelRatio || 1;
-  const w   = noveltyCanvas.width  = noveltyCanvas.offsetWidth  * dpr;
-  const h   = noveltyCanvas.height = noveltyCanvas.offsetHeight * dpr;
+const w = noveltyCanvas.width;
+const h = noveltyCanvas.height;
   nCtx.clearRect(0, 0, w, h);
   if (noveltyHistory.length < 10) return;
   const now = performance.now();
@@ -1143,7 +1176,7 @@ function drawNoveltyCurve() {
   nCtx.strokeStyle = '#39ff8a';
   nCtx.lineWidth   = 2.5 * dpr;
   nCtx.shadowColor = '#39ff8a';
-  nCtx.shadowBlur  = 8;
+  //nCtx.shadowBlur  = 8;
   nCtx.beginPath();
   let first = true;
   for (const p of noveltyHistory) {
@@ -1154,7 +1187,7 @@ function drawNoveltyCurve() {
     else        { nCtx.lineTo(x, y); }
   }
   nCtx.stroke();
-  nCtx.shadowBlur  = 0;
+ // nCtx.shadowBlur  = 0;
   nCtx.strokeStyle = '#ffffff18';
   nCtx.lineWidth   = 1 * dpr;
   nCtx.beginPath();
@@ -1265,8 +1298,8 @@ function computeNoveltyBPM() {
 // ============================================================
 function drawOnsetViz() {
   const dpr = window.devicePixelRatio || 1;
-  const w   = acCanvas.width  = acCanvas.offsetWidth  * dpr;
-  const h   = acCanvas.height = acCanvas.offsetHeight * dpr;
+const w = acCanvas.width;
+const h = acCanvas.height
   acCtx.clearRect(0, 0, w, h);
   const now    = performance.now();
   const WIN_MS = 5000;
@@ -1307,8 +1340,8 @@ function updateVU(norm) {
 
 function drawWave(buffer) {
   const dpr = window.devicePixelRatio || 1;
-  const w   = canvas.width  = canvas.offsetWidth  * dpr;
-  const h   = canvas.height = canvas.offsetHeight * dpr;
+const w = canvas.width;
+const h = canvas.height;
   cctx.clearRect(0, 0, w, h);
   cctx.strokeStyle = '#1a2030'; cctx.lineWidth = 1;
   cctx.beginPath(); cctx.moveTo(0, h/2); cctx.lineTo(w, h/2); cctx.stroke();
@@ -1321,9 +1354,9 @@ function drawWave(buffer) {
   cctx.strokeStyle = '#5dbbf5';
   cctx.lineWidth   = 1.5 * dpr;
   cctx.shadowColor = '#5dbbf5';
-  cctx.shadowBlur  = 4;
+  // cctx.shadowBlur  = 4;
   cctx.stroke();
-  cctx.shadowBlur  = 0;
+ // cctx.shadowBlur  = 0;
 }
 
 // ============================================================
