@@ -35,6 +35,47 @@
   --label:      #dde4f0;
   --label-sub:  #7a8ba8;
   --label-dim:  #384050;
+
+  --header-grad-top: #252930;
+  --header-grad-bot: #151820;
+  --footer-grad-top: #14171d;
+  --footer-grad-bot: #0e1014;
+  --bpm-scanline: rgba(0,0,0,0.10);
+}
+
+/* ── LIGHT THEME ── */
+body.light {
+  --rack-bg:    #e8eaf0;
+  --face:       #f2f4f8;
+  --deep:       #eaecf2;
+  --inset:      #dde0e8;
+  --mid:        #c8cdd8;
+  --hi:         rgba(255,255,255,0.70);
+  --lo:         rgba(0,0,0,0.10);
+
+  --gold:       #c07010;
+  --gold-glow:  rgba(192,112,16,0.30);
+  --gold-dim:   #f5e0c0;
+
+  --ice:        #1a7fc0;
+  --ice-glow:   rgba(26,127,192,0.25);
+
+  --mint:       #00a878;
+  --mint-dim:   #c0ede0;
+  --mint-glow:  rgba(0,168,120,0.30);
+
+  --red:        #d93040;
+  --red-dim:    #fce0e2;
+
+  --label:      #1a1d24;
+  --label-sub:  #5a6478;
+  --label-dim:  #9aa0b0;
+
+  --header-grad-top: #dde0e8;
+  --header-grad-bot: #d0d4de;
+  --footer-grad-top: #d8dbe4;
+  --footer-grad-bot: #cdd0da;
+  --bpm-scanline: rgba(0,0,0,0.04);
 }
 
 html, body {
@@ -77,7 +118,7 @@ html, body {
 
 /* ── HEADER ── */
 .rack-header {
-  background: linear-gradient(180deg, #252930 0%, #151820 100%);
+  background: linear-gradient(180deg, var(--header-grad-top) 0%, var(--header-grad-bot) 100%);
   padding: 11px 16px;
   display: flex;
   align-items: center;
@@ -132,7 +173,7 @@ html, body {
   background-image:
     repeating-linear-gradient(0deg,
       transparent 0px, transparent 3px,
-      rgba(0,0,0,0.10) 3px, rgba(0,0,0,0.10) 4px);
+      var(--bpm-scanline) 3px, var(--bpm-scanline) 4px);
   padding: 22px 20px 18px;
   display: flex;
   align-items: flex-end;
@@ -264,55 +305,103 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ── MODE SELECTOR ── */
-.mode-panel {
+/* ── THEME SWITCH ── */
+.theme-switch {
+  display: flex; align-items: center; gap: 7px;
+  flex-shrink: 0;
+}
+.theme-toggle {
+  position: relative; width: 34px; height: 18px; cursor: pointer;
+}
+.theme-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.theme-track {
+  position: absolute; inset: 0;
+  border-radius: 9px;
+  background: var(--mid);
+  border: 1px solid var(--lo);
+  transition: background .25s;
+}
+.theme-toggle input:checked + .theme-track { background: rgba(240,160,48,0.28); }
+.theme-knob {
+  position: absolute; top: 2px; left: 2px;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--label-sub);
+  transition: transform .22s cubic-bezier(.4,0,.2,1), background .25s;
+  font-size: 9px; display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.theme-toggle input:checked + .theme-track + .theme-knob {
+  transform: translateX(15px);
+  background: var(--gold);
+}
+.theme-icon { font-size: 9px; color: var(--label-dim); user-select: none; }
+
+/* ── BPM HISTORY CHART ── */
+.bpm-history-panel {
   background: var(--deep);
-  padding: 12px 16px;
-  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 16px 12px;
+  flex-direction: column; gap: 5px;
   border-bottom: 1px solid var(--lo);
   position: relative;
+  display: flex;
 }
-.mode-panel::before {
+.bpm-history-panel::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
+  top: 0; left: 0; right: 0; height: 1px;
   background: var(--hi);
 }
-.mode-label { font-size: 10px; font-weight: 700; letter-spacing: 5px; color: var(--label-sub); }
-.mode-btns  { display: flex; gap: 8px; }
-.mode-btn {
-  flex: 1; padding: 13px 8px;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 12px; font-weight: 700; letter-spacing: 2px;
-  border-radius: 6px;
+.bpm-history-label {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 4px; color: var(--label-dim);
+}
+.bpm-history-label span { letter-spacing: 1px; font-size: 9px; color: var(--label-sub); }
+#bpm-history-canvas {
+  width: 100%; display: block;
+  border-radius: 4px;
+  background: var(--inset);
   border: 1px solid var(--mid);
-  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
-  color: var(--label-sub);
-  cursor: pointer;
-  transition: all .18s;
-  -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);
+  box-shadow: inset 0 1px 6px rgba(0,0,0,0.80);
+  height: 52px;
 }
-.mode-btn:active { opacity: 0.7; transform: translateY(1px); }
-.mode-btn.active-tap {
-  background: linear-gradient(180deg, rgba(240,160,48,0.16) 0%, rgba(240,160,48,0.05) 100%);
-  color: var(--gold);
-  border-color: rgba(240,160,48,0.38);
-  box-shadow: 0 0 16px rgba(240,160,48,0.18), inset 0 1px 0 rgba(240,160,48,0.18);
+
+/* ── DEBUG SLIDERS ── */
+.debug-sliders {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  margin-top: 4px;
 }
-.mode-btn.active-music {
-  background: linear-gradient(180deg, rgba(93,187,245,0.16) 0%, rgba(93,187,245,0.05) 100%);
-  color: var(--ice);
-  border-color: rgba(93,187,245,0.38);
-  box-shadow: 0 0 16px rgba(93,187,245,0.18), inset 0 1px 0 rgba(93,187,245,0.18);
+.debug-slider-row {
+  display: flex; flex-direction: column; gap: 2px;
 }
-.mode-btn.blocked { animation: shake .3s ease; }
-@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+.debug-slider-label {
+  display: flex; justify-content: space-between;
+  font-size: 9px; letter-spacing: 1px;
+}
+.debug-slider-key { color: var(--label-sub); }
+.debug-slider-val { font-family: 'Orbitron', monospace; font-size: 9px; color: var(--ice); }
+.debug-slider-row input[type=range] {
+  width: 100%; height: 4px;
+  -webkit-appearance: none; appearance: none;
+  background: var(--mid);
+  border-radius: 2px; outline: none; cursor: pointer;
+  accent-color: var(--gold);
+}
+.debug-slider-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 6px var(--gold-glow);
+  border: 1px solid rgba(0,0,0,0.3);
+}
+
 
 /* ── MUSIC PANEL ── */
 .music-panel {
-  display: none;
+  display: flex;
   background: var(--deep);
   padding: 10px 16px 14px;
   flex-direction: column; gap: 6px;
@@ -326,7 +415,6 @@ html, body {
   height: 1px;
   background: var(--hi);
 }
-.music-panel.visible { display: flex; }
 .music-panel-label {
   font-size: 10px; font-weight: 700;
   letter-spacing: 4px; color: var(--label-sub);
@@ -390,7 +478,7 @@ html, body {
 
 /* ── FOOTER ── */
 .rack-footer {
-  background: linear-gradient(180deg, #14171d, #0e1014);
+  background: linear-gradient(180deg, var(--footer-grad-top), var(--footer-grad-bot));
   padding: 9px 16px;
   display: flex; justify-content: space-between;
 }
@@ -407,6 +495,13 @@ html, body {
     <span class="brand">STUDIO</span>
     <span class="rack-title">BPM DETECTOR PRO</span>
     <div class="led-power" id="led-power"></div>
+    <div class="theme-switch">
+      <label class="theme-toggle" title="Mode clair / sombre">
+        <input type="checkbox" id="theme-chk" onchange="toggleTheme(this.checked)">
+        <div class="theme-track"></div>
+        <div class="theme-knob">☀</div>
+      </label>
+    </div>
     <div class="screw"></div>
   </div>
 
@@ -444,15 +539,33 @@ html, body {
       <div class="debug-row"><span class="debug-key">RAW BPM</span><span class="debug-val" id="dbg-raw">—</span></div>
       <div class="debug-row"><span class="debug-key">SMOOTH</span><span class="debug-val" id="dbg-smooth">—</span></div>
     </div>
+    <div class="debug-sliders">
+      <div class="debug-slider-row">
+        <div class="debug-slider-label">
+          <span class="debug-slider-key">LOCK</span>
+          <span class="debug-slider-val" id="dbg-lock-val">800 ms</span>
+        </div>
+        <input type="range" id="slider-lock" min="400" max="1600" step="50" value="800"
+               oninput="updateLockMs(+this.value)">
+      </div>
+      <div class="debug-slider-row">
+        <div class="debug-slider-label">
+          <span class="debug-slider-key">CHANGE</span>
+          <span class="debug-slider-val" id="dbg-change-val">1500 ms</span>
+        </div>
+        <input type="range" id="slider-change" min="800" max="3200" step="100" value="1500"
+               oninput="updateChangeMs(+this.value)">
+      </div>
+    </div>
   </div>
 
-  <!-- MODE SELECTOR -->
-  <div class="mode-panel">
-    <div class="mode-label">MODE</div>
-    <div class="mode-btns">
-      <button class="mode-btn active-tap" id="btn-mode-tap"   onclick="setMode('tap')">TAP / CLAP</button>
-      <button class="mode-btn"            id="btn-mode-music" onclick="setMode('music')">MUSIQUE</button>
+  <!-- BPM HISTORY CHART (5 min) -->
+  <div class="bpm-history-panel" id="bpm-history-panel">
+    <div class="bpm-history-label">
+      <span>BPM HISTORY</span>
+      <span id="bpm-history-range">— 5 MIN —</span>
     </div>
+    <canvas id="bpm-history-canvas"></canvas>
   </div>
 
   <!-- MUSIC PANEL — novelty curve uniquement -->
@@ -483,7 +596,7 @@ html, body {
 // ============================================================
 let ctx, analyser, src, stream;
 let running = false;
-let currentMode = 'tap';
+let currentMode = 'music';
 
 // ============================================================
 // UI REFS
@@ -495,6 +608,8 @@ const ledPower    = document.getElementById('led-power');
 const btnToggle   = document.getElementById('btn-toggle');
 const noveltyCanvas = document.getElementById('novelty-canvas');
 const nCtx          = noveltyCanvas.getContext('2d');
+const bpmHistCanvas = document.getElementById('bpm-history-canvas');
+const bpmHistCtx    = bpmHistCanvas.getContext('2d');
 
 // Debug refs
 const dbgPanel     = document.getElementById('debug-panel');
@@ -540,13 +655,18 @@ const NOVELTY_BPM_MAX   = 200;
 let confirmedBpm       = null;
 let candidateBpm       = null;
 let candidateFirstSeen = 0;
-const LOCK_MS          = 800;   // délai avant 1er affichage
-const CHANGE_MS        = 1500;  // délai pour remplacer un BPM déjà affiché
+let LOCK_MS          = 800;   // délai avant 1er affichage
+let CHANGE_MS        = 1500;  // délai pour remplacer un BPM déjà affiché
 const CONFIRM_TOLERANCE = 2;    // ±2 BPM = même candidat
 
 // ── SILENCE DETECTION ──
 let silenceStartTime     = 0;
 const SILENCE_TIMEOUT_MS = 2000;
+
+// ── BPM HISTORY (5 min rolling) ──
+const BPM_HIST_WIN_MS = 5 * 60 * 1000; // 5 minutes
+let bpmHistory = []; // { time, bpm }
+let bpmHistInterval = null;
 
 // ── MÉTRONOME (simplifié — plus de flash ni de dots) ──
 let metronomeInterval = null;
@@ -709,25 +829,6 @@ function stddev(a) {
 }
 
 // ============================================================
-// MODE
-// ============================================================
-function setMode(m) {
-  if (running) {
-    const id  = m === 'tap' ? 'btn-mode-tap' : 'btn-mode-music';
-    const btn = document.getElementById(id);
-    btn.classList.add('blocked');
-    setTimeout(() => btn.classList.remove('blocked'), 350);
-    return;
-  }
-  currentMode = m;
-  const isTap = m === 'tap';
-  document.getElementById('btn-mode-tap').className   = 'mode-btn' + (isTap  ? ' active-tap'   : '');
-  document.getElementById('btn-mode-music').className = 'mode-btn' + (!isTap ? ' active-music'  : '');
-  document.getElementById('music-panel').classList.toggle('visible', !isTap);
-  resetState();
-}
-
-// ============================================================
 // START / STOP
 // ============================================================
 
@@ -735,6 +836,8 @@ function resizeCanvases() {
   const dpr = window.devicePixelRatio || 1;
   noveltyCanvas.width  = noveltyCanvas.offsetWidth  * dpr;
   noveltyCanvas.height = noveltyCanvas.offsetHeight * dpr;
+  bpmHistCanvas.width  = bpmHistCanvas.offsetWidth  * dpr;
+  bpmHistCanvas.height = bpmHistCanvas.offsetHeight * dpr;
 }
 
 async function toggle() {
@@ -826,6 +929,7 @@ function resetState() {
   confirmedBpm = null; candidateBpm = null; candidateFirstSeen = 0;
   silenceStartTime = 0;
   stopMetronome();
+  bpmHistory = [];
 
   if (bpmWorker) bpmWorker.postMessage({ type: 'reset' });
 
@@ -999,6 +1103,7 @@ function processMusic() {
         bpmEl.classList.remove('pulsing', 'dim');
         setUIState(noveltyBeatTimes.length >= 6 ? 'locked' : 'tracking');
         startMetronome(confirmedBpm);
+        pushBpmHistory(confirmedBpm);
       } else {
         bpmEl.textContent = '--';
         bpmEl.classList.add('pulsing');
@@ -1028,6 +1133,7 @@ function renderMusic() {
   if (!running) return;
   requestAnimationFrame(renderMusic);
   drawNoveltyCurve();
+  drawBpmHistory();
 }
 
 // ============================================================
@@ -1228,8 +1334,126 @@ function setUIState(s) {
 }
 
 // ============================================================
-// MATH
+// THEME TOGGLE
 // ============================================================
+function toggleTheme(isLight) {
+  document.body.classList.toggle('light', isLight);
+  // Redraw canvases with new theme colors
+  drawNoveltyCurve();
+  drawBpmHistory();
+}
+
+// ============================================================
+// BPM HISTORY CHART
+// ============================================================
+function pushBpmHistory(bpm) {
+  const now = performance.now();
+  bpmHistory.push({ time: now, bpm });
+  const cutoff = now - BPM_HIST_WIN_MS;
+  while (bpmHistory.length > 0 && bpmHistory[0].time < cutoff) bpmHistory.shift();
+}
+
+function drawBpmHistory() {
+  const dpr = window.devicePixelRatio || 1;
+  const w   = bpmHistCanvas.width;
+  const h   = bpmHistCanvas.height;
+  bpmHistCtx.clearRect(0, 0, w, h);
+
+  const isLight = document.body.classList.contains('light');
+  const now = performance.now();
+
+  // Background
+  bpmHistCtx.fillStyle = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.20)';
+  bpmHistCtx.fillRect(0, 0, w, h);
+
+  // Grid lines at 60, 90, 120, 150 BPM
+  const bpmGridLines = [60, 90, 120, 150, 180];
+  const bpmMin = 55, bpmMax = 185;
+  bpmHistCtx.strokeStyle = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)';
+  bpmHistCtx.lineWidth = 1 * dpr;
+  bpmHistCtx.setLineDash([3 * dpr, 4 * dpr]);
+  for (const b of bpmGridLines) {
+    const y = h - ((b - bpmMin) / (bpmMax - bpmMin)) * h;
+    bpmHistCtx.beginPath();
+    bpmHistCtx.moveTo(0, y);
+    bpmHistCtx.lineTo(w, y);
+    bpmHistCtx.stroke();
+  }
+  bpmHistCtx.setLineDash([]);
+
+  if (bpmHistory.length < 2) return;
+
+  // Time axis: last 5 min, right-aligned = now
+  const timeMin = now - BPM_HIST_WIN_MS;
+
+  // Fill area under curve
+  const grad = bpmHistCtx.createLinearGradient(0, 0, 0, h);
+  if (isLight) {
+    grad.addColorStop(0, 'rgba(192,112,16,0.25)');
+    grad.addColorStop(1, 'rgba(192,112,16,0.02)');
+  } else {
+    grad.addColorStop(0, 'rgba(240,160,48,0.30)');
+    grad.addColorStop(1, 'rgba(240,160,48,0.02)');
+  }
+  bpmHistCtx.beginPath();
+  let first = true;
+  for (const p of bpmHistory) {
+    const x = ((p.time - timeMin) / BPM_HIST_WIN_MS) * w;
+    const y = h - ((Math.min(Math.max(p.bpm, bpmMin), bpmMax) - bpmMin) / (bpmMax - bpmMin)) * h;
+    if (first) { bpmHistCtx.moveTo(x, h); bpmHistCtx.lineTo(x, y); first = false; }
+    else bpmHistCtx.lineTo(x, y);
+  }
+  const lastP = bpmHistory[bpmHistory.length - 1];
+  const lastX = ((lastP.time - timeMin) / BPM_HIST_WIN_MS) * w;
+  bpmHistCtx.lineTo(lastX, h);
+  bpmHistCtx.closePath();
+  bpmHistCtx.fillStyle = grad;
+  bpmHistCtx.fill();
+
+  // Main line
+  bpmHistCtx.strokeStyle = isLight ? '#c07010' : '#f0a030';
+  bpmHistCtx.lineWidth = 2 * dpr;
+  bpmHistCtx.lineJoin = 'round';
+  bpmHistCtx.beginPath();
+  first = true;
+  for (const p of bpmHistory) {
+    const x = ((p.time - timeMin) / BPM_HIST_WIN_MS) * w;
+    const y = h - ((Math.min(Math.max(p.bpm, bpmMin), bpmMax) - bpmMin) / (bpmMax - bpmMin)) * h;
+    if (first) { bpmHistCtx.moveTo(x, y); first = false; }
+    else bpmHistCtx.lineTo(x, y);
+  }
+  bpmHistCtx.stroke();
+
+  // Last BPM dot
+  const lx = ((lastP.time - timeMin) / BPM_HIST_WIN_MS) * w;
+  const ly = h - ((Math.min(Math.max(lastP.bpm, bpmMin), bpmMax) - bpmMin) / (bpmMax - bpmMin)) * h;
+  bpmHistCtx.beginPath();
+  bpmHistCtx.arc(lx, ly, 4 * dpr, 0, Math.PI * 2);
+  bpmHistCtx.fillStyle = isLight ? '#c07010' : '#f0a030';
+  bpmHistCtx.fill();
+  bpmHistCtx.strokeStyle = isLight ? '#f2f4f8' : '#0f1115';
+  bpmHistCtx.lineWidth = 1.5 * dpr;
+  bpmHistCtx.stroke();
+
+  // Update range label
+  const oldestMin = Math.round((now - bpmHistory[0].time) / 1000 / 60);
+  document.getElementById('bpm-history-range').textContent =
+    bpmHistory.length > 1 ? oldestMin + ' MIN WINDOW' : '— 5 MIN —';
+}
+
+// ============================================================
+// DEBUG SLIDERS
+// ============================================================
+function updateLockMs(v) {
+  LOCK_MS = v;
+  document.getElementById('dbg-lock-val').textContent = v + ' ms';
+}
+function updateChangeMs(v) {
+  CHANGE_MS = v;
+  document.getElementById('dbg-change-val').textContent = v + ' ms';
+}
+
+
 function avg(a)       { return a.length ? a.reduce((s, v) => s + v, 0) / a.length : 0; }
 function stddev(a, m) { return a.length ? Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length) : 0; }
 function median(a) {
