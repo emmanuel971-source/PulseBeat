@@ -662,6 +662,7 @@ let noveltyBeatTimes    = [];
 let noveltySmoothedBpm  = null;
 const NOVELTY_BPM_MIN   = 60;
 const NOVELTY_BPM_MAX   = 200;
+const NOISE_GATE_THRESHOLD = 0.05; // Seuil de sensibilité (à ajuster selon tes tests)
 
 // ── CONFIRMATION GATE ASYMÉTRIQUE ──
 // Accrochage rapide : affiche dès que le candidat tient LOCK_MS
@@ -1068,26 +1069,32 @@ function processMusic() {
   const totalFlux = bandFluxes.reduce((a, b) => a + b, 0);
   acFluxSmooth    = 0.5 * acFluxSmooth + 0.5 * totalFlux;
 
-  // 3. Novelty Curve et détection de pics
+// 3. Calcul de la puissance (Gate) et Novelty
   const novelty = calculateNovelty(bandFluxes);
-  updateNoveltyBuffer(novelty, now);
-  detectNoveltyPeaks(now);
 
-  // 4. Détection de silence et logique de confirmation du BPM
-  let newBpm = null;
-  if (totalFlux < 0.01) {
+  // Détection de silence et logique de confirmation du BPM
+  let newBpm = null;if (novelty < NOISE_GATE_THRESHOLD) {
     if (silenceStartTime === 0) silenceStartTime = now;
+    
     if (now - silenceStartTime > SILENCE_TIMEOUT_MS) {
       bpmEl.classList.add('dim');
       bpmEl.classList.remove('locked', 'pulsing');
       setUIState('silence');
       stopMetronome();
+      
+      // CRUCIAL : On vide l'historique pour éviter les BPM fantômes au prochain démarrage
+      noveltyHistory = []; 
+      noveltyBeatTimes = [];
     }
+    return; // ON ARRÊTE ICI : on n'ajoute pas de silence à l'historique
   } else {
-    if (silenceStartTime !== 0) {
-      silenceStartTime = 0;
-      bpmEl.classList.remove('dim');
-    }
+    silenceStartTime = 0;
+    bpmEl.classList.remove('dim');
+  }
+
+  // 4. Si on a passé la Gate, on enregistre et on détecte les pics
+  updateNoveltyBuffer(novelty, now);
+  detectNoveltyPeaks(now);
 
     newBpm = computeNoveltyBPM();
     if (newBpm !== null) {
@@ -1125,7 +1132,7 @@ function processMusic() {
         stopMetronome();
       }
     }
-  }
+  
 
   // 5. Calibration et Worker
   if (isCalibrating) {
@@ -1297,21 +1304,43 @@ function computeNoveltyBPM() {
     if (idx >= 0 && idx < N) bins[idx] = Math.max(bins[idx], p.value * weight);
   }
 
-  const lagMin = Math.floor(60000 / 180 / BIN_MS);
+const lagMin = Math.floor(60000 / 180 / BIN_MS);
   const lagMax = Math.ceil (60000 /  60 / BIN_MS);
-  let bestLag = -1, bestCorr = -Infinity;
+  
+  let bestLag = -1;
+  let bestCorr = -Infinity;
+  
+  // Tableau pour stocker les résultats de corrélation
+  const corrs = new Float32Array(lagMax + 2); 
 
   for (let lag = lagMin; lag <= lagMax; lag++) {
     let corr = 0;
     const count = N - lag;
     for (let i = 0; i < count; i++) corr += bins[i] * bins[i + lag];
     corr /= count;
-    if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
+    
+    corrs[lag] = corr; // On stocke la valeur
+    
+    if (corr > bestCorr) {
+      bestCorr = corr;
+      bestLag = lag;
+    }
   }
 
-  if (bestLag < 0 || bestCorr < 1e-6) return null;
+  if (bestLag <= lagMin || bestLag >= lagMax || bestCorr < 1e-6) return null;
 
-  let bpm = 60000 / (bestLag * BIN_MS);
+  // --- INTERPOLATION PARABOLIQUE ---
+  const y1 = corrs[bestLag - 1];
+  const y2 = corrs[bestLag];
+  const y3 = corrs[bestLag + 1];
+  
+  // Calcul du décalage fractionnaire (entre -0.5 et +0.5)
+  const delta = (y1 - y3) / (2 * (y1 - 2 * y2 + y3));
+  const refinedLag = bestLag + delta;
+
+  let bpm = 60000 / (refinedLag * BIN_MS);
+  // ---------------------------------
+
   while (bpm > 180) bpm /= 2;
   while (bpm < 60)  bpm *= 2;
   if (bpm < 60 || bpm > 180) return null;
@@ -1333,7 +1362,7 @@ function computeNoveltyBPM() {
 
   noveltySmoothedBpm = noveltySmoothedBpm === null
     ? bpm
-    : 0.80 * noveltySmoothedBpm + 0.20 * bpm;
+    : 0.92 * noveltySmoothedBpm + 0.08 * bpm; // Lissage plus lent pour plus de stabilité
 
   return Math.round(noveltySmoothedBpm);
 }
