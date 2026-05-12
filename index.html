@@ -29,6 +29,13 @@
   --mint-dim:   #032e1e;
   --mint-glow:  rgba(0,229,160,0.35);
 
+  /* Dark theme : locked = mint classique, novelty = vert fluo */
+  --locked-color:      #00e5a0;
+  --locked-glow:       rgba(0,229,160,0.35);
+  --locked-bg:         rgba(0,229,160,0.10);
+  --novelty-color:     #39ff8a;
+  --novelty-shadow:    #39ff8a;
+
   --red:        #ff4d5e;
   --red-dim:    #2d040a;
 
@@ -63,6 +70,13 @@ body.light {
   --mint:       #00a878;
   --mint-dim:   #c0ede0;
   --mint-glow:  rgba(0,168,120,0.30);
+
+  /* En mode light : locked = rouge japonais, novelty = orange */
+  --locked-color:      #d93040;
+  --locked-glow:       rgba(217,48,64,0.25);
+  --locked-bg:         rgba(217,48,64,0.08);
+  --novelty-color:     #c07010;
+  --novelty-shadow:    #c07010;
 
   --red:        #d93040;
   --red-dim:    #fce0e2;
@@ -208,8 +222,8 @@ html, body {
   transition: color .25s, text-shadow .25s;
 }
 #bpm.locked {
-  color: var(--mint);
-  text-shadow: 0 0 28px var(--mint-glow), 0 0 64px rgba(0,229,160,0.10);
+  color: var(--locked-color);
+  text-shadow: 0 0 28px var(--locked-glow), 0 0 64px var(--locked-glow);
 }
 #bpm.dim {
   color: var(--label-dim);
@@ -243,10 +257,10 @@ html, body {
 .state-badge.silence  { background: rgba(255,255,255,0.03); color: var(--label-dim);  border-color: var(--mid); }
 .state-badge.tracking { background: rgba(240,160,48,0.10);  color: var(--gold);        border-color: rgba(240,160,48,0.28); }
 .state-badge.locked   {
-  background: rgba(0,229,160,0.10);
-  color: var(--mint);
-  border-color: rgba(0,229,160,0.35);
-  box-shadow: 0 0 14px var(--mint-glow);
+  background: var(--locked-bg, rgba(0,229,160,0.10));
+  color: var(--locked-color);
+  border-color: var(--locked-glow);
+  box-shadow: 0 0 14px var(--locked-glow);
 }
 .state-dot {
   width: 6px; height: 6px;
@@ -363,7 +377,7 @@ html, body {
   background: var(--inset);
   border: 1px solid var(--mid);
   box-shadow: inset 0 1px 6px rgba(0,0,0,0.80);
-  height: 52px;
+  height: 104px;
 }
 
 /* ── DEBUG SLIDERS ── */
@@ -1204,9 +1218,9 @@ const h = noveltyCanvas.height;
     if (p.value > maxV) maxV = p.value;
   }
   if (maxV - minV < 0.001) maxV = minV + 0.01;
-  nCtx.strokeStyle = '#39ff8a';
+  nCtx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--novelty-color').trim() || '#39ff8a';
   nCtx.lineWidth   = 2.5 * dpr;
-  nCtx.shadowColor = '#39ff8a';
+  nCtx.shadowColor = getComputedStyle(document.body).getPropertyValue('--novelty-shadow').trim() || '#39ff8a';
   //nCtx.shadowBlur  = 8;
   nCtx.beginPath();
   let first = true;
@@ -1362,74 +1376,100 @@ function drawBpmHistory() {
   const isLight = document.body.classList.contains('light');
   const now = performance.now();
 
-  // Background
-  bpmHistCtx.fillStyle = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.20)';
-  bpmHistCtx.fillRect(0, 0, w, h);
-
-  // Grid lines at 60, 90, 120, 150 BPM
-  const bpmGridLines = [60, 90, 120, 150, 180];
   const bpmMin = 55, bpmMax = 185;
-  bpmHistCtx.strokeStyle = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)';
-  bpmHistCtx.lineWidth = 1 * dpr;
+  const bpmGridLines = [60, 90, 120, 150, 180];
+
+  // Left axis width (space for labels)
+  const axisW = 28 * dpr;
+  const plotX = axisW;
+  const plotW = w - axisW;
+
+  // Background (plot area only)
+  bpmHistCtx.fillStyle = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.20)';
+  bpmHistCtx.fillRect(plotX, 0, plotW, h);
+
+  // Grid lines + axis labels
   bpmHistCtx.setLineDash([3 * dpr, 4 * dpr]);
+  bpmHistCtx.lineWidth = 1 * dpr;
+  bpmHistCtx.font = `bold ${8 * dpr}px 'Orbitron', monospace`;
+  bpmHistCtx.textAlign = 'right';
+  bpmHistCtx.textBaseline = 'middle';
+
   for (const b of bpmGridLines) {
     const y = h - ((b - bpmMin) / (bpmMax - bpmMin)) * h;
+    // Grid line
+    bpmHistCtx.strokeStyle = isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.07)';
     bpmHistCtx.beginPath();
-    bpmHistCtx.moveTo(0, y);
+    bpmHistCtx.moveTo(plotX, y);
     bpmHistCtx.lineTo(w, y);
     bpmHistCtx.stroke();
+    // Tick mark
+    bpmHistCtx.setLineDash([]);
+    bpmHistCtx.strokeStyle = isLight ? 'rgba(0,0,0,0.20)' : 'rgba(255,255,255,0.15)';
+    bpmHistCtx.beginPath();
+    bpmHistCtx.moveTo(plotX, y);
+    bpmHistCtx.lineTo(plotX - 4 * dpr, y);
+    bpmHistCtx.stroke();
+    bpmHistCtx.setLineDash([3 * dpr, 4 * dpr]);
+    // Label
+    bpmHistCtx.fillStyle = isLight ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.28)';
+    bpmHistCtx.fillText(b, plotX - 6 * dpr, y);
   }
   bpmHistCtx.setLineDash([]);
 
+  // Axis line
+  bpmHistCtx.strokeStyle = isLight ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.12)';
+  bpmHistCtx.lineWidth = 1 * dpr;
+  bpmHistCtx.beginPath();
+  bpmHistCtx.moveTo(plotX, 0);
+  bpmHistCtx.lineTo(plotX, h);
+  bpmHistCtx.stroke();
+
   if (bpmHistory.length < 2) return;
 
-  // Time axis: last 5 min, right-aligned = now
   const timeMin = now - BPM_HIST_WIN_MS;
+  const lineColor = isLight ? '#c07010' : '#f0a030';
+  const glowColor = isLight ? 'rgba(192,112,16,0.25)' : 'rgba(240,160,48,0.30)';
+
+  // Map point → canvas coords (within plot area)
+  const px = p => plotX + ((p.time - timeMin) / BPM_HIST_WIN_MS) * plotW;
+  const py = p => h - ((Math.min(Math.max(p.bpm, bpmMin), bpmMax) - bpmMin) / (bpmMax - bpmMin)) * h;
 
   // Fill area under curve
   const grad = bpmHistCtx.createLinearGradient(0, 0, 0, h);
-  if (isLight) {
-    grad.addColorStop(0, 'rgba(192,112,16,0.25)');
-    grad.addColorStop(1, 'rgba(192,112,16,0.02)');
-  } else {
-    grad.addColorStop(0, 'rgba(240,160,48,0.30)');
-    grad.addColorStop(1, 'rgba(240,160,48,0.02)');
-  }
+  grad.addColorStop(0, isLight ? 'rgba(192,112,16,0.22)' : 'rgba(240,160,48,0.28)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
   bpmHistCtx.beginPath();
   let first = true;
   for (const p of bpmHistory) {
-    const x = ((p.time - timeMin) / BPM_HIST_WIN_MS) * w;
-    const y = h - ((Math.min(Math.max(p.bpm, bpmMin), bpmMax) - bpmMin) / (bpmMax - bpmMin)) * h;
+    const x = px(p), y = py(p);
     if (first) { bpmHistCtx.moveTo(x, h); bpmHistCtx.lineTo(x, y); first = false; }
     else bpmHistCtx.lineTo(x, y);
   }
   const lastP = bpmHistory[bpmHistory.length - 1];
-  const lastX = ((lastP.time - timeMin) / BPM_HIST_WIN_MS) * w;
-  bpmHistCtx.lineTo(lastX, h);
+  bpmHistCtx.lineTo(px(lastP), h);
   bpmHistCtx.closePath();
   bpmHistCtx.fillStyle = grad;
   bpmHistCtx.fill();
 
   // Main line
-  bpmHistCtx.strokeStyle = isLight ? '#c07010' : '#f0a030';
+  bpmHistCtx.strokeStyle = lineColor;
   bpmHistCtx.lineWidth = 2 * dpr;
   bpmHistCtx.lineJoin = 'round';
   bpmHistCtx.beginPath();
   first = true;
   for (const p of bpmHistory) {
-    const x = ((p.time - timeMin) / BPM_HIST_WIN_MS) * w;
-    const y = h - ((Math.min(Math.max(p.bpm, bpmMin), bpmMax) - bpmMin) / (bpmMax - bpmMin)) * h;
+    const x = px(p), y = py(p);
     if (first) { bpmHistCtx.moveTo(x, y); first = false; }
     else bpmHistCtx.lineTo(x, y);
   }
   bpmHistCtx.stroke();
 
   // Last BPM dot
-  const lx = ((lastP.time - timeMin) / BPM_HIST_WIN_MS) * w;
-  const ly = h - ((Math.min(Math.max(lastP.bpm, bpmMin), bpmMax) - bpmMin) / (bpmMax - bpmMin)) * h;
+  const lx = px(lastP), ly = py(lastP);
   bpmHistCtx.beginPath();
   bpmHistCtx.arc(lx, ly, 4 * dpr, 0, Math.PI * 2);
-  bpmHistCtx.fillStyle = isLight ? '#c07010' : '#f0a030';
+  bpmHistCtx.fillStyle = lineColor;
   bpmHistCtx.fill();
   bpmHistCtx.strokeStyle = isLight ? '#f2f4f8' : '#0f1115';
   bpmHistCtx.lineWidth = 1.5 * dpr;
