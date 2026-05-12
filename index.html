@@ -540,9 +540,9 @@ const NOVELTY_BPM_MAX   = 200;
 let confirmedBpm       = null;
 let candidateBpm       = null;
 let candidateFirstSeen = 0;
-const LOCK_MS          = 900;   // délai avant 1er affichage
-const CHANGE_MS        = 2000;  // délai pour remplacer un BPM déjà affiché
-const CONFIRM_TOLERANCE = 20;    // ±2 BPM = même candidat
+const LOCK_MS          = 800;   // délai avant 1er affichage
+const CHANGE_MS        = 1500;  // délai pour remplacer un BPM déjà affiché
+const CONFIRM_TOLERANCE = 2;    // ±2 BPM = même candidat
 
 // ── SILENCE DETECTION ──
 let silenceStartTime     = 0;
