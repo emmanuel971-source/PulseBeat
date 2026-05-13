@@ -710,7 +710,7 @@ let currentGenre = 'electro'; // 'electro' | 'rock'
 // ROCK : on réduit HIGH (pollué par distorsion/cymbales) et booste KICK
 const BAND_WEIGHTS = {
   electro: { KICK: 1.7, LOW: 1.0, MID: 1.3, HIGH: 1.6 },
-  rock:    { KICK: 2.2, LOW: 1.2, MID: 0.9, HIGH: 0.4 }
+  rock:    { KICK: 2.5, LOW: 1.4, MID: 0.75, HIGH: 0.25 }   // HIGH encore plus baissé
 };
 
 // ============================================================
@@ -842,35 +842,42 @@ self.onmessage = function(e) {
 };
 
 function processSample(bandFluxes, time) {
-  // En mode ROCK, le floorSlow descend plus vite (0.985 vs 0.992)
-  // pour ne pas laisser le plancher monter sur un signal continu fuzzy.
-  const floorDecay = (genre === 'rock') ? 0.985 : 0.992;
-  const weights    = (genre === 'rock') ? BAND_WEIGHTS_ROCK : BAND_WEIGHTS_ELECTRO;
-  const bandNames  = ['KICK','LOW','MID','HIGH'];
+  const isRock = genre === 'rock';
+  const floorDecays = isRock 
+    ? [0.978, 0.985, 0.988, 0.965]   // KICK, LOW, MID, HIGH → HIGH beaucoup plus réactif
+    : [0.992, 0.992, 0.992, 0.980];
+
+  const weights = isRock ? BAND_WEIGHTS_ROCK : BAND_WEIGHTS_ELECTRO;
 
   for (let b = 0; b < BANDS.length; b++) {
-    // Applique le poids genre au flux reçu (les weights côté main thread
-    // sont déjà genre-aware, mais on re-pondère ici pour le threshold)
-    const flux = (bandFluxes[b] || 0);
-    const s    = states[b];
+    const flux = bandFluxes[b] || 0;
+    const s = states[b];
     const rise = Math.max(0, flux - s.prev);
     s.prev = flux;
-    s.floorSlow = floorDecay * s.floorSlow + (1 - floorDecay) * rise;
+
+    // Floor decay spécifique par bande
+    const decay = floorDecays[b];
+    s.floorSlow = decay * s.floorSlow + (1 - decay) * rise;
+
     const threshold = Math.max(s.floorSlow * s.k, 0.006);
+
     if (rise > threshold && time - s.lastOnsetTime > 130) {
       const interval = s.onsets.length ? time - s.onsets.at(-1).time : null;
       s.onsets.push({ time, interval });
       if (s.onsets.length > 120) s.onsets.shift();
+
       self.postMessage({
-        type: 'onset', band: b, time: time,
+        type: 'onset',
+        band: b,
+        time: time,
         strength: rise / (s.floorSlow || 1),
-        kUsed: s.k, interval: interval
+        kUsed: s.k,
+        interval: interval
       });
       s.lastOnsetTime = time;
     }
   }
 }
-
 function runCalibration() {
   for (let b = 0; b < BANDS.length; b++) {
     const bestK = findBestKForBand(b);
@@ -1365,7 +1372,22 @@ function updateDebug(now, rawBpm) {
 // NOVELTY
 // ============================================================
 function calculateNovelty(bandFluxes) {
-  return bandFluxes[0] + bandFluxes[1] + bandFluxes[2] + bandFluxes[3];
+  const [kick, low, mid, high] = bandFluxes;
+
+  // Poids très orienté percussif
+  let novelty = kick * 2.8 + low * 1.6 + mid * 0.9;
+
+  if (currentGenre === 'rock') {
+    novelty += high * 0.35;           // contribution faible des cymbales
+  } else {
+    novelty += high * 1.1;
+  }
+
+  // Bonus si le kick domine (très utile sur du live)
+  const kickRatio = kick / (low + mid + high + 0.001);
+  if (kickRatio > 0.35) novelty *= 1.25;
+
+  return novelty;
 }
 
 function updateNoveltyBuffer(novelty, now) {
@@ -1416,31 +1438,43 @@ const h = noveltyCanvas.height;
 // PEAK DETECTION — seuil adaptatif + fenêtre ±4 frames
 // ============================================================
 function detectNoveltyPeaks(now) {
-  if (noveltyHistory.length < 10) return;
-  const minInterval = 200;
+  if (noveltyHistory.length < 15) return;
+
+  const minInterval = currentGenre === 'rock' ? 240 : 200;
+
   const vals = noveltyHistory.map(p => p.value);
   const mean = vals.reduce((s, v) => s + v, 0) / vals.length;
   const std  = Math.sqrt(vals.reduce((s, v) => s + (v - mean) ** 2, 0) / vals.length);
-  const adaptiveThreshold = mean + 1.2 * std;
-  const WIN = 4;
+
+  // Seuil plus permissif en rock
+  const adaptiveThreshold = currentGenre === 'rock' 
+    ? mean + 1.35 * std 
+    : mean + 1.1 * std;
+
+  const WIN = currentGenre === 'rock' ? 5 : 4;
+
   for (let i = WIN; i < noveltyHistory.length - WIN; i++) {
     const curr = noveltyHistory[i];
     if (curr.time <= noveltyLastPeakTime) continue;
+
     let isMax = true;
     for (let k = 1; k <= WIN; k++) {
-      if (noveltyHistory[i - k].value >= curr.value ||
-          noveltyHistory[i + k].value >= curr.value) {
-        isMax = false; break;
+      if (noveltyHistory[i - k].value >= curr.value + 0.001 ||
+          noveltyHistory[i + k].value >= curr.value + 0.001) {
+        isMax = false;
+        break;
       }
     }
+
     if (isMax && curr.value > adaptiveThreshold) {
-      if (noveltyBeatTimes.length === 0 ||
-          curr.time - noveltyBeatTimes.at(-1) > minInterval) {
+      const lastBeatTime = noveltyBeatTimes.length ? noveltyBeatTimes.at(-1) : 0;
+      if (curr.time - lastBeatTime > minInterval) {
         noveltyBeatTimes.push(curr.time);
-        if (noveltyBeatTimes.length > 32) noveltyBeatTimes.shift();
+        if (noveltyBeatTimes.length > 40) noveltyBeatTimes.shift();
       }
     }
   }
+
   if (noveltyHistory.length > WIN + 1) {
     noveltyLastPeakTime = noveltyHistory[noveltyHistory.length - WIN - 1].time;
   }
