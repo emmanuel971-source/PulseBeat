@@ -531,6 +531,12 @@ html, body {
   border-color: rgba(93,187,245,0.40);
   box-shadow: 0 0 12px rgba(93,187,245,0.15);
 }
+.genre-btn.active[data-genre="acoustic"] {
+  background: rgba(0,245,212,0.10);
+  color: var(--mint);
+  border-color: rgba(0,245,212,0.40);
+  box-shadow: 0 0 12px rgba(0,245,212,0.18);
+}
 .genre-btn:active { opacity: 0.7; }
 .genre-hint {
   font-size: 9px; letter-spacing: 1px;
@@ -602,6 +608,8 @@ html, body {
       <div class="debug-row"><span class="debug-key">SPAN</span><span class="debug-val" id="dbg-span">0 s</span></div>
       <div class="debug-row"><span class="debug-key">RAW BPM</span><span class="debug-val" id="dbg-raw">—</span></div>
       <div class="debug-row"><span class="debug-key">SMOOTH</span><span class="debug-val" id="dbg-smooth">—</span></div>
+      <div class="debug-row"><span class="debug-key">FLUX</span><span class="debug-val" id="dbg-flux">—</span></div>
+      <div class="debug-row"><span class="debug-key">PEAK/THR</span><span class="debug-val" id="dbg-thresh">—</span></div>
     </div>
     <div class="debug-sliders">
       <div class="debug-slider-row">
@@ -642,8 +650,9 @@ html, body {
   <div class="genre-panel">
     <div class="genre-label">GENRE FILTER</div>
     <div class="genre-buttons">
-      <button class="genre-btn active" id="genre-electro" onclick="setGenre('electro')">⚡ ELECTRO / EDM</button>
-      <button class="genre-btn"        id="genre-rock"    onclick="setGenre('rock')">🎸 ROCK / LIVE</button>
+      <button class="genre-btn active" id="genre-electro"  data-genre="electro"  onclick="setGenre('electro')">⚡ ELECTRO / EDM</button>
+      <button class="genre-btn"        id="genre-rock"     data-genre="rock"     onclick="setGenre('rock')">🎸 ROCK / LIVE</button>
+      <button class="genre-btn"        id="genre-acoustic" data-genre="acoustic" onclick="setGenre('acoustic')">🎹 ACOUSTIC</button>
     </div>
     <div class="genre-hint" id="genre-hint">Réponse plate — optimisé kick & basses propres</div>
   </div>
@@ -657,8 +666,8 @@ html, body {
 
   <!-- FOOTER -->
   <div class="rack-footer">
-    <span id="footer-label">MULTI-BAND · NOVELTY CURVE · AUTOCORR</span>
-    <span>v10.0</span>
+    <span id="footer-label">MULTI-BAND · NOVELTY CURVE · AUTOCORR · ACOUSTIC</span>
+    <span>v10.1</span>
   </div>
 
 </div>
@@ -671,6 +680,7 @@ html, body {
 let ctx, analyser, src, stream;
 let filterLowShelf  = null;   // boost graves (mode ROCK)
 let filterHighShelf = null;   // coupe aigus  (mode ROCK)
+let filterBandpass  = null;   // bandpass 3.5kHz (mode ACOUSTIC)
 let running = false;
 let currentMode = 'music';
 
@@ -699,6 +709,8 @@ const dbgCalib     = document.getElementById('dbg-calib');
 const dbgSpan      = document.getElementById('dbg-span');
 const dbgRaw       = document.getElementById('dbg-raw');
 const dbgSmooth    = document.getElementById('dbg-smooth');
+const dbgFlux      = document.getElementById('dbg-flux');
+const dbgThresh    = document.getElementById('dbg-thresh');
 let debugVisible   = false;
 
 // ============================================================
@@ -709,8 +721,9 @@ let currentGenre = 'electro'; // 'electro' | 'rock'
 // Poids des bandes selon le genre
 // ROCK : on réduit HIGH (pollué par distorsion/cymbales) et booste KICK
 const BAND_WEIGHTS = {
-  electro: { KICK: 1.7, LOW: 1.0, MID: 1.3, HIGH: 1.6 },
-  rock:    { KICK: 2.5, LOW: 1.4, MID: 0.75, HIGH: 0.25 }   // HIGH encore plus baissé
+  electro:  { KICK: 1.7, LOW: 1.0, MID: 1.3, HIGH: 1.6 },
+  rock:     { KICK: 2.5, LOW: 1.4, MID: 0.75, HIGH: 0.25 },  // HIGH encore plus baissé
+  acoustic: { KICK: 0.6, LOW: 0.8, MID: 2.2,  HIGH: 2.8  }   // MID+HIGH dominants : cordes, piano, voix
 };
 
 // ============================================================
@@ -751,6 +764,9 @@ const CONFIRM_TOLERANCE = 2;    // ±2 BPM = même candidat
 // ── SILENCE DETECTION ──
 let silenceStartTime     = 0;
 const SILENCE_TIMEOUT_MS = 2000;
+let fluxPeak             = 0;       // max lissé de acFluxSmooth — référence dynamique
+const SILENCE_RATIO      = 0.25;    // silence si flux < 25% du pic observé
+const FLUX_PEAK_DECAY    = 0.9998;  // descend très lentement (s'adapte aux pauses longues)
 
 // ── BPM HISTORY (5 min rolling) ──
 const BPM_HIST_WIN_MS = 5 * 60 * 1000; // 5 minutes
@@ -808,9 +824,9 @@ let acSampleInterval = null;
 function createBpmWorker() {
   const code = `
 const BANDS = ${JSON.stringify(BANDS.map(b => ({ name: b.name })))};
-const BAND_WEIGHTS_ELECTRO = ${JSON.stringify(BAND_WEIGHTS.electro)};
-const BAND_WEIGHTS_ROCK    = ${JSON.stringify(BAND_WEIGHTS.rock)};
-
+const BAND_WEIGHTS_ELECTRO  = ${JSON.stringify(BAND_WEIGHTS.electro)};
+const BAND_WEIGHTS_ROCK     = ${JSON.stringify(BAND_WEIGHTS.rock)};
+const BAND_WEIGHTS_ACOUSTIC = ${JSON.stringify(BAND_WEIGHTS.acoustic)};
 let genre = 'electro';
 let states = BANDS.map(() => ({ prev:0, floorSlow:0, lastOnsetTime:0, k:3.5, onsets:[] }));
 let calibrationData = [];
@@ -842,12 +858,20 @@ self.onmessage = function(e) {
 };
 
 function processSample(bandFluxes, time) {
-  const isRock = genre === 'rock';
-  const floorDecays = isRock 
-    ? [0.978, 0.985, 0.988, 0.965]   // KICK, LOW, MID, HIGH → HIGH beaucoup plus réactif
-    : [0.992, 0.992, 0.992, 0.980];
+  const isRock     = genre === 'rock';
+  const isAcoustic = genre === 'acoustic';
 
-  const weights = isRock ? BAND_WEIGHTS_ROCK : BAND_WEIGHTS_ELECTRO;
+  // floorDecays : contrôle la réactivité de l'enveloppe de bruit par bande
+  // acoustic : MID/HIGH très réactifs (transitoires courts), KICK quasi ignoré
+  const floorDecays = isRock
+    ? [0.978, 0.985, 0.988, 0.965]
+    : isAcoustic
+      ? [0.995, 0.990, 0.972, 0.968]   // KICK lent, MID+HIGH rapides
+      : [0.992, 0.992, 0.992, 0.980];
+
+  const weights = isRock ? BAND_WEIGHTS_ROCK
+                : isAcoustic ? BAND_WEIGHTS_ACOUSTIC
+                : BAND_WEIGHTS_ELECTRO;
 
   for (let b = 0; b < BANDS.length; b++) {
     const flux = bandFluxes[b] || 0;
@@ -878,6 +902,7 @@ function processSample(bandFluxes, time) {
     }
   }
 }
+
 function runCalibration() {
   for (let b = 0; b < BANDS.length; b++) {
     const bestK = findBestKForBand(b);
@@ -959,22 +984,49 @@ function setGenre(genre) {
   // Update UI buttons
   document.getElementById('genre-electro').classList.toggle('active', genre === 'electro');
   document.getElementById('genre-rock').classList.toggle('active', genre === 'rock');
+  document.getElementById('genre-acoustic').classList.toggle('active', genre === 'acoustic');
 
   // Update hint text
   const hints = {
-    electro: 'Réponse plate — optimisé kick & basses propres',
-    rock:    'Boost graves +8dB · Coupe aigus -14dB · floorSlow réactif'
+    electro:  'Réponse plate — optimisé kick & basses propres',
+    rock:     'Boost graves +8dB · Coupe aigus -14dB · floorSlow réactif',
+    acoustic: 'Boost présence 4kHz +6dB · EQ MID/HIGH · transitoires cordes & piano'
   };
   document.getElementById('genre-hint').textContent = hints[genre];
 
   // Si une session est active, on met à jour les filtres en temps réel
-  if (running && filterLowShelf && filterHighShelf) {
-    filterLowShelf.gain.value  = (genre === 'rock') ? 8   : 0;
-    filterHighShelf.gain.value = (genre === 'rock') ? -14 : 0;
+  if (running && filterLowShelf && filterHighShelf && filterBandpass) {
+    _applyGenreFilters(genre);
   }
 
   // Notifier le Worker du nouveau genre
   if (bpmWorker) bpmWorker.postMessage({ type: 'setGenre', genre });
+}
+
+// Applique la configuration de filtres selon le genre
+function _applyGenreFilters(genre) {
+  if (genre === 'electro') {
+    filterBandpass.frequency.value = 4000;
+    filterBandpass.Q.value         = 0.9;
+    filterBandpass.gain.value      = 0;   // peaking à gain=0 = totalement transparent
+    filterLowShelf.gain.value      = 0;
+    filterHighShelf.gain.value     = 0;
+  } else if (genre === 'rock') {
+    filterBandpass.frequency.value = 4000;
+    filterBandpass.Q.value         = 0.9;
+    filterBandpass.gain.value      = 0;   // transparent en rock
+    filterLowShelf.gain.value      = 8;
+    filterHighShelf.gain.value     = -14;
+  } else if (genre === 'acoustic') {
+    // Acoustic : on veut capter les transitoires larges (cordes, piano, voix, cajon)
+    // → filtre bandpass transparent (Q très bas = passe-tout), on laisse l'EQ faire le travail
+    filterBandpass.type            = 'peaking';  // peaking = boost sans couper les extrêmes
+    filterBandpass.frequency.value = 4000;       // zone de présence / attaque des cordes
+    filterBandpass.Q.value         = 0.9;
+    filterBandpass.gain.value      = 6;          // +6dB autour de 4kHz
+    filterLowShelf.gain.value      = -6;         // atténue les graves qui parasitent (pied, salle)
+    filterHighShelf.gain.value     = 8;          // boost des transitoires aigus (plectre, frappe)
+  }
 }
 
 // ============================================================
@@ -1033,22 +1085,32 @@ try {
   analyser = ctx.createAnalyser();
 
   // ── EQ FILTERS ──
-  // Deux BiquadFilter en série entre src et analyser.
-  // En mode ELECTRO : gains à 0 → chaîne transparente, son non altéré.
-  // En mode ROCK    : lowShelf +8dB@120Hz + highShelf -14dB@3kHz
-  //   → renforce kick/basses, atténue distorsion harmonique et cymbales.
+  // Trois BiquadFilter en série entre src et analyser.
+  // filterBandpass : transparent en electro/rock (Q~0), bandpass 3.5kHz en acoustic
+  // filterLowShelf  : boost graves en ROCK (+8dB), atténue en acoustic (-4dB)
+  // filterHighShelf : coupe aigus en ROCK (-14dB), boost en acoustic (+10dB)
+  filterBandpass  = ctx.createBiquadFilter();
+  filterBandpass.type            = 'peaking';   // peaking : transparent à gain=0, actif en acoustic
+  filterBandpass.frequency.value = 4000;
+  filterBandpass.Q.value         = 0.9;
+  filterBandpass.gain.value      = 0;           // neutre par défaut
+
   filterLowShelf  = ctx.createBiquadFilter();
   filterLowShelf.type            = 'lowshelf';
   filterLowShelf.frequency.value = 120;
-  filterLowShelf.gain.value      = (currentGenre === 'rock') ? 8 : 0;
+  filterLowShelf.gain.value      = 0;
 
   filterHighShelf = ctx.createBiquadFilter();
   filterHighShelf.type            = 'highshelf';
   filterHighShelf.frequency.value = 3000;
-  filterHighShelf.gain.value      = (currentGenre === 'rock') ? -14 : 0;
+  filterHighShelf.gain.value      = 0;
 
-  // Chaîne : src → lowShelf → highShelf → analyser
-  src.connect(filterLowShelf);
+  // Applique immédiatement les bons paramètres selon le genre actif
+  _applyGenreFilters(currentGenre);
+
+  // Chaîne : src → bandpass → lowShelf → highShelf → analyser
+  src.connect(filterBandpass);
+  filterBandpass.connect(filterLowShelf);
   filterLowShelf.connect(filterHighShelf);
   filterHighShelf.connect(analyser);
 
@@ -1099,6 +1161,7 @@ function resetState() {
   // Gate + silence
   confirmedBpm = null; candidateBpm = null; candidateFirstSeen = 0;
   silenceStartTime = 0;
+  fluxPeak = 0;
   stopMetronome();
   bpmHistory = [];
 
@@ -1235,10 +1298,18 @@ function processMusic() {
 
 // 4. Détection de silence et logique de confirmation du BPM
   let newBpm = null;
-  
-  // On redescend le seuil très bas (ex: 0.015). 
-  // Le flux mesure les impacts, donc il faut être tolérant pendant les breaks musicaux.
-  const NOISE_THRESHOLD = 0.015; 
+
+  // Seuil RELATIF adaptatif : on mémorise le pic de flux observé pendant la musique
+  // et on considère "silence" quand le signal tombe sous SILENCE_RATIO (12%) de ce pic.
+  // → S'auto-calibre en mode ROCK (boost +8dB → pic plus élevé → seuil plus élevé aussi).
+  // → Immunisé contre les bruits de fond constants (ventilo, voix…).
+  // fluxPeak monte instantanément sur tout nouveau max, descend très lentement.
+  if (acFluxSmooth > fluxPeak) {
+    fluxPeak = acFluxSmooth;
+  } else {
+    fluxPeak = Math.max(fluxPeak * FLUX_PEAK_DECAY, 0.008); // plancher minimal anti-division
+  }
+  const NOISE_THRESHOLD = fluxPeak * SILENCE_RATIO;
 
   if (acFluxSmooth < NOISE_THRESHOLD) {
     if (silenceStartTime === 0) silenceStartTime = now;
@@ -1361,6 +1432,13 @@ function updateDebug(now, rawBpm) {
   dbgSpan.textContent      = span.toFixed(1) + ' s';
   dbgRaw.textContent       = rawBpm !== null && rawBpm !== undefined ? rawBpm + ' BPM' : '—';
   dbgSmooth.textContent    = noveltySmoothedBpm !== null ? noveltySmoothedBpm.toFixed(1) : '—';
+  dbgFlux.textContent      = acFluxSmooth.toFixed(4);
+  const dynThr = fluxPeak * SILENCE_RATIO;
+  dbgThresh.textContent    = fluxPeak.toFixed(4) + ' / ' + dynThr.toFixed(4);
+  // Colorer en rouge si on est proche du seuil (musique quasi-silencieuse)
+  dbgFlux.classList.remove('warn', 'bad');
+  if (acFluxSmooth < dynThr * 1.5) dbgFlux.classList.add('warn');
+  if (acFluxSmooth < dynThr)       dbgFlux.classList.add('bad');
 
   colorClass(dbgGate, gateLeft, requiredMs * 0.5, requiredMs * 0.9);
   colorClass(dbgPeaks, 4 - noveltyBeatTimes.length, 1, 3);
@@ -1373,6 +1451,18 @@ function updateDebug(now, rawBpm) {
 // ============================================================
 function calculateNovelty(bandFluxes) {
   const [kick, low, mid, high] = bandFluxes;
+
+  if (currentGenre === 'acoustic') {
+    // Acoustic : transitoires portés par MID+HIGH (attaque de cordes, piano, voix, cajon)
+    // On écrase le kick (basses souvent indistinctes en acoustique capté par micro smartphone)
+    let novelty = mid * 2.5 + high * 2.2 + low * 0.9 + kick * 0.4;
+
+    // Bonus si le MID/HIGH dominent nettement (= attaque franche d'un instrument)
+    const acRatio = (mid + high) / (kick + low + 0.001);
+    if (acRatio > 1.5) novelty *= 1.2;
+
+    return novelty;
+  }
 
   // Poids très orienté percussif
   let novelty = kick * 2.8 + low * 1.6 + mid * 0.9;
@@ -1440,18 +1530,20 @@ const h = noveltyCanvas.height;
 function detectNoveltyPeaks(now) {
   if (noveltyHistory.length < 15) return;
 
-  const minInterval = currentGenre === 'rock' ? 240 : 200;
+  const minInterval = currentGenre === 'rock' ? 240 : currentGenre === 'acoustic' ? 280 : 200;
 
   const vals = noveltyHistory.map(p => p.value);
   const mean = vals.reduce((s, v) => s + v, 0) / vals.length;
   const std  = Math.sqrt(vals.reduce((s, v) => s + (v - mean) ** 2, 0) / vals.length);
 
-  // Seuil plus permissif en rock
-  const adaptiveThreshold = currentGenre === 'rock' 
-    ? mean + 1.35 * std 
-    : mean + 1.1 * std;
+  // Acoustic : seuil plus permissif (transitoires plus discrets que kick électronique)
+  const adaptiveThreshold = currentGenre === 'rock'
+    ? mean + 1.35 * std
+    : currentGenre === 'acoustic'
+      ? mean + 0.9 * std
+      : mean + 1.1 * std;
 
-  const WIN = currentGenre === 'rock' ? 5 : 4;
+  const WIN = currentGenre === 'rock' ? 5 : currentGenre === 'acoustic' ? 6 : 4;
 
   for (let i = WIN; i < noveltyHistory.length - WIN; i++) {
     const curr = noveltyHistory[i];
@@ -1536,9 +1628,11 @@ function computeNoveltyBPM() {
     }
   }
 
+  // Lissage adaptatif : acoustic plus réactif (tempo moins régulier → moins de mémoire)
+  const alpha = currentGenre === 'acoustic' ? 0.35 : 0.20;
   noveltySmoothedBpm = noveltySmoothedBpm === null
     ? bpm
-    : 0.80 * noveltySmoothedBpm + 0.20 * bpm;
+    : (1 - alpha) * noveltySmoothedBpm + alpha * bpm;
 
   return Math.round(noveltySmoothedBpm);
 }
