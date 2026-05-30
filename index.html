@@ -468,9 +468,18 @@ input[type=range]::-webkit-slider-thumb {
 #play-view.ui-hidden .play-top {
   opacity: 0; pointer-events: none; transform: translateY(-100%);
 }
-#play-view.ui-hidden #transcript-bar,
 #play-view.ui-hidden .confidence-bar-wrap {
   opacity: 0; pointer-events: none;
+}
+/* transcript-bar : reste visible mais remonte se coller sous le texte */
+#play-view.ui-hidden #transcript-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 5;
+  opacity: 0.55;
+  pointer-events: none;
+  border-bottom: none;
+  background: #070a10cc;
 }
 #play-view.ui-hidden .play-footer {
   opacity: 0; pointer-events: none; transform: translateY(100%);
@@ -658,6 +667,17 @@ input[type=range]::-webkit-slider-thumb {
 <div id="edit-view" class="view">
   <input id="song-title-input" placeholder="Titre — Artiste">
 
+
+  <!-- Champ BPM -->
+  <div style="flex-shrink:0; display:flex; align-items:center; gap:12px; padding:10px 16px; background:var(--bg2); border-bottom:1px solid #ffffff08;">
+    <span style="font-size:0.85em; color:var(--muted); white-space:nowrap;">🥁 Tempo :</span>
+    <input type="number" id="song-bpm-input" min="20" max="300" placeholder="— BPM"
+      style="width:90px; padding:6px 10px; border-radius:8px; border:1px solid #ffffff12;
+             background:var(--bg3); color:var(--text); font-family:Space Mono,monospace;
+             font-size:0.95em; outline:none; -moz-appearance:textfield;">
+    <span id="bpm-source-badge" style="font-size:0.78em; color:var(--muted); font-family:Space Mono,monospace;"></span>
+  </div>
+
   <!-- Sélecteur de langue -->
   <div class="lang-selector">
     <span class="lang-label" id="lang-label-text">🌐 Langue de la chanson :</span>
@@ -682,6 +702,7 @@ input[type=range]::-webkit-slider-thumb {
   <div class="edit-footer">
     <button id="edit-timing-btn" class="btn" onclick="goToTimingMode()">⏱ Timing</button>
     <button class="btn btn-blue" onclick="saveSong()">💾 Sauvegarder</button>
+    <button id="edit-delete-btn" class="btn btn-danger" onclick="deleteSongFromEdit()" style="display:none">🗑 Supprimer</button>
     <button class="btn" onclick="showList()">✕</button>
   </div>
 </div>
@@ -1197,7 +1218,7 @@ let isPaused       = false;
 // Reco vocale
 let recognition    = null;
 let recoActive     = false;
-let recoEnabled    = true;   // peut être désactivé par l'utilisateur
+let recoEnabled    = localStorage.getItem('reco_enabled') !== '0';   // mémorisé en localStorage
 let currentLineIdx = 0;      // index ligne active
 let manualMode     = false;  // true si le chanteur a scrollé manuellement
 let capacitorWatchdog = null; // Timer pour le redémarrage automatique Capacitor
@@ -1517,6 +1538,22 @@ function editSong(id, prefillTitle = null) {
   const song = id ? songs.find(s => s.id === id) : null;
   document.getElementById('song-title-input').value = song ? song.title : (prefillTitle || '');
   document.getElementById('lyrics-text').value       = song ? song.lyrics : '';
+  // BPM
+  const bpmInput = document.getElementById('song-bpm-input');
+  const bpmBadge = document.getElementById('bpm-source-badge');
+  if (bpmInput) bpmInput.value = (song && song.bpm) ? song.bpm : '';
+  if (bpmBadge) {
+    if (song && song.bpm) {
+      bpmBadge.textContent = song.bpmSource === 'musicbrainz' ? '\u2713 MusicBrainz'
+                           : song.bpmSource === 'claude'      ? '\u26a0\ufe0f estim\u00e9'
+                           : '\u270f\ufe0f manuel';
+      bpmBadge.style.color = song.bpmSource === 'musicbrainz' ? 'var(--green)'
+                           : song.bpmSource === 'claude'      ? 'var(--warn)'
+                           : 'var(--muted)';
+    } else {
+      bpmBadge.textContent = '';
+    }
+  }
   // Langue : utilise celle sauvegardée si elle existe, sinon aucune sélection (nouvelle chanson)
   selectedLang = song ? (song.lang || null) : null;
   syncLangButtons();
@@ -1526,6 +1563,9 @@ function editSong(id, prefillTitle = null) {
   if (timingBtn) {
     timingBtn.className = hasTiming ? 'btn btn-green' : 'btn btn-danger';
   }
+  // Bouton Supprimer : visible uniquement pour une chanson existante
+  const deleteBtn = document.getElementById('edit-delete-btn');
+  if (deleteBtn) deleteBtn.style.display = id ? '' : 'none';
   // ----------------------------------------------------
   showView('edit-view');
 }
@@ -1541,6 +1581,18 @@ function syncLangButtons() {
   // Affiche l'avertissement si aucune langue choisie
   const warn = document.getElementById('lang-warning');
   if (warn) warn.style.display = selectedLang ? 'none' : 'block';
+}
+
+function deleteSongFromEdit() {
+  if (!currentSongId) return;
+  const song = appState.library[currentSongId];
+  const title = song ? song.title : 'cette chanson';
+  confirmDialog('Retirer de la setlist ?', `"${title}" sera retirée d'ici, mais restera disponible dans la bibliothèque globale.`, () => {
+    const s = getSetlist(currentNav.groupId, currentNav.setlistId);
+    if (s) s.songIds = s.songIds.filter(id => String(id) !== String(currentSongId));
+    save();
+    navTo('songs');
+  });
 }
 
 function saveSong() {
@@ -1577,12 +1629,33 @@ function saveSong() {
     songData.lyrics = lyrics; 
     songData.lang = selectedLang;
   }
+
+  // --- SAUVEGARDE BPM MANUEL ---
+  const bpmRaw = document.getElementById('song-bpm-input').value;
+  const bpmVal = bpmRaw ? parseInt(bpmRaw) : null;
+  if (bpmVal && bpmVal >= 20 && bpmVal <= 300) {
+    // Si l'utilisateur a modifié la valeur, on marque comme manuel
+    if (songData.bpm !== bpmVal) {
+      songData.bpm = bpmVal;
+      songData.bpmSource = 'manual';
+    }
+  } else if (!bpmRaw) {
+    // Champ vidé = suppression
+    songData.bpm = null;
+    songData.bpmSource = null;
+  }
   
   // --- LANCEMENT SILENCIEUX DU TIMING AUTO ---
   const needsTiming = !songData.timings || songData.timings.length === 0;
   if (doAutoTiming && needsTiming) {
     songData.isFetchingTiming = true;
     runAutoTimingInBackground(currentSongId, title); // Non-bloquant !
+  }
+
+  // --- LANCEMENT SILENCIEUX DU BPM AUTO ---
+  const needsBpm = !songData.bpm;
+  if (needsBpm) {
+    runAutoBpmInBackground(currentSongId, title); // Non-bloquant !
   }
 
   save(); 
@@ -1778,6 +1851,10 @@ function startPlayMode(id) {
   document.getElementById('play-btn').style.display  = '';
   document.getElementById('pause-btn').style.display = 'none';
   document.getElementById('reco-toggle-btn').style.display = 'none';
+  // Synchronise l'apparence du bouton micro avec l'état mémorisé
+  { const recoBtn = document.getElementById('reco-toggle-btn');
+    if (recoEnabled) { recoBtn.textContent = '🎤 ON'; recoBtn.className = 'btn btn-purple'; }
+    else             { recoBtn.textContent = '🎤 OFF'; recoBtn.className = 'btn'; } }
   setRecoStatus('idle', '—');
   setBadge('manual');
   document.getElementById('transcript-bar').textContent = 'En attente…';
@@ -2099,6 +2176,7 @@ function togglePause() {
 
 function toggleReco() {
   recoEnabled = !recoEnabled;
+  localStorage.setItem('reco_enabled', recoEnabled ? '1' : '0');
   const btn = document.getElementById('reco-toggle-btn');
   if (recoEnabled) {
     btn.textContent = '🎤 ON';
@@ -2436,7 +2514,7 @@ function stopAll() {
   _stopRAF();
   if (capacitorWatchdog) { clearTimeout(capacitorWatchdog); capacitorWatchdog = null; } // AJOUT
   timingRunning = false; isRunning = false; isPaused = false; recoActive = false;
-  recoEnabled   = true;
+  recoEnabled   = localStorage.getItem('reco_enabled') !== '0';
   if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
 }
 
@@ -2491,6 +2569,7 @@ function renderSongList() {
     const badgeMetaContainer = main.querySelector('.song-card-meta');
     const timingBadge = document.createElement('span');
     
+    const bpmSuffix = song.bpm ? ` · ${song.bpm} BPM` : '';
     if (song.isFetchingTiming) {
       // ÉTAT : EN COURS DE RECHERCHE
       timingBadge.className = 'badge';
@@ -2499,13 +2578,13 @@ function renderSongList() {
       timingBadge.style.border = '1px solid #ffcc0040';
       timingBadge.textContent = '⏳ Recherche auto...';
     } else if (hasTiming) {
-      // ÉTAT : PRÊT
+      // ÉTAT : PRÊT (+ BPM si disponible)
       timingBadge.className = 'badge badge-ready';
-      timingBadge.textContent = '✅ Prête';
+      timingBadge.textContent = '✅ Prête' + bpmSuffix;
     } else {
-      // ÉTAT : À FAIRE MANUELLEMENT
+      // ÉTAT : À FAIRE MANUELLEMENT (+ BPM si disponible)
       timingBadge.className = 'badge badge-timing';
-      timingBadge.textContent = '⏱ Timing à faire';
+      timingBadge.textContent = '⏱ Timing à faire' + bpmSuffix;
       timingBadge.ontouchstart = (e) => { e.stopPropagation(); };
       timingBadge.onclick = (e) => { 
         e.stopPropagation(); 
@@ -2519,14 +2598,6 @@ function renderSongList() {
 
     [
       ['✏️', 'Modifier', () => editSong(song.id)],
-      
-      ['🗑', 'Retirer', () => confirmDialog('Retirer de la setlist ?', `"${song.title}" sera retirée d'ici, mais restera disponible dans la bibliothèque globale.`, () => {
-        const s = getSetlist(currentNav.groupId, currentNav.setlistId);
-        // On retire l'ID du tableau de la setlist
-        s.songIds = s.songIds.filter(id => String(id) !== String(song.id));
-        save(); 
-        navTo('songs'); // Recharge la vue pour reconstruire le tableau global "songs"
-      }), 'del'],
     ].forEach(([icon, title, fn, cls]) => {
       const btn = document.createElement('button');
       btn.textContent = icon; btn.title = title;
@@ -3201,6 +3272,128 @@ function interpolateMissingTimings(timings, totalDurationEstimate = null) {
 
   return timings;
 }
+// ═══════════════════════════════════════════════════════
+//  BPM AUTO — MusicBrainz → Fallback Claude API
+// ═══════════════════════════════════════════════════════
+
+async function tryFetchBpmMusicBrainz(cleanTitle, cleanArtist) {
+  // Recherche sur MusicBrainz : on cherche un enregistrement avec champ bpm renseigné
+  try {
+    const query = cleanArtist
+      ? `recording:"${cleanTitle}" AND artist:"${cleanArtist}"`
+      : `recording:"${cleanTitle}"`;
+    const url = `https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(query)}&limit=5&fmt=json`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'LyricsPrompter/1.0 (contact@example.com)' }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const recordings = data.recordings || [];
+    // On cherche le premier enregistrement avec un bpm
+    for (const rec of recordings) {
+      if (rec.bpm && rec.bpm > 20 && rec.bpm < 300) {
+        return { bpm: Math.round(rec.bpm), source: 'musicbrainz' };
+      }
+    }
+    return null;
+  } catch (e) {
+    console.warn('[BPM] MusicBrainz error:', e.message);
+    return null;
+  }
+}
+
+// Helper : POST vers l'API Anthropic — contourne le CORS via CapacitorHttp sur Android,
+// fetch standard sinon (fonctionne en prod web ou depuis un serveur local)
+async function _anthropicPost(body) {
+  const API_URL = 'https://api.anthropic.com/v1/messages';
+  const headers = { 'Content-Type': 'application/json' };
+
+  if (window.Capacitor?.isNativePlatform() && Capacitor.Plugins?.CapacitorHttp) {
+    // Natif Android : CapacitorHttp ignore le CORS
+    const res = await Capacitor.Plugins.CapacitorHttp.request({
+      method: 'POST',
+      url: API_URL,
+      headers,
+      data: body
+    });
+    return res.data; // déjà parsé
+  } else {
+    // Web / test local
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  }
+}
+
+async function tryFetchBpmClaude(cleanTitle, cleanArtist) {
+  try {
+    const prompt = cleanArtist
+      ? `What is the BPM (tempo) of the song "${cleanTitle}" by ${cleanArtist}? Reply with ONLY a single integer between 20 and 300, or the word null if you are not confident within 5 BPM. No explanation, no punctuation.`
+      : `What is the BPM (tempo) of the song "${cleanTitle}"? Reply with ONLY a single integer between 20 and 300, or the word null if you are not confident within 5 BPM. No explanation, no punctuation.`;
+
+    const data = await _anthropicPost({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 20,
+      messages: [{ role: 'user', content: prompt }]
+    });
+    const text = (data.content?.[0]?.text || '').trim();
+    if (!text || text === 'null') return null;
+    const val = parseInt(text);
+    if (isNaN(val) || val < 20 || val > 300) return null;
+    return { bpm: val, source: 'claude' };
+  } catch (e) {
+    console.warn('[BPM] Claude API error:', e.message);
+    return null;
+  }
+}
+
+async function runAutoBpmInBackground(songId, songTitleInput) {
+  try {
+    // Séparer titre / artiste
+    let cleanTitle = songTitleInput;
+    let cleanArtist = '';
+    if (songTitleInput.includes(' — ')) {
+      const parts = songTitleInput.split(' — ');
+      cleanTitle  = parts[0].trim();
+      cleanArtist = parts[1].trim();
+    } else {
+      cleanTitle = songTitleInput.split('—')[0].trim();
+    }
+
+    // 1. MusicBrainz
+    let result = await tryFetchBpmMusicBrainz(cleanTitle, cleanArtist);
+
+    // 2. Fallback Claude
+    if (!result) {
+      result = await tryFetchBpmClaude(cleanTitle, cleanArtist);
+    }
+
+    const song = appState.library[songId];
+    if (!song) return;
+
+    if (result) {
+      song.bpm = result.bpm;
+      song.bpmSource = result.source;
+      const label = result.source === 'musicbrainz' ? 'MusicBrainz' : 'estimé';
+      showAutoTimingToast(`🥁 Tempo : ${result.bpm} BPM (${label})`, 2500);
+    }
+    // Pas de toast si rien trouvé — silencieux
+
+  } catch (e) {
+    console.error('[BPM] Background task error:', e);
+  } finally {
+    const song = appState.library[songId];
+    if (song) {
+      save();
+      if (currentNav.screen === 'songs') renderSongList();
+    }
+  }
+}
+
 // ═══════════════════════════════════════════════════════
 // TÂCHE DE FOND : TIMING AUTO SILENCIEUX
 // ═══════════════════════════════════════════════════════
